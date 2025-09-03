@@ -1,6 +1,5 @@
 // Auto-generated from amway_master_skus_full.csv
 // Do not edit by hand; re-generate when the CSV changes.
-/* eslint-disable */
 export const PRODUCT_URLS: Record<string, string> = {
   "110403": `https://www.amway.com/Amway-Home%E2%84%A2-Prewash-Spray-p-110403`,
   "110601": `https://www.amway.com/XS%E2%84%A2-CocoWater-Hydration-Drink-Mix-Strawberry-Watermelon-p-110601`,
