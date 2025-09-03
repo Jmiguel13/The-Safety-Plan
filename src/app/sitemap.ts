@@ -1,39 +1,27 @@
-// app/sitemap.ts
+// src/app/sitemap.ts
 import type { MetadataRoute } from "next";
-import { supabasePublic } from "@/lib/supabasePublic";
-import { IS_PROD } from "@/lib/env";
+import { kits } from "@/lib/kits";
 
-export const revalidate = 300; // refresh sitemap every 5 minutes
+function originFromEnvOrFallback() {
+  const env = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "");
+  return env || "https://the-safety-plan.vercel.app";
+}
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-
-  // No sitemap on dev/preview to avoid indexing previews
-  if (!IS_PROD) return [];
-
+export default function sitemap(): MetadataRoute.Sitemap {
+  const origin = originFromEnvOrFallback();
   const now = new Date();
 
-  let kits: { slug: string }[] = [];
-  try {
-    const { data } = await supabasePublic
-      .from("kits")
-      .select("slug")
-      .eq("is_published", true);
-    kits = data ?? [];
-  } catch {
-    // fail soft: we'll still return the base routes below
-  }
-
-  const kitUrls = kits.map((k) => ({
-    url: `${base}/kits/${k.slug}`,
-    lastModified: now,
-  }));
-
-  return [
-    { url: `${base}/`, lastModified: now },
-    { url: `${base}/kits`, lastModified: now },
-    { url: `${base}/faq`, lastModified: now },
-    { url: `${base}/contact`, lastModified: now },
-    ...kitUrls,
+  const base: MetadataRoute.Sitemap = [
+    { url: `${origin}/`,           lastModified: now, changeFrequency: "weekly", priority: 1 },
+    { url: `${origin}/kits`,       lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${origin}/shop`,       lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${origin}/gallery`,    lastModified: now, changeFrequency: "weekly", priority: 0.6 },
   ];
+
+  const kitPages: MetadataRoute.Sitemap = kits.flatMap((k) => ([
+    { url: `${origin}/kits/${k.slug}`,        lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${origin}/kits/${k.slug}/items`,  lastModified: now, changeFrequency: "weekly", priority: 0.6 },
+  ]));
+
+  return [...base, ...kitPages];
 }
