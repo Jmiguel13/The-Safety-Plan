@@ -1,0 +1,10 @@
+// .eslintrc.json (or .eslintrc.js equivalent)
+{
+  "overrides": [
+    {
+      "files": ["babel.config.js"],
+      "parserOptions": { "sourceType": "script" },
+      "env": { "node": true }
+    }
+  ]
+}

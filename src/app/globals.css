@@ -1,0 +1,149 @@
+﻿@import "tailwindcss";
+
+/* =============== BASE (tokens, background, type) =============== */
+@layer base {
+  :root {
+    --bg: #0b0f10;
+    --panel: #0f1416;
+    --panel-elev: 0 6px 24px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.02);
+    --border: #1f2a2d;
+    --ok: #36d399;
+    --warn: #f4bf50;
+    --fg: #e6f0f1;
+    --fg-muted: #a4b0b2;
+    --link: #b9e4ff;
+    --grid-alpha: 0.035; /* 3.5% */
+  }
+
+  html, body { color: var(--fg); background: var(--bg); }
+
+  /* Tactical grid background + subtle vignette */
+  .bg-grid {
+    background:
+      radial-gradient(1200px 600px at 75% -10%, rgba(0,0,0,.35), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,var(--grid-alpha)) 0px, rgba(255,255,255,var(--grid-alpha)) 1px, transparent 1px, transparent 24px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,var(--grid-alpha)) 0px, rgba(255,255,255,var(--grid-alpha)) 1px, transparent 1px, transparent 24px),
+      linear-gradient(#0b1011, #0b1011);
+    color: var(--fg);
+  }
+
+  /* Headings (no responsive utilities inside @apply) */
+  h1 { @apply font-extrabold tracking-tight; font-size: 2.5rem; line-height: 1.1; }
+  @media (min-width: 768px) { h1 { font-size: 3.75rem; line-height: 1; } }
+
+  h2 { @apply font-semibold; font-size: 1.5rem; line-height: 1.25; }
+  @media (min-width: 768px) { h2 { font-size: 1.875rem; } }
+
+  .muted { color: var(--fg-muted); }
+
+  /* Base link tweaks */
+  a { text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
+
+  /* Skip link */
+  .skip-link { position: absolute; left: 0; top: -40px; background: #111; color: #fff; padding: 8px 12px; border-radius: 8px; z-index: 50; }
+  .skip-link:focus { top: 8px; }
+
+  /* Footer breathing room for help ribbon */
+  body { padding-bottom: 64px; }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+  }
+}
+
+/* =============== COMPONENTS (btns, cards, pills) =============== */
+@layer components {
+  .container { width: 100%; max-width: 72rem; margin-inline: auto; padding-inline: 1rem; }
+  @media (min-width: 768px) { .container { padding-inline: 2rem; } }
+
+  /* Tiny status dot used in kit previews */
+  .preview-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    background: var(--ok);
+  }
+
+  .btn, .btn-ghost {
+    @apply inline-flex items-center gap-2 rounded-full px-4 py-2 transition;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+  }
+  .btn { box-shadow: inset 0 0 0 1px rgba(54,211,153,0.25); }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-ghost { background: transparent; }
+  .btn-ghost:hover { background: rgba(255,255,255,0.05); }
+  .btn:focus-visible, .btn-ghost:focus-visible, a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--ok); outline-offset: 2px; border-radius: 9999px;
+  }
+
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 0.75rem; }
+
+  /* Elevated panel as a plain class (no @apply to it anywhere) */
+  .panel-elevated {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem; /* rounded-xl */
+    box-shadow: var(--panel-elev);
+  }
+
+  .panel-inset { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 0.75rem; }
+
+  .divider { height: 1px; background: var(--border); opacity: .6; margin: 2rem 0; }
+
+  .pill { @apply rounded-full px-3 py-1 border transition; border-color: var(--border); }
+  .pill[data-active="true"] { background: rgba(54,211,153,0.14); box-shadow: inset 0 0 0 1px rgba(54,211,153,0.35); }
+  .pill:hover { background: rgba(255,255,255,0.06); }
+
+  /* Reusable row with token border (replaces inline styles) */
+  .glow-row {
+    @apply flex items-center justify-between rounded-lg border px-4 py-3 transition;
+    border-color: var(--border);
+  }
+  .glow-row:hover { background: rgba(255,255,255,0.05); }
+
+  /* FAQ Card wrapper — expand instead of @apply panel-elevated */
+  .faq-card {
+    @apply rounded-xl border p-4 md:p-6 space-y-3;
+    background: var(--panel);
+    border-color: var(--border);
+    box-shadow: var(--panel-elev);
+  }
+
+  /* Chip-style action links (great for tel:/sms:) */
+  .link-chip {
+    @apply inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm no-underline transition;
+    border-color: var(--border);
+    background: rgba(255,255,255,0.03);
+    color: var(--link);
+  }
+  .link-chip:hover { background: rgba(255,255,255,0.06); }
+  .link-chip:focus-visible { outline: 2px solid var(--ok); outline-offset: 2px; }
+
+  .link-chip.tel::before { content: "📞"; font-size: 1rem; }
+  .link-chip.sms::before { content: "💬"; font-size: 1rem; }
+
+  /* Gallery tiles */
+  .gallery-figure { @apply relative overflow-hidden rounded-xl border; border-color: var(--border); background: var(--panel); }
+  .gallery-img { @apply object-cover transition-transform duration-300; }
+  .gallery-figure:hover .gallery-img { transform: scale(1.05); }
+  .gallery-caption { @apply absolute inset-0 flex items-end bg-black/0 transition-colors; }
+  .gallery-figure:hover .gallery-caption { background: rgba(0,0,0,.35); }
+
+  /* Fallback color (broad support) */
+  .gallery-caption > div {
+    @apply w-full p-3 text-[13px];
+    color: var(--fg);
+    opacity: .9; /* ≈ 90% */
+  }
+
+  /* Progressive enhancement where supported */
+  @supports (color: color-mix(in oklab, black 90%)) {
+    .gallery-caption > div {
+      color: color-mix(in oklab, var(--fg) 90%, transparent);
+      opacity: 1;
+    }
+  }
+}

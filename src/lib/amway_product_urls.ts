@@ -1,0 +1,26 @@
+// Auto-generated from amway_master_skus_full.csv
+// Do not edit by hand; re-generate when the CSV changes.
+/* eslint-disable */
+export const PRODUCT_URLS: Record<string, string> = {
+  "110403": `https://www.amway.com/Amway-Home%E2%84%A2-Prewash-Spray-p-110403`,
+  "110601": `https://www.amway.com/XS%E2%84%A2-CocoWater-Hydration-Drink-Mix-Strawberry-Watermelon-p-110601`,
+  "110631": `https://www.amway.com/XS%E2%84%A2-CocoWater-Hydration-Drink-Mix-Blue-Citrus-p-110631`,
+  "119346": `https://www.amway.com/Nutrilite%E2%84%A2-Vitamin-D-p-119346`,
+  "123046": `https://www.amway.com/Nutrilite%E2%84%A2-Kids-Complete-Immunity-Fast-Melt-Powder-p-123046`,
+  "123364": `https://www.amway.com/Nutrilite%E2%84%A2-Double-X%E2%84%A2-Multivitamin-10-day-Supply-p-123364`,
+  "123842": `https://www.amway.com/Nutrilite%E2%84%A2-Ultra-Focus-Energy-Pack-p-123842`,
+  "125557": `https://www.amway.com/Nutrilite%E2%84%A2-Men%E2%80%99s-Daily-Multivitamin-Tablets-p-125557`,
+  "125923": `https://www.amway.com/Nutrilite%E2%84%A2-Organics-Plant-Protein-Powder-Vanilla-p-125923`,
+  "126199": `https://www.amway.com/XS%E2%84%A2-Energy-Drink-12-oz---Tropical-p-126199`,
+  "126465": `https://www.amway.com/Satinique%E2%84%A2-Intensive-Repair-Hair-Treatment-p-126465`,
+  "126883": `https://www.amway.com/XS%E2%84%A2-Energy-Drink-12-oz---Classic-p-126883`,
+  "126983": `https://www.amway.com/XS%E2%84%A2-Energy-Drink-12-oz-Caffeine-Free-Cranberry-Grape-p-126983`,
+  "126985": `https://www.amway.com/XS%E2%84%A2-Sparkling-Juiced-Energy-Drink-Dragon-Fruit-p-126985`,
+  "127070": `https://www.amway.com/XS%E2%84%A2-Energy-Drink-12-oz-%E2%80%93-Variety-Case-p-127070`,
+  "127712": `https://www.amway.com/Amway%E2%84%A2-Sample-Bags-p-127712`,
+  "306333": `https://www.amway.com/Artistry-Skin-Nutrition%E2%84%A2-Renewing-and-Firming-Foil-Sample-Pack-p-306333`,
+  "317535": `https://www.amway.com/Nutrilite%E2%84%A2-Organics-Plant-Protein-Powder-Vanilla-Samples-p-317535`,
+  "321253": `https://www.amway.com/XS%E2%84%A2-CBD-Cream-Samples-p-321253`,
+  "123781V": `https://www.amway.com/Artistry-Skin-Nutrition%E2%84%A2-Renewing-Foaming-Cleanser-p-123781V`,
+  "125897TR": `https://www.amway.com/g%26h%E2%84%A2-Protect-Bar-Soap-p-125897TR`,
+};
