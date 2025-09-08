@@ -1,76 +1,76 @@
-﻿import type { Metadata, Viewport } from "next";
+﻿// src/app/faq/page.tsx
 import Link from "next/link";
-import CrisisCTA from "@/components/CrisisCTA";
+import { myShopLink } from "@/lib/amway";
 
-export const viewport: Viewport = { themeColor: "#0b0f10" };
+export const metadata = { title: "FAQ — The Safety Plan" };
 
-export const metadata: Metadata = {
-  title: "FAQ — The Safety Plan",
-  description: "Short, honest answers — and real ways to get help.",
-};
-
-export default function FAQPage() {
+export default function FaqPage() {
   return (
-    <main id="content" className="container py-10 space-y-6">
-      <header className="space-y-1">
-        <h1>Questions & Answers</h1>
-        <p className="muted text-sm">Quick answers, real impact.</p>
+    <section className="mx-auto max-w-3xl space-y-6">
+      <header className="space-y-2">
+        <h1 className="text-3xl font-bold">Frequently Asked Questions</h1>
+        <p className="muted">Kits, ordering, and mission details.</p>
       </header>
 
-      {/* Crisis resources */}
-      <CrisisCTA />
+      <article id="kits" className="faq-card">
+        <h2 className="text-xl font-semibold">What’s in the kits?</h2>
+        <p className="muted">
+          Each kit focuses on clean energy, hydration, recovery, and rest. Contents may vary by availability.
+        </p>
+        <div className="mt-3">
+          <Link href="/kits" className="link-chip">Browse Kits</Link>
+        </div>
+      </article>
 
-      <div className="divider" />
+      <article id="ordering" className="faq-card">
+        <h2 className="text-xl font-semibold">How do I order?</h2>
+        <p className="muted">
+          Use our storefront to purchase directly. We include UTM tracking so we can measure mission impact.
+        </p>
+        <div className="mt-3 flex gap-2">
+          <a
+            href={myShopLink("/", "faq")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="link-chip"
+          >
+            Open Storefront
+          </a>
+          <Link href="/donate" className="link-chip">Donate Instead</Link>
+        </div>
+      </article>
 
-      {/* FAQs */}
-      <section className="space-y-4">
-        <article className="panel p-4 md:p-6">
-          <h3 className="text-lg font-semibold">Where do profits go?</h3>
-          <p className="muted mt-2">
-            After costs, every dollar fuels veteran-focused suicide prevention and frontline support—care kits,
-            outreach, and community programs. We publish simple impact updates so you can see where help goes.
-          </p>
-        </article>
+      <article id="veteran-awareness" className="faq-card">
+        <h2 className="text-xl font-semibold">Veteran awareness & resources</h2>
+        <p className="muted">
+          If you or someone you know is struggling, you are not alone. Please consider talking to a trusted person and
+          reaching out to support resources in your area.
+        </p>
+        <ul className="mt-3 grid gap-2 text-sm">
+          <li>
+            <a className="link-chip tel" href="tel:988">Call 988 (US)</a>
+            <span className="muted ml-2">— 24/7 Suicide & Crisis Lifeline</span>
+          </li>
+          <li>
+            <a className="link-chip sms" href="sms:988">Text 988 (US)</a>
+            <span className="muted ml-2">— Text line for crisis support</span>
+          </li>
+        </ul>
+        <p className="mt-3 text-xs text-zinc-500">
+          In emergencies, call your local emergency number immediately.
+        </p>
+      </article>
 
-        <article className="panel p-4 md:p-6">
-          <h3 className="text-lg font-semibold">What’s in the Resilient Kit?</h3>
-          <p className="muted mt-2">
-            Daily-carry wellness: clean energy, hydration, key vitamins, recovery aids, and a few morale boosters.
-            It’s the “ready in your bag” kit.{" "}
-            <Link className="underline hover:no-underline" href="/kits/resilient">
-              See full kit
-            </Link>
-            .
-          </p>
-        </article>
-
-        <article className="panel p-4 md:p-6">
-          <h3 className="text-lg font-semibold">Shipping, returns, & warranty</h3>
-          <ul className="mt-2 list-disc pl-6 space-y-1 text-[var(--fg-muted)]">
-            <li>Fast continental U.S. shipping.</li>
-            <li>30-day returns on unopened items.</li>
-            <li>
-              <span className="font-medium text-[var(--fg)]">180-day kit warranty</span> — we’ll replace or make it right
-              for manufacturing defects or items damaged in transit. Normal wear and consumables aren’t covered.
-            </li>
-          </ul>
-          <p className="muted mt-2 text-sm">
-            Need a hand with an order?{" "}
-            <Link className="underline hover:no-underline" href="/contact">
-              Contact support
-            </Link>
-            .
-          </p>
-        </article>
-
-        <article className="panel p-4 md:p-6">
-          <h3 className="text-lg font-semibold">Who’s behind The Safety Plan?</h3>
-          <p className="muted mt-2">
-            A mission-driven crew of vets, families, and friends who believe the right gear plus community can save
-            lives. Every purchase helps us reach the next person who needs it.
-          </p>
-        </article>
-      </section>
-    </main>
+      <article id="support" className="faq-card">
+        <h2 className="text-xl font-semibold">How else can I help?</h2>
+        <p className="muted">
+          Share the mission, sponsor a kit, or donate to fund more distributions.
+        </p>
+        <div className="mt-3 flex gap-2">
+          <Link href="/donate" className="btn">Donate</Link>
+          <Link href="/kits" className="btn-ghost">Explore Kits</Link>
+        </div>
+      </article>
+    </section>
   );
 }

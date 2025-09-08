@@ -5,15 +5,27 @@ import { stripe } from "@/lib/stripe";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+type Body = { amount?: number };
+
 export async function POST(req: Request) {
   try {
-    const { amount } = await req.json().catch(() => ({ amount: 2500 })); // default $25
-    const cents = Math.max(100, Math.min(Number(amount) || 2500, 1_000_000)); // $1–$10,000
+    const body = (await req.json().catch(() => ({}))) as Body;
+
+    // Default $25, min $1, max $10,000
+    const centsRaw = Number(body.amount ?? 2500);
+    const cents = Math.max(100, Math.min(Number.isFinite(centsRaw) ? centsRaw : 2500, 1_000_000));
 
     const origin =
       req.headers.get("origin") ||
       process.env.NEXT_PUBLIC_SITE_URL ||
       "http://localhost:3000";
+
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json(
+        { ok: false, error: "Stripe is not configured." },
+        { status: 500 }
+      );
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -39,11 +51,10 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ ok: true, url: session.url });
-  } catch (err: any) {
-    console.error(err);
-    return NextResponse.json(
-      { ok: false, error: err?.message || "Stripe error" },
-      { status: 500 }
-    );
+  } catch (err) {
+    const message =
+      (err as { message?: string })?.message ?? "Stripe error creating checkout session";
+    console.error("[donate] error:", message);
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

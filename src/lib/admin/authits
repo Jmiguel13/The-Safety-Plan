@@ -1,0 +1,18 @@
+// src/lib/admin/auth.ts
+export function requireBasicAuth(req: Request) {
+  const header = req.headers.get("authorization") || "";
+  if (!header.startsWith("Basic ")) return null;
+
+  const decoded = Buffer.from(header.slice(6), "base64").toString("utf8");
+  const idx = decoded.indexOf(":");
+  const user = idx >= 0 ? decoded.slice(0, idx) : decoded;
+  const pass = idx >= 0 ? decoded.slice(idx + 1) : "";
+
+  const expectedUser = process.env.ADMIN_BASIC_USER || process.env.ADMIN_USER || "";
+  const expectedPass = process.env.ADMIN_BASIC_PASS || process.env.ADMIN_PASS || "";
+
+  if (!expectedUser || !expectedPass) return null;
+  if (user === expectedUser && pass === expectedPass) return { user };
+
+  return null;
+}

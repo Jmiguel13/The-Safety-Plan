@@ -1,116 +1,128 @@
 // src/app/donate/page.tsx
 "use client";
 
-import * as React from "react";
+import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
-const PRESETS = [1000, 2500, 5000, 10000]; // $10, $25, $50, $100
+type DonateResponse =
+  | { ok: true; url: string }
+  | { ok: false; error: string };
+
+const PRESETS = [10, 25, 50, 100] as const;
 
 export default function DonatePage() {
-  const [amount, setAmount] = React.useState(2500);
-  const [loading, setLoading] = React.useState(false);
-  const [notice, setNotice] = React.useState<null | string>(null);
+  const params = useSearchParams();
+  const [custom, setCustom] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
-  React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("success")) setNotice("Thank you—your donation was received.");
-    else if (params.get("canceled")) setNotice("Donation canceled.");
-  }, []);
+  const success = params.get("success") === "1";
+  const canceled = params.get("canceled") === "1";
 
-  async function startCheckout(cents: number) {
+  const amount = useMemo<number>(() => {
+    const n = Number(custom);
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+  }, [custom]);
+
+  const submit = async (dollars: number) => {
+    setError("");
     setLoading(true);
     try {
+      const cents = Math.max(100, Math.min(Math.round(dollars * 100), 1_000_000)); // $1–$10k
       const res = await fetch("/api/donate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: cents }),
       });
-      const json = await res.json();
-      if (json?.url) window.location.href = json.url;
-      else alert(json?.error || "Unable to start donation checkout.");
-    } finally {
+
+      const data = (await res.json()) as DonateResponse;
+      if (!data.ok) {
+        setError(data.error || "Donation failed.");
+        setLoading(false);
+        return;
+      }
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
+    } catch {
+      // no variable needed to satisfy no-unused-vars
+      setError("Network error. Try again.");
       setLoading(false);
     }
-  }
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    await startCheckout(amount);
-  }
+  };
 
   return (
-    <div className="mx-auto max-w-2xl py-10 space-y-8">
+    <section className="space-y-8 max-w-2xl">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold">Support the Mission</h1>
-        <p className="text-zinc-400">
-          Every dollar helps fund wellness kits for frontline fighters and veterans at risk.
+        <h1 className="text-5xl font-extrabold tracking-tight">Donate</h1>
+        <p className="muted">
+          Your gift funds Resilient &amp; Homefront kits and suicide-prevention resources for veterans.
         </p>
-        {notice && (
-          <p className="text-sm text-emerald-400" role="status" aria-live="polite">
-            {notice}
-          </p>
-        )}
       </header>
 
-      {/* Preset amounts */}
-      <div className="flex flex-wrap gap-3" role="group" aria-label="Quick donation amounts">
-        {PRESETS.map((cents) => (
-          <button
-            key={cents}
-            onClick={() => startCheckout(cents)}
-            disabled={loading}
-            aria-label={`Donate $${(cents / 100).toFixed(0)}`}
-            className="rounded-full border border-white/20 px-4 py-2 hover:border-white/40 focus:outline-none focus:ring focus:ring-white/20"
-          >
-            ${ (cents / 100).toFixed(0) }
-          </button>
-        ))}
-      </div>
+      {success && (
+        <div className="panel-elevated p-4">
+          <div className="text-green-300 font-medium">Thank you — your donation was received.</div>
+        </div>
+      )}
+      {canceled && (
+        <div className="panel-elevated p-4">
+          <div className="muted">Donation canceled. You can try again below.</div>
+        </div>
+      )}
 
-      {/* Custom amount with explicit label (fixes Axe 'forms/label') */}
-      <form onSubmit={onSubmit} className="space-y-3" noValidate>
-        <label
-          htmlFor="custom-amount"
-          className="block text-sm text-zinc-400"
-        >
-          Custom amount (USD)
-        </label>
+      <div className="panel p-5 space-y-4">
+        <div>
+          <h2 className="text-xl font-semibold">Choose an amount</h2>
+          <p className="muted text-sm">Presets or enter a custom amount.</p>
+        </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap gap-2">
+          {PRESETS.map((d) => (
+            <button
+              key={d}
+              className="pill"
+              onClick={() => submit(d)}
+              disabled={loading}
+              aria-disabled={loading}
+            >
+              ${d}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label htmlFor="custom" className="sr-only">
+            Custom amount
+          </label>
           <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">$</span>
             <input
-              id="custom-amount"
-              name="customAmount"
-              type="number"
-              min={1}
-              step={1}
+              id="custom"
               inputMode="numeric"
               pattern="[0-9]*"
-              value={(amount / 100).toFixed(0)}
-              onChange={(e) => {
-                const dollars = Math.max(1, Math.floor(Number(e.target.value) || 1));
-                setAmount(dollars * 100);
-              }}
-              placeholder="25"
-              title="Enter a donation amount in US dollars"
-              aria-describedby="custom-amount-help"
-              className="w-40 rounded-md bg-transparent border border-white/20 pl-7 pr-3 py-2 outline-none focus:ring focus:ring-white/20"
+              className="rounded-full border border-[var(--border)] bg-transparent px-8 py-2 outline-none"
+              placeholder="Custom"
+              value={custom}
+              onChange={(e) => setCustom(e.target.value.replace(/[^\d]/g, ""))}
             />
           </div>
-
           <button
-            type="submit"
+            className="btn"
+            onClick={() => submit(amount || 25)}
             disabled={loading}
-            className="rounded-full border border-white/20 px-4 py-2 hover:border-white/40 focus:outline-none focus:ring focus:ring-white/20"
+            aria-disabled={loading}
           >
-            {loading ? "Starting…" : `Donate $${(amount / 100).toFixed(0)}`}
+            {loading ? "Processing…" : "Donate"}
           </button>
         </div>
 
-        <p id="custom-amount-help" className="text-xs text-zinc-500">
-          Payments are processed securely by Stripe. Minimum $1.
-        </p>
-      </form>
-    </div>
+        {error ? <div className="text-red-300 text-sm">{error}</div> : null}
+      </div>
+
+      <div className="muted text-xs">
+        Secure payments are handled by Stripe. You’ll be redirected to a secure checkout page.
+      </div>
+    </section>
   );
 }

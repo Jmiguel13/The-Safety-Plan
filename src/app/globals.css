@@ -1,21 +1,33 @@
 ﻿@import "tailwindcss";
 
-/* =============== BASE (tokens, background, type) =============== */
+/* ===================== BASE (tokens, background, type) ===================== */
 @layer base {
   :root {
     --bg: #0b0f10;
     --panel: #0f1416;
     --panel-elev: 0 6px 24px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.02);
     --border: #1f2a2d;
-    --ok: #36d399;
-    --warn: #f4bf50;
+    --border-strong: #3f3f46;
+
+    --ok: #36d399;    /* emerald-ish */
+    --warn: #f4bf50;  /* amber */
+    --ring: #10b981;  /* focus ring */
+
     --fg: #e6f0f1;
     --fg-muted: #a4b0b2;
     --link: #b9e4ff;
+
+    --radius: 12px;
     --grid-alpha: 0.035; /* 3.5% */
   }
 
   html, body { color: var(--fg); background: var(--bg); }
+
+  /* Selection: fallback first, then modern override */
+  ::selection { background: rgba(16,185,129,.28); color: #fff; }
+  @supports (color: color-mix(in oklab, black 90%)) {
+    ::selection { background: color-mix(in oklab, var(--ok) 28%, transparent); }
+  }
 
   /* Tactical grid background + subtle vignette */
   .bg-grid {
@@ -27,18 +39,23 @@
     color: var(--fg);
   }
 
-  /* Headings (no responsive utilities inside @apply) */
-  h1 { @apply font-extrabold tracking-tight; font-size: 2.5rem; line-height: 1.1; }
-  @media (min-width: 768px) { h1 { font-size: 3.75rem; line-height: 1; } }
+  /* Headings */
+  h1 { @apply font-extrabold tracking-tight; font-size: clamp(2.25rem, 4vw, 3.75rem); line-height: 1.05; }
+  h2 { @apply font-semibold; font-size: clamp(1.25rem, 2vw, 1.875rem); line-height: 1.2; }
 
-  h2 { @apply font-semibold; font-size: 1.5rem; line-height: 1.25; }
-  @media (min-width: 768px) { h2 { font-size: 1.875rem; } }
+/* Balanced headings – progressive enhancement only */
+@supports (text-wrap: balance) {
+  .text-balance { text-wrap: balance; }
+}
 
   .muted { color: var(--fg-muted); }
 
   /* Base link tweaks */
   a { text-underline-offset: 3px; }
   a:hover { text-decoration-thickness: 2px; }
+
+  /* Global focus (fallback; components refine further) */
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 8px; }
 
   /* Skip link */
   .skip-link { position: absolute; left: 0; top: -40px; background: #111; color: #fff; padding: 8px 12px; border-radius: 8px; z-index: 50; }
@@ -53,43 +70,51 @@
   }
 }
 
-/* =============== COMPONENTS (btns, cards, pills) =============== */
+/* ===================== COMPONENTS (btns, cards, pills) ===================== */
 @layer components {
   .container { width: 100%; max-width: 72rem; margin-inline: auto; padding-inline: 1rem; }
   @media (min-width: 768px) { .container { padding-inline: 2rem; } }
 
   /* Tiny status dot used in kit previews */
-  .preview-dot {
-    width: 28px;
-    height: 28px;
-    border-radius: 9999px;
-    background: var(--ok);
-  }
+  .preview-dot { width: 28px; height: 28px; border-radius: 9999px; background: var(--ok); }
 
+  /* Buttons */
   .btn, .btn-ghost {
-    @apply inline-flex items-center gap-2 rounded-full px-4 py-2 transition;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 transition;
     border: 1px solid var(--border);
-    background: rgba(255,255,255,0.03);
+    -webkit-user-select: none; /* Safari */
+    user-select: none;
+    will-change: transform, background-color, border-color;
   }
-  .btn { box-shadow: inset 0 0 0 1px rgba(54,211,153,0.25); }
-  .btn:hover { transform: translateY(-1px); }
-  .btn-ghost { background: transparent; }
+  .btn {
+    background: rgba(255,255,255,0.06);
+    box-shadow: inset 0 0 0 1px rgba(54,211,153,0.25);
+    color: var(--fg);
+  }
+  .btn:hover { transform: translateY(-1px); background: rgba(255,255,255,0.09); }
+  .btn:active { transform: translateY(0); }
+
+  .btn-ghost { background: transparent; color: var(--fg); }
   .btn-ghost:hover { background: rgba(255,255,255,0.05); }
   .btn:focus-visible, .btn-ghost:focus-visible, a:focus-visible, button:focus-visible {
-    outline: 2px solid var(--ok); outline-offset: 2px; border-radius: 9999px;
+    outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 9999px;
+  }
+  .btn[disabled], .btn-ghost[disabled] {
+    opacity: .55; cursor: not-allowed; transform: none; box-shadow: none;
   }
 
-  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 0.75rem; }
-
-  /* Elevated panel as a plain class (no @apply to it anywhere) */
-  .panel-elevated {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 0.75rem; /* rounded-xl */
-    box-shadow: var(--panel-elev);
+  /* Tags */
+  .tag {
+    display:inline-flex; align-items:center; gap:.4ch; padding:2px 8px; border-radius:9999px;
+    border:1px solid var(--border); background:rgba(255,255,255,.03);
+    font-size:10px; letter-spacing:.06em; text-transform:uppercase; color: var(--fg);
   }
+  .tag-accent { border-color: var(--border-strong); color:#bae6fd; background: rgba(125,211,252,.10); }
 
-  .panel-inset { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 0.75rem; }
+  /* Panels & cards */
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); }
+  .panel-elevated { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--panel-elev); }
+  .panel-inset { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: var(--radius); }
 
   .divider { height: 1px; background: var(--border); opacity: .6; margin: 2rem 0; }
 
@@ -97,14 +122,14 @@
   .pill[data-active="true"] { background: rgba(54,211,153,0.14); box-shadow: inset 0 0 0 1px rgba(54,211,153,0.35); }
   .pill:hover { background: rgba(255,255,255,0.06); }
 
-  /* Reusable row with token border (replaces inline styles) */
+  /* Reusable row with token border */
   .glow-row {
     @apply flex items-center justify-between rounded-lg border px-4 py-3 transition;
     border-color: var(--border);
   }
   .glow-row:hover { background: rgba(255,255,255,0.05); }
 
-  /* FAQ Card wrapper — expand instead of @apply panel-elevated */
+  /* FAQ Card wrapper */
   .faq-card {
     @apply rounded-xl border p-4 md:p-6 space-y-3;
     background: var(--panel);
@@ -121,7 +146,6 @@
   }
   .link-chip:hover { background: rgba(255,255,255,0.06); }
   .link-chip:focus-visible { outline: 2px solid var(--ok); outline-offset: 2px; }
-
   .link-chip.tel::before { content: "📞"; font-size: 1rem; }
   .link-chip.sms::before { content: "💬"; font-size: 1rem; }
 
@@ -136,9 +160,8 @@
   .gallery-caption > div {
     @apply w-full p-3 text-[13px];
     color: var(--fg);
-    opacity: .9; /* ≈ 90% */
+    opacity: .9;
   }
-
   /* Progressive enhancement where supported */
   @supports (color: color-mix(in oklab, black 90%)) {
     .gallery-caption > div {
@@ -146,4 +169,51 @@
       opacity: 1;
     }
   }
+
+  /* Stat blocks (used on home preview) */
+  .stat .label { font-size: .75rem; color: rgb(161 161 170); }
+  .stat .value { font-weight: 600; letter-spacing: -0.01em; }
+}
+
+/* ===================== UTILITIES (tiny helpers) ===================== */
+@layer utilities {
+  .ring-ok { outline: 2px solid var(--ring); outline-offset: 2px; }
+  .shadow-subtle { box-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 8px 24px rgba(0,0,0,.25); }
+}
+
+/* ===================== Hero preview polish ===================== */
+.preview-surface { position: relative; }
+.preview-surface::before {
+  content: "";
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(600px 300px at 50% -20%, rgba(16,185,129,.10), transparent 60%),
+    linear-gradient(to bottom, rgba(255,255,255,.03), rgba(255,255,255,.01));
+}
+
+/* Pulsing status dot (GPU-friendly: transform/opacity only) */
+.pulse-dot {
+  width: 28px; height: 28px; border-radius: 9999px;
+  background: var(--ok);
+  position: relative;
+  will-change: transform, opacity;
+}
+.pulse-dot::after {
+  content: "";
+  position: absolute; inset: -12px;
+  border-radius: 9999px;
+  /* Fallback border color */
+  border: 2px solid rgba(16,185,129,.45);
+  animation: sp-pulse 2s ease-out infinite;
+}
+/* Modern override when color-mix is supported */
+@supports (color: color-mix(in oklab, black 90%)) {
+  .pulse-dot::after {
+    border-color: color-mix(in oklab, var(--ok) 65%, transparent);
+  }
+}
+@keyframes sp-pulse {
+  0%   { transform: scale(.6); opacity: .8; }
+  70%  { transform: scale(1.25); opacity: 0; }
+  100% { transform: scale(1.25); opacity: 0; }
 }

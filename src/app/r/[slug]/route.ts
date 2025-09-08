@@ -3,7 +3,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { kits } from "@/lib/kits";
-import { myShopLink } from "@/lib/amway"; // ⬅️ storefront only
+import { myShopLink } from "@/lib/amway"; // (path?: string, campaign?: string)
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,7 +48,6 @@ function withUTM(raw: string, slug: string, params: URLSearchParams) {
     if (!u.searchParams.get("utm_source")) u.searchParams.set("utm_source", "safety-plan");
     if (!u.searchParams.get("utm_medium")) u.searchParams.set("utm_medium", "web");
     if (!u.searchParams.get("utm_campaign")) u.searchParams.set("utm_campaign", `kit-${slug}`);
-    // Merge incoming utm_* overrides
     for (const [k, v] of params.entries()) {
       if (k.toLowerCase().startsWith("utm_") && v) u.searchParams.set(k, v);
     }
@@ -58,21 +57,17 @@ function withUTM(raw: string, slug: string, params: URLSearchParams) {
   }
 }
 
-/**
- * Prefer code-side kits → send to storefront with campaign.
- * (We no longer attempt cart injection.)
- */
+/** Code-side kits → MyShop storefront with campaign (no cart injection). */
 function resolveKitStorefront(slug: string): string | null {
   const kit = kits.find((k) => k.slug === slug);
   if (!kit) return null;
-  return myShopLink(`kit-${slug}`);
+  return myShopLink("/", `kit-${slug}`); // root never 404s
 }
 
 async function resolveFromDb(
   sb: SupabaseClient,
   slug: string
 ): Promise<{ kitId: string | null; url: string | null; isPublished: boolean }> {
-  // 1) find published kit (safe "first row" pattern)
   const kitRes = await sb
     .from("kits")
     .select("id, slug, buy_url, is_published")
@@ -80,16 +75,10 @@ async function resolveFromDb(
     .limit(1);
 
   const k = (kitRes.data?.[0] as KitRow | undefined) ?? null;
-  if (!k || !k.is_published) {
-    return { kitId: null, url: null, isPublished: false };
-  }
+  if (!k || !k.is_published) return { kitId: null, url: null, isPublished: false };
 
-  // Prefer explicit buy_url (might be a storefront or product URL)
-  if (k.buy_url) {
-    return { kitId: k.id, url: k.buy_url, isPublished: true };
-  }
+  if (k.buy_url) return { kitId: k.id, url: k.buy_url, isPublished: true };
 
-  // 2) fallback to first ordered product with a live amway_url
   const itemsRes = await sb
     .from("kit_items")
     .select("sort_order, products:product_id (id, amway_url, is_published)")
@@ -97,10 +86,7 @@ async function resolveFromDb(
     .order("sort_order", { ascending: true });
 
   const list = (itemsRes.data as ItemRow[] | null) ?? [];
-  const firstWithUrl = list
-    .map((i) => i.products)
-    .find((p) => p?.is_published && p?.amway_url);
-
+  const firstWithUrl = list.map((i) => i.products).find((p) => p?.is_published && p?.amway_url);
   return { kitId: k.id, url: firstWithUrl?.amway_url ?? null, isPublished: true };
 }
 
@@ -128,19 +114,17 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
   // A) Try code-side kit → storefront
   let destination = resolveKitStorefront(slug);
 
-  // B) If not available, resolve from DB (buy_url or first item amway_url)
+  // B) If not available, resolve from DB
   let resolvedDb = { kitId: null as string | null, url: null as string | null, isPublished: false };
   if (!destination) {
     resolvedDb = await resolveFromDb(sb, slug);
     destination = resolvedDb.url || null;
   }
 
-  // C) Final fallback: MyShop storefront with campaign
-  if (!destination) {
-    destination = myShopLink(`fallback-${slug}`);
-  }
+  // C) Final fallback: storefront root + campaign
+  if (!destination) destination = myShopLink("/", `fallback-${slug}`);
 
-  // D) If destination is a full http URL, merge UTM; otherwise use internal page
+  // D) Merge UTM if external, else internal fallback
   const internalFallback = new URL(`/kits/${slug}`, url.origin).toString();
   if (isHttpUrl(destination)) {
     destination = withUTM(destination, slug, url.searchParams);
@@ -148,12 +132,12 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     destination = internalFallback;
   }
 
-  // Prepare log payload (fire-and-forget; do not block redirect)
+  // Fire-and-forget log
   const utm = pickUtm(url.searchParams);
   const path_from = req.headers.get("referer") || `/r/${slug}`;
   const ip = clientIp(req);
   const user_agent = req.headers.get("user-agent");
-  const kitId = resolvedDb.kitId ?? null; // null if code-side path used
+  const kitId = resolvedDb.kitId ?? null;
 
   void (async () => {
     try {
@@ -166,7 +150,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
         user_agent,
       });
     } catch {
-      // ignore log errors
+      /* ignore */
     }
   })();
 
@@ -177,7 +161,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       isPublished: destination !== internalFallback ? true : resolvedDb.isPublished ?? false,
       destination,
       fallbackUsed: destination === internalFallback,
-      source: kitId ? "db" : "code", // "code" when using kits.ts storefront
+      source: kitId ? "db" : "code",
     });
   }
 

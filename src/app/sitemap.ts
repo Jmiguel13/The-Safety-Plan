@@ -1,27 +1,40 @@
 // src/app/sitemap.ts
 import type { MetadataRoute } from "next";
-import { kits } from "@/lib/kits";
+import { getSupabase } from "@/lib/ssr-supabase";
 
-function originFromEnvOrFallback() {
-  const env = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "");
-  return env || "https://the-safety-plan.vercel.app";
-}
+type KitSlugRow = { slug: string | null };
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const origin = originFromEnvOrFallback();
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const base = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/+$/, "");
+  const sb = getSupabase();
+
+  let slugs: string[] = [];
+  try {
+    const { data } = await sb.from("kits").select("slug").eq("is_published", true);
+    const rows = (data ?? []) as KitSlugRow[];
+    slugs = rows.map(r => r.slug).filter((s): s is string => typeof s === "string" && s.length > 0);
+  } catch {}
+
   const now = new Date();
 
-  const base: MetadataRoute.Sitemap = [
-    { url: `${origin}/`,           lastModified: now, changeFrequency: "weekly", priority: 1 },
-    { url: `${origin}/kits`,       lastModified: now, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${origin}/shop`,       lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${origin}/gallery`,    lastModified: now, changeFrequency: "weekly", priority: 0.6 },
+  const urls: MetadataRoute.Sitemap = [
+    { url: `${base}/`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.8 },
+    { url: `${base}/kits`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 },
+    { url: `${base}/donate`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.4 },
+    { url: `${base}/faq`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.4 },
+    { url: `${base}/gallery`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.4 },
   ];
 
-  const kitPages: MetadataRoute.Sitemap = kits.flatMap((k) => ([
-    { url: `${origin}/kits/${k.slug}`,        lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${origin}/kits/${k.slug}/items`,  lastModified: now, changeFrequency: "weekly", priority: 0.6 },
-  ]));
+  urls.push(
+    ...slugs.map(
+      (slug): MetadataRoute.Sitemap[number] => ({
+        url: `${base}/kits/${slug}`,
+        lastModified: now,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      })
+    )
+  );
 
-  return [...base, ...kitPages];
+  return urls;
 }
