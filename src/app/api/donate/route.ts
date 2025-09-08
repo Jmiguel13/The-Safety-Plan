@@ -11,9 +11,12 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json().catch(() => ({}))) as Body;
 
-    // Default $25, min $1, max $10,000
+    // Expect cents; default $25, min $1, max $10,000.
     const centsRaw = Number(body.amount ?? 2500);
-    const cents = Math.max(100, Math.min(Number.isFinite(centsRaw) ? centsRaw : 2500, 1_000_000));
+    const cents = Math.max(
+      100,
+      Math.min(Number.isFinite(centsRaw) ? Math.round(centsRaw) : 2500, 1_000_000)
+    );
 
     const origin =
       req.headers.get("origin") ||

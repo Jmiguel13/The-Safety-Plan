@@ -70,6 +70,7 @@ export default function KitItemsPage({ params }: { params: { slug: string } }) {
               target="_blank"
               rel="noopener noreferrer"
               className="btn"
+              aria-label="Add full kit to MyShop cart"
             >
               Add full kit to cart
             </a>
@@ -80,7 +81,7 @@ export default function KitItemsPage({ params }: { params: { slug: string } }) {
           ) : null}
 
           <a
-            href={myShopLink()} // root — no /quick-buy
+            href={myShopLink("/")} // root storefront
             target="_blank"
             rel="noopener noreferrer"
             className="btn-ghost"
@@ -133,13 +134,15 @@ export default function KitItemsPage({ params }: { params: { slug: string } }) {
                   </a>
                 ) : (
                   <>
+                    {/* Direct to the single product on your MyShop when possible */}
                     <a
-                      href={myShopLink()} // root — no /quick-buy
+                      href={myShopLink(it.sku)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="link-chip"
+                      aria-label={`View SKU ${it.sku} on MyShop`}
                     >
-                      Open Storefront
+                      View on MyShop
                     </a>
                     {/* Single-SKU copier */}
                     <CopySkus items={[{ sku: it.sku, qty: it.qty }]} />
@@ -159,6 +162,7 @@ export default function KitItemsPage({ params }: { params: { slug: string } }) {
             target="_blank"
             rel="noopener noreferrer"
             className="btn"
+            aria-label="Add full kit to MyShop cart"
           >
             Add full kit to cart
           </a>

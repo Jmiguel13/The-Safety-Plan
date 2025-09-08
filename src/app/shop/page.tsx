@@ -1,8 +1,7 @@
 ﻿// src/app/shop/page.tsx
 import Link from "next/link";
 import { kits } from "@/lib/kits";
-import { PRODUCT_URLS } from "@/lib/amway_product_urls";
-import { myShopLink } from "@/lib/amway";
+import { myShopLink, MYSHOP_BASE } from "@/lib/amway";
 import { TSP_PRODUCTS } from "@/lib/tsp-products";
 
 /** ---------- Types & helpers ---------- */
@@ -13,7 +12,7 @@ type KitLite = {
   skus?: string[];
 };
 
-type SoloItem = { sku: string; title: string; url?: string };
+type SoloItem = { sku: string; title: string; url: string };
 
 function titleCase(s: string) {
   return s ? s.replace(/^\w/, (c) => c.toUpperCase()) : s;
@@ -35,13 +34,18 @@ function countsForKit(k: KitLite) {
   return { itemCount, skuCount };
 }
 
-/** Curate a simple “solo products” strip from PRODUCT_URLS */
+/** Curate a simple “solo products” strip that ALWAYS credits your MyShop */
 function soloItems(): SoloItem[] {
-  const picks = ["127070", "110601", "109747"]; // tweak as you like
-  return picks.map((sku) => ({
+  // tweak picks as you like
+  const picks: Array<{ sku: string; title: string }> = [
+    { sku: "127070", title: "XS Energy 12-pack — Variety Case" },
+    { sku: "110601", title: "XS Sports Electrolyte — Strawberry Watermelon" },
+    { sku: "109747", title: "Nutrilite Vitamin C — 180 tablets" },
+  ];
+  return picks.map(({ sku, title }) => ({
     sku,
-    title: `SKU ${sku}`,
-    url: PRODUCT_URLS[sku],
+    title,
+    url: myShopLink(sku),
   }));
 }
 
@@ -66,7 +70,7 @@ export default function ShopPage() {
           Visit our official Amway storefront. Every order advances the mission.
         </p>
         <div className="flex flex-wrap gap-3 pt-1">
-          <a href={myShopLink()} target="_blank" rel="noopener noreferrer" className="btn">
+          <a href={MYSHOP_BASE} target="_blank" rel="noopener noreferrer" className="btn">
             Open Storefront
           </a>
           <Link href="/kits" className="btn-ghost">
@@ -75,7 +79,7 @@ export default function ShopPage() {
         </div>
 
         {/* local section nav */}
-        <nav className="flex flex-wrap gap-2 pt-2">
+        <nav className="flex flex-wrap gap-2 pt-2" aria-label="Shop sections">
           <a href="#kits" className="pill" data-active="true">The Kits</a>
           <a href="#solo" className="pill">Solo Amway Products</a>
           <a href="#tsp" className="pill">The Safety Plan Products</a>
@@ -119,7 +123,13 @@ export default function ShopPage() {
 
       {/* Section 2: Solo Amway Products */}
       <section id="solo" className="space-y-4 scroll-mt-24">
-        <h2 className="text-2xl font-semibold">Solo Amway Products</h2>
+        <div className="flex items-end justify-between">
+          <h2 className="text-2xl font-semibold">Solo Amway Products</h2>
+          <a href={MYSHOP_BASE} target="_blank" rel="noopener noreferrer" className="btn-ghost text-sm">
+            Open MyShop
+          </a>
+        </div>
+
         {solos.length === 0 ? (
           <div className="panel p-4">
             <p className="muted text-sm">Curated picks coming soon.</p>
@@ -128,30 +138,20 @@ export default function ShopPage() {
           <ul className="grid gap-2">
             {solos.map((p) => (
               <li key={p.sku} className="glow-row">
-                <div>
-                  <div className="font-medium">{p.title}</div>
-                  <div className="muted text-sm">Quick-buy single item</div>
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{p.title}</div>
+                  <div className="muted text-sm">Quick-buy single item · SKU {p.sku}</div>
                 </div>
                 <div>
-                  {p.url ? (
-                    <a
-                      href={p.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-ghost"
-                    >
-                      Buy
-                    </a>
-                  ) : (
-                    <a
-                      href={myShopLink("solo-product")}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-ghost"
-                    >
-                      Open Storefront
-                    </a>
-                  )}
+                  <a
+                    href={p.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-ghost"
+                    aria-label={`Buy ${p.title}`}
+                  >
+                    Buy
+                  </a>
                 </div>
               </li>
             ))}
@@ -176,9 +176,15 @@ export default function ShopPage() {
                 </div>
                 <div className="flex gap-2">
                   {p.url ? (
-                    <Link href={p.url} className="btn-ghost">
-                      {p.inStock ? "View" : "Waitlist"}
-                    </Link>
+                    p.url.startsWith("/") ? (
+                      <Link href={p.url} className="btn-ghost">
+                        {p.inStock ? "View" : "Waitlist"}
+                      </Link>
+                    ) : (
+                      <a href={p.url} target="_blank" rel="noopener noreferrer" className="btn-ghost">
+                        {p.inStock ? "View" : "Waitlist"}
+                      </a>
+                    )
                   ) : (
                     <span className="tag">Coming soon</span>
                   )}
