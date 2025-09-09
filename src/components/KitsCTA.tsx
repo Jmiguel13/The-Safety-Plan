@@ -1,5 +1,6 @@
 // src/components/KitsCTA.tsx
 import Link from "next/link";
+import { MYSHOP_BASE } from "@/lib/amway";
 
 export default function KitsCTA() {
   return (
@@ -10,9 +11,8 @@ export default function KitsCTA() {
         These are more than products — they’re lifelines.
       </p>
       <div className="mt-6 flex justify-center gap-3">
-        {/* External → <a> */}
         <a
-          href={process.env.NEXT_PUBLIC_MYSHOP_BASE ?? "#"}
+          href={MYSHOP_BASE}
           target="_blank"
           rel="noopener noreferrer"
           className="rounded-full bg-white px-4 py-2 text-black hover:bg-zinc-100"
@@ -20,7 +20,6 @@ export default function KitsCTA() {
           Visit Amway Store →
         </a>
 
-        {/* Internal → <Link> */}
         <Link
           href="/kits"
           className="rounded-full border border-zinc-700 px-4 py-2 hover:bg-zinc-900"

@@ -19,7 +19,7 @@ type AnyKit = {
 // optional extras you may add to each kit object in kits.ts
 type KitExtras = AnyKit & {
   addons?: string[]; // Solo Amway SKUs to recommend
-  gear?: string[];   // IDs from TSP_PRODUCTS
+  gear?: string[]; // IDs from TSP_PRODUCTS
 };
 
 type NormItem = {
@@ -43,7 +43,7 @@ function normalizeItems(k: AnyKit) {
     ? k.items.map((it) => ({
         title: it.title,
         sku: String(it.sku),
-        qty: Number(it.qty ?? 1),
+        qty: Math.max(1, Math.floor(Number(it.qty ?? 1))),
         buy_url: it.buy_url,
         note: it.note,
       }))
@@ -63,8 +63,7 @@ export default function KitPage({ params }: { params: { slug: string } }) {
   if (!kit) notFound();
 
   const title =
-    kit.title ??
-    `${params.slug[0]?.toUpperCase() ?? ""}${params.slug.slice(1)} Kit`;
+    kit.title ?? `${params.slug[0]?.toUpperCase() ?? ""}${params.slug.slice(1)} Kit`;
 
   const subtitle =
     kit.description ??
@@ -77,15 +76,14 @@ export default function KitPage({ params }: { params: { slug: string } }) {
 
   const { list, itemCount, skuCount } = normalizeItems(kit);
   const weight =
-    typeof kit.weight_lb === "number"
-      ? `${kit.weight_lb} lb`
-      : kit.weight_lb || "-";
+    typeof kit.weight_lb === "number" ? `${kit.weight_lb} lb` : kit.weight_lb || "-";
+
+  const hasItems = list.length > 0;
 
   // Build a full-kit MyShop cart link as fallback if /r/[slug] isn’t wired
-  const fullKitCartUrl =
-    list.length > 0
-      ? buildCartLink(list.map((i) => ({ sku: i.sku, qty: i.qty || 1 })))
-      : MYSHOP_BASE;
+  const fullKitCartUrl = hasItems
+    ? buildCartLink(list.map((i) => ({ sku: i.sku, qty: i.qty || 1 })))
+    : MYSHOP_BASE;
 
   // Recommended add-ons (Amway SKUs) — always deep-link via your MyShop
   const recommendedAddons =
@@ -113,14 +111,12 @@ export default function KitPage({ params }: { params: { slug: string } }) {
       {/* Top: Title + preview + stats */}
       <header className="grid items-start gap-8 md:grid-cols-[1.2fr_.8fr]">
         <div className="space-y-4">
-          <h1 className="text-balance text-5xl font-extrabold tracking-tight">
-            {title}
-          </h1>
+          <h1 className="text-balance text-5xl font-extrabold tracking-tight">{title}</h1>
           <p className="muted">{subtitle}</p>
 
           <div className="flex flex-wrap gap-3">
             {/* Prefer your redirect route if it’s implemented */}
-            <Link href={`/r/${kit.slug}`} className="btn">
+            <Link href={`/r/${kit.slug}`} className="btn" aria-label={`Buy ${title} now`}>
               Buy now
             </Link>
             {/* Fallback: direct cart link on MyShop */}
@@ -129,6 +125,7 @@ export default function KitPage({ params }: { params: { slug: string } }) {
               target="_blank"
               rel="noopener noreferrer"
               className="btn-ghost"
+              aria-label={`Quick add ${title} on MyShop`}
             >
               Quick Add (MyShop)
             </a>
@@ -173,23 +170,19 @@ export default function KitPage({ params }: { params: { slug: string } }) {
       <section className="space-y-4">
         <h2 className="text-2xl font-semibold">What&apos;s inside</h2>
 
-        {list.length === 0 ? (
+        {!hasItems ? (
           <p className="muted">Item list coming soon.</p>
         ) : (
           <ul className="grid gap-2">
             {list.map((it, i) => (
               <li key={`${it.sku}-${i}`} className="glow-row">
                 <div className="min-w-0">
-                  <div className="font-medium truncate">
-                    {it.title ?? "Product"}
-                  </div>
+                  <div className="font-medium truncate">{it.title ?? "Product"}</div>
                   <div className="text-sm muted">
                     SKU: {it.sku}
                     {it.qty > 1 ? ` • Qty ${it.qty}` : ""}
                   </div>
-                  {it.note ? (
-                    <div className="text-sm muted">{it.note}</div>
-                  ) : null}
+                  {it.note ? <div className="text-sm muted">{it.note}</div> : null}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -278,9 +271,7 @@ export default function KitPage({ params }: { params: { slug: string } }) {
                 <li key={p.id} className="glow-row">
                   <div className="min-w-0">
                     <div className="font-medium truncate">{p.title}</div>
-                    {p.blurb ? (
-                      <div className="muted text-sm">{p.blurb}</div>
-                    ) : null}
+                    {p.blurb ? <div className="muted text-sm">{p.blurb}</div> : null}
                   </div>
                   <div className="flex gap-2">
                     {p.url ? (

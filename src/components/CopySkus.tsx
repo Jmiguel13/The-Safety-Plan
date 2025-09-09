@@ -9,12 +9,12 @@ export default function CopySkus({
   items,
   label,
   className,
+  /** "button" renders a full button; "chip" renders a small pill. Default auto: >1 items => button, 1 item => chip */
   variant,
 }: {
   items: Item[];
   label?: string;
   className?: string;
-  /** "button" renders a full button; "chip" renders a small pill. Default auto: >1 items => button, 1 item => chip */
   variant?: "button" | "chip";
 }) {
   const [copied, setCopied] = useState(false);
@@ -24,23 +24,15 @@ export default function CopySkus({
     [items]
   );
 
-  const look =
-    variant ??
-    (items.length > 1 ? "button" : "chip"); // sensible default: multi = button, single = chip
-
-  const classes =
-    look === "chip"
-      ? `link-chip ${className ?? ""}`
-      : `btn-ghost ${className ?? ""}`;
+  const look = variant ?? (items.length > 1 ? "button" : "chip");
+  const classes = look === "chip" ? `link-chip ${className ?? ""}` : `btn-ghost ${className ?? ""}`;
 
   async function onCopy() {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      // brief visual confirmation
       setTimeout(() => setCopied(false), 1200);
     } catch {
-      // Fallback: textarea trick
       const el = document.createElement("textarea");
       el.value = text;
       el.style.position = "fixed";

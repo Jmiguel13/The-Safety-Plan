@@ -1,59 +1,120 @@
 // src/app/api/admin/kits/[id]/items/[product_id]/route.ts
-import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/server/supabase"; // ← use alias
+import { createSupabaseAdmin } from "@/lib/supabaseAdmin";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime = "nodejs"; // admin ops require server runtime
 
-type PatchBody = { quantity?: number; sort_order?: number };
+/** Extracts /api/admin/kits/:id/items/:product_id from the URL */
+function extractParams(pathname: string): { id: string; product_id: string } | null {
+  const parts = pathname.split("/").filter(Boolean);
+  // .../api/admin/kits/:id/items/:product_id
+  const itemsIdx = parts.lastIndexOf("items");
+  if (itemsIdx <= 0 || itemsIdx + 1 >= parts.length) return null;
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string; product_id: string } }
-) {
-  const sb = supabaseServer();
-  const patch = (await req.json().catch(() => ({} as PatchBody))) as PatchBody;
+  const product_id = decodeURIComponent(parts[itemsIdx + 1] || "");
+  const id = decodeURIComponent(parts[itemsIdx - 1] || "");
+  if (!id || !product_id) return null;
+  return { id, product_id };
+}
 
-  const update: Record<string, unknown> = {};
-  if (typeof patch.quantity === "number")
-    update.quantity = Math.max(1, Math.floor(patch.quantity));
-  if (typeof patch.sort_order === "number")
-    update.sort_order = Math.floor(patch.sort_order);
-
-  // Nothing to update
-  if (Object.keys(update).length === 0) {
-    return NextResponse.json({ ok: true, item: null });
+/** DELETE: remove an item from kit_items */
+export async function DELETE(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const params = extractParams(url.pathname);
+  if (!params) {
+    return Response.json({ ok: false, error: "Bad route: missing id/product_id" }, { status: 400 });
   }
 
+  const { id: kit_id, product_id } = params;
+  const sb = createSupabaseAdmin();
+
+  const { error } = await sb.from("kit_items").delete().match({ kit_id, product_id });
+  if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
+
+  // Optional: compact sort_order after deletion
+  const { data: remaining, error: listErr } = await sb
+    .from("kit_items")
+    .select("id")
+    .eq("kit_id", kit_id)
+    .order("sort_order", { ascending: true });
+
+  if (!listErr && Array.isArray(remaining)) {
+    let order = 1;
+    for (const row of remaining) {
+      await sb.from("kit_items").update({ sort_order: order }).eq("id", row.id);
+      order++;
+    }
+  }
+
+  return Response.json({ ok: true, deleted: { kit_id, product_id } }, { status: 200 });
+}
+
+/** PATCH: update qty, sort_order, or note */
+type PatchBody = {
+  qty?: number;
+  sort_order?: number;
+  note?: string | null;
+};
+
+export async function PATCH(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const params = extractParams(url.pathname);
+  if (!params) {
+    return Response.json({ ok: false, error: "Bad route: missing id/product_id" }, { status: 400 });
+  }
+
+  const { id: kit_id, product_id } = params;
+
+  let body: PatchBody;
+  try {
+    body = (await request.json()) as PatchBody;
+  } catch {
+    return Response.json({ ok: false, error: "Invalid JSON body." }, { status: 400 });
+  }
+
+  const update: Record<string, unknown> = {};
+  if (typeof body.qty === "number" && Number.isFinite(body.qty) && body.qty > 0) {
+    update.qty = Math.floor(body.qty);
+  }
+  if (typeof body.sort_order === "number" && Number.isFinite(body.sort_order) && body.sort_order > 0) {
+    update.sort_order = Math.floor(body.sort_order);
+  }
+  if (body.note === null || typeof body.note === "string") {
+    update.note = body.note;
+  }
+
+  if (Object.keys(update).length === 0) {
+    return Response.json({ ok: false, error: "Nothing to update." }, { status: 400 });
+  }
+
+  const sb = createSupabaseAdmin();
   const { data, error } = await sb
     .from("kit_items")
     .update(update)
-    .eq("kit_id", params.id)
-    .eq("product_id", params.product_id)
-    .select(
-      "product_id, quantity, sort_order, products:product_id (id, title, brand, amway_sku)"
-    )
-    .single(); // exactly one row by (kit_id, product_id) PK
+    .match({ kit_id, product_id })
+    .select("*")
+    .single();
 
-  if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  }
-  return NextResponse.json({ ok: true, item: data ?? null });
+  if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
+
+  return Response.json({ ok: true, item: data }, { status: 200 });
 }
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string; product_id: string } }
-) {
-  const sb = supabaseServer();
-  const { error } = await sb
-    .from("kit_items")
-    .delete()
-    .eq("kit_id", params.id)
-    .eq("product_id", params.product_id);
-
-  if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+/** GET detail (sanity) */
+export async function GET(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const params = extractParams(url.pathname);
+  if (!params) {
+    return Response.json({ ok: false, error: "Bad route: missing id/product_id" }, { status: 400 });
   }
-  return NextResponse.json({ ok: true });
+
+  const { id: kit_id, product_id } = params;
+  const sb = createSupabaseAdmin();
+  const { data, error } = await sb
+    .from("kit_items")
+    .select("id, kit_id, product_id, qty, sort_order, note")
+    .match({ kit_id, product_id })
+    .maybeSingle();
+
+  if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
+  return Response.json({ ok: true, item: data ?? null }, { status: 200 });
 }

@@ -1,8 +1,8 @@
+// src/app/kits/[slug]/page.tsx
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { kits } from "@/lib/kits";
-import { PRODUCT_URLS } from "@/lib/amway_product_urls";
-import { myShopLink } from "@/lib/amway";
+import { MYSHOP_BASE, myShopLink, buildCartLink } from "@/lib/amway";
 import { TSP_PRODUCTS, type TspProduct } from "@/lib/tsp-products";
 
 /** --- Types --- */
@@ -19,7 +19,7 @@ type AnyKit = {
 // optional extras you may add to each kit object in kits.ts
 type KitExtras = AnyKit & {
   addons?: string[]; // Solo Amway SKUs to recommend
-  gear?: string[];   // IDs from TSP_PRODUCTS
+  gear?: string[]; // IDs from TSP_PRODUCTS
 };
 
 type NormItem = {
@@ -43,7 +43,7 @@ function normalizeItems(k: AnyKit) {
     ? k.items.map((it) => ({
         title: it.title,
         sku: String(it.sku),
-        qty: Number(it.qty ?? 1),
+        qty: Math.max(1, Math.floor(Number(it.qty ?? 1))),
         buy_url: it.buy_url,
         note: it.note,
       }))
@@ -63,8 +63,7 @@ export default function KitPage({ params }: { params: { slug: string } }) {
   if (!kit) notFound();
 
   const title =
-    kit.title ??
-    `${params.slug[0]?.toUpperCase() ?? ""}${params.slug.slice(1)} Kit`;
+    kit.title ?? `${params.slug[0]?.toUpperCase() ?? ""}${params.slug.slice(1)} Kit`;
 
   const subtitle =
     kit.description ??
@@ -77,24 +76,59 @@ export default function KitPage({ params }: { params: { slug: string } }) {
 
   const { list, itemCount, skuCount } = normalizeItems(kit);
   const weight =
-    typeof kit.weight_lb === "number"
-      ? `${kit.weight_lb} lb`
-      : kit.weight_lb || "-";
+    typeof kit.weight_lb === "number" ? `${kit.weight_lb} lb` : kit.weight_lb || "-";
+
+  const hasItems = list.length > 0;
+
+  // Full-kit MyShop cart link (uses the active cart strategy from env)
+  const fullKitCartUrl = hasItems
+    ? buildCartLink(list.map((i) => ({ sku: i.sku, qty: i.qty || 1 })))
+    : MYSHOP_BASE;
+
+  // Recommended add-ons (Amway SKUs) — always deep-link via your MyShop
+  const recommendedAddons =
+    Array.isArray(kit.addons) && kit.addons.length > 0
+      ? kit.addons.map((sku) => ({
+          sku: String(sku),
+          title: `SKU ${sku}`,
+          url: myShopLink(String(sku)),
+        }))
+      : [];
+
+  // Quick Add All add-ons button (only if we have recommendations)
+  const addAllAddonsUrl =
+    recommendedAddons.length > 0
+      ? buildCartLink(recommendedAddons.map((a) => ({ sku: a.sku, qty: 1 })))
+      : undefined;
+
+  // TSP gear slice (IDs from your local products list)
+  const tspGear = (Array.isArray(kit.gear) ? kit.gear : [])
+    .map((id) => TSP_PRODUCTS.find((x) => x.id === id))
+    .filter(Boolean) as TspProduct[];
 
   return (
     <section className="space-y-10">
       {/* Top: Title + preview + stats */}
       <header className="grid items-start gap-8 md:grid-cols-[1.2fr_.8fr]">
         <div className="space-y-4">
-          <h1 className="text-balance text-5xl font-extrabold tracking-tight">
-            {title}
-          </h1>
+          <h1 className="text-balance text-5xl font-extrabold tracking-tight">{title}</h1>
           <p className="muted">{subtitle}</p>
 
           <div className="flex flex-wrap gap-3">
-            <Link href={`/r/${kit.slug}`} className="btn">
+            {/* Prefer your redirect route if it’s implemented */}
+            <Link href={`/r/${kit.slug}`} className="btn" aria-label={`Buy ${title} now`}>
               Buy now
             </Link>
+            {/* Fallback: direct cart link on MyShop */}
+            <a
+              href={fullKitCartUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-ghost"
+              aria-label={`Quick add ${title} on MyShop`}
+            >
+              Quick Add (MyShop)
+            </a>
             <Link href={`/kits/${kit.slug}/items`} className="btn-ghost">
               View SKUs
             </Link>
@@ -136,7 +170,7 @@ export default function KitPage({ params }: { params: { slug: string } }) {
       <section className="space-y-4">
         <h2 className="text-2xl font-semibold">What&apos;s inside</h2>
 
-        {list.length === 0 ? (
+        {!hasItems ? (
           <p className="muted">Item list coming soon.</p>
         ) : (
           <ul className="grid gap-2">
@@ -148,9 +182,7 @@ export default function KitPage({ params }: { params: { slug: string } }) {
                     SKU: {it.sku}
                     {it.qty > 1 ? ` • Qty ${it.qty}` : ""}
                   </div>
-                  {it.note ? (
-                    <div className="text-sm muted">{it.note}</div>
-                  ) : null}
+                  {it.note ? <div className="text-sm muted">{it.note}</div> : null}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -164,9 +196,14 @@ export default function KitPage({ params }: { params: { slug: string } }) {
                       Buy
                     </a>
                   ) : (
-                    <Link href={`/kits/${kit.slug}/items`} className="link-chip">
-                      Copy
-                    </Link>
+                    <a
+                      href={myShopLink(it.sku)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="link-chip"
+                    >
+                      View on MyShop
+                    </a>
                   )}
                 </div>
               </li>
@@ -175,35 +212,85 @@ export default function KitPage({ params }: { params: { slug: string } }) {
         )}
 
         {/* Recommended Solo Amway add-ons */}
-        {Array.isArray(kit.addons) && kit.addons.length > 0 ? (
+        {recommendedAddons.length > 0 ? (
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold">Recommended add-ons</h2>
+            <div className="flex items-end justify-between">
+              <h2 className="text-xl font-semibold">Recommended add-ons</h2>
+              <a
+                href={MYSHOP_BASE}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-ghost text-sm"
+              >
+                Browse MyShop
+              </a>
+            </div>
+
             <ul className="grid gap-2">
-              {kit.addons.map((sku: string) => (
-                <li key={sku} className="glow-row">
-                  <div>
-                    <div className="font-medium">SKU {sku}</div>
-                    <div className="muted text-sm">Single-item add-on</div>
+              {recommendedAddons.map((p) => (
+                <li key={p.sku} className="glow-row">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{p.title}</div>
+                    <div className="muted text-sm">SKU {p.sku}</div>
                   </div>
-                  <div>
-                    {PRODUCT_URLS[sku] ? (
-                      <a
-                        href={PRODUCT_URLS[sku] as string}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-ghost"
-                      >
-                        Buy
-                      </a>
+                  <div className="flex gap-2">
+                    <a
+                      href={p.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-ghost"
+                    >
+                      Add on MyShop
+                    </a>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {addAllAddonsUrl ? (
+              <div className="pt-2">
+                <a
+                  className="btn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href={addAllAddonsUrl}
+                >
+                  Quick Add All Add-ons
+                </a>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
+        {/* The Safety Plan gear */}
+        {tspGear.length > 0 ? (
+          <section className="space-y-3">
+            <h2 className="text-xl font-semibold">The Safety Plan gear</h2>
+            <ul className="grid gap-2">
+              {tspGear.map((p) => (
+                <li key={p.id} className="glow-row">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{p.title}</div>
+                    {p.blurb ? <div className="muted text-sm">{p.blurb}</div> : null}
+                  </div>
+                  <div className="flex gap-2">
+                    {p.url ? (
+                      p.url.startsWith("/") ? (
+                        <Link href={p.url} className="btn-ghost">
+                          {p.inStock ? "View" : "Waitlist"}
+                        </Link>
+                      ) : (
+                        <a
+                          href={p.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn-ghost"
+                        >
+                          {p.inStock ? "View" : "Waitlist"}
+                        </a>
+                      )
                     ) : (
-                      <a
-                        href={myShopLink("addon")}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-ghost"
-                      >
-                        Open Storefront
-                      </a>
+                      <span className="tag">Coming soon</span>
                     )}
                   </div>
                 </li>
@@ -212,40 +299,18 @@ export default function KitPage({ params }: { params: { slug: string } }) {
           </section>
         ) : null}
 
-        {/* The Safety Plan gear */}
-        {Array.isArray(kit.gear) && kit.gear.length > 0 ? (
-          <section className="space-y-3">
-            <h2 className="text-xl font-semibold">The Safety Plan gear</h2>
-            <ul className="grid gap-2">
-              {kit.gear.map((id: string) => {
-                const p: TspProduct | undefined = TSP_PRODUCTS.find((x) => x.id === id);
-                if (!p) return null;
-                return (
-                  <li key={id} className="glow-row">
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">{p.title}</div>
-                      {p.blurb ? <div className="muted text-sm">{p.blurb}</div> : null}
-                    </div>
-                    <div className="flex gap-2">
-                      {p.url ? (
-                        <Link href={p.url} className="btn-ghost">
-                          {p.inStock ? "View" : "Waitlist"}
-                        </Link>
-                      ) : (
-                        <span className="tag">Coming soon</span>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ) : null}
-
         <div className="flex gap-3 pt-2">
           <Link href={`/r/${kit.slug}`} className="btn">
             Buy now
           </Link>
+          <a
+            href={fullKitCartUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-ghost"
+          >
+            Quick Add (MyShop)
+          </a>
           <Link href={`/kits/${kit.slug}/items`} className="btn-ghost">
             View SKUs
           </Link>

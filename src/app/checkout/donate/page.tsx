@@ -4,11 +4,17 @@ import React from "react";
 
 const PRESETS = [10, 25, 50, 100, 250];
 
-type ApiResponse = { ok: true; url: string } | { ok: false; error?: string };
+type ApiResponse =
+  | { ok: true; url: string }
+  | { ok: false; error?: string };
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
-  try { return JSON.stringify(error); } catch { return String(error); }
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
 }
 
 export default function DonatePage() {
@@ -37,9 +43,10 @@ export default function DonatePage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ amount: val }),
       });
+
       const json = (await res.json()) as ApiResponse;
 
-      if (!res.ok || !("ok" in json) || !json.ok || !("url" in json)) {
+      if (!res.ok || !json.ok || !("url" in json)) {
         throw new Error(("error" in json && json.error) || "Could not create checkout session.");
       }
 
@@ -65,14 +72,13 @@ export default function DonatePage() {
             type="button"
             onClick={() => pickPreset(p)}
             className="rounded-md border border-zinc-700 px-3 py-2 text-sm hover:bg-zinc-900"
-            aria-label={`Preset $${p}`}
           >
             ${p}
           </button>
         ))}
       </div>
 
-      {/* Custom amount + Donate */}
+      {/* Custom amount */}
       <div className="flex items-center gap-2">
         <span className="rounded-md border border-zinc-700 px-2 py-2">$</span>
         <input
@@ -85,10 +91,8 @@ export default function DonatePage() {
           }}
           placeholder="Enter amount"
           className="flex-1 rounded-md border border-zinc-700 bg-transparent px-3 py-2 outline-none"
-          aria-label="Donation amount"
         />
         <button
-          type="button"
           onClick={donate}
           disabled={busy}
           className="rounded-md bg-white/90 px-4 py-2 font-medium text-black hover:bg-white disabled:opacity-50"
