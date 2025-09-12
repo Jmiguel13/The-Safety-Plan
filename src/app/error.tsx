@@ -1,9 +1,10 @@
-// src/app/error.tsx
-"use client";
+﻿"use client";
 
-import Link from "next/link";
-
-export default function GlobalError({
+/**
+ * Route-level error boundary. This renders inside your layout's <main>.
+ * Do NOT include <html> or <body> here.
+ */
+export default function Error({
   error,
   reset,
 }: {
@@ -11,23 +12,15 @@ export default function GlobalError({
   reset: () => void;
 }) {
   return (
-    <main className="min-h-dvh grid place-items-center bg-black text-white px-6">
-      <div className="text-center max-w-lg">
-        <h1 className="text-3xl font-bold mb-2">Something went wrong</h1>
-        <p className="text-zinc-400">If this keeps happening, please try again later.</p>
-        {error?.digest && (
-          <p className="mt-2 text-xs text-zinc-500">Error ID: {error.digest}</p>
-        )}
-        <div className="mt-6 flex items-center justify-center gap-3">
-          <button
-            onClick={() => reset()}
-            className="btn"
-          >
-            Try again
-          </button>
-          <Link href="/" className="btn-ghost">Go home</Link>
-        </div>
+    <div className="min-h-[70vh] grid place-items-center px-6">
+      <div className="text-center space-y-3">
+        <div className="tag tag-accent w-max mx-auto">Something went wrong</div>
+        <h1 className="text-2xl font-extrabold tracking-tight">Something went wrong</h1>
+        <p className="muted text-sm">{error?.message ?? "Unexpected error"}</p>
+        <button type="button" className="btn" onClick={() => reset()}>
+          Try again
+        </button>
       </div>
-    </main>
+    </div>
   );
 }
