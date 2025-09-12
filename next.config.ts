@@ -1,17 +1,24 @@
 // next.config.ts
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV !== "production";
+
 const useReactCompiler =
   process.env.REACT_COMPILER === "1" ||
   process.env.REACT_COMPILER?.toLowerCase() === "true";
 
+// Build a CSP string. In dev we allow react-refresh requirements.
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  // Dev needs 'unsafe-eval' (react-refresh) and sometimes blob: for chunks
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval' blob:" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
-  "connect-src 'self' https:",
+  // Dev needs websocket + localhost for HMR / refresh overlay
+  `connect-src 'self' https:${isDev ? " ws: http://localhost:*" : ""}`,
   "font-src 'self' https: data:",
+  // Dev may create workers from blob:
+  `worker-src 'self'${isDev ? " blob:" : ""}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
 ].join("; ");

@@ -1,124 +1,193 @@
 "use client";
 
-import React from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
-const PRESETS = [10, 25, 50, 100, 250];
+const PRESETS = [10, 25, 50, 100] as const;
+const MIN_CENTS = 100;     // $1.00
+const MAX_CENTS = 500000;  // $5,000.00
 
-type ApiResponse = { ok: true; url: string } | { ok: false; error?: string };
+function dollarsToCents(input: string): number | null {
+  // allow digits and a single dot
+  const clean = (input ?? "").replace(/[^\d.]/g, "");
+  if (!clean) return null;
 
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  try { return JSON.stringify(error); } catch { return String(error); }
+  // collapse multiple dots to one (keeps the first)
+  const parts = clean.split(".");
+  const normalized = parts.length > 2 ? `${parts[0]}.${parts.slice(1).join("")}` : clean;
+
+  const n = Number(normalized);
+  if (!Number.isFinite(n)) return null;
+
+  const cents = Math.round(n * 100);
+  return cents > 0 ? cents : null;
+}
+
+function centsToTidyDollars(cents: number): string {
+  // 2500 -> "25"; 2550 -> "25.5"; 2599 -> "25.99"
+  const s = (cents / 100).toFixed(2);
+  return s.replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
 }
 
 export default function DonatePage() {
-  const [amount, setAmount] = React.useState<number | "">("");
-  const [busy, setBusy] = React.useState(false);
-  const [msg, setMsg] = React.useState<string | null>(null);
+  const search = useSearchParams();
+  const [amountStr, setAmountStr] = useState<string>("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
-  function pickPreset(v: number) {
-    setAmount(v);
-    setMsg(null);
-  }
+  // Prefill from query string ?amount=25 (or ?a=25)
+  useEffect(() => {
+    const q = search?.get("amount") ?? search?.get("a");
+    if (q) {
+      const c = dollarsToCents(q);
+      if (c) setAmountStr(centsToTidyDollars(c));
+    }
+  }, [search]);
+
+  const amountCents = useMemo(() => dollarsToCents(amountStr), [amountStr]);
 
   async function donate() {
+    if (busy) return;
+
+    setMsg(null);
+
+    const cents = dollarsToCents(amountStr);
+    if (!cents) {
+      setMsg("Please enter an amount (minimum $1).");
+      return;
+    }
+    if (cents < MIN_CENTS) {
+      setMsg("Minimum donation is $1.");
+      return;
+    }
+    if (cents > MAX_CENTS) {
+      setMsg("Maximum donation for this form is $5,000.");
+      return;
+    }
+
     try {
       setBusy(true);
-      setMsg(null);
-      const val = typeof amount === "number" ? amount : Number(amount);
-      if (!Number.isFinite(val) || val <= 0) {
-        setMsg("Enter a valid amount.");
-        setBusy(false);
-        return;
-      }
-
       const res = await fetch("/api/checkout/donate", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ amount: val }),
+        body: JSON.stringify({ amount_cents: cents }),
       });
-      const json = (await res.json()) as ApiResponse;
 
-      if (!res.ok || !("ok" in json) || !json.ok || !("url" in json)) {
-        throw new Error(("error" in json && json.error) || "Could not create checkout session.");
+      if (!res.ok) {
+        // Make 404/500 obvious in the UI
+        const text = await res.text().catch(() => "");
+        try {
+          const asJson = JSON.parse(text) as { error?: string };
+          setMsg(asJson?.error || `Checkout error (${res.status})`);
+        } catch {
+          setMsg(text || `Checkout error (${res.status})`);
+        }
+        return;
       }
 
-      window.location.href = json.url;
-    } catch (error: unknown) {
-      setMsg(getErrorMessage(error));
+      const data = (await res.json()) as { ok: boolean; url?: string; error?: string };
+      if (!data.ok || !data.url) {
+        setMsg(data.error || "Could not start checkout. Try again.");
+        return;
+      }
+
+      window.location.assign(data.url);
+    } catch {
+      setMsg("Network error. Please try again.");
+    } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
+    <section className="space-y-8 max-w-xl">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold">Donate</h1>
-        <p className="text-zinc-400">Your support funds veteran crisis resources.</p>
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Donate</h1>
+        <p className="muted">Your donation funds resources for veterans in crisis.</p>
       </header>
 
-      {/* Presets */}
-      <div className="flex flex-wrap gap-2">
-        {PRESETS.map((p) => (
-          <button
-            key={p}
-            type="button"
-            onClick={() => pickPreset(p)}
-            className="rounded-md border border-zinc-700 px-3 py-2 text-sm hover:bg-zinc-900"
-            aria-label={`Preset $${p}`}
-          >
-            ${p}
-          </button>
-        ))}
+      {/* Preset buttons */}
+      <div className="panel p-4">
+        <div className="flex flex-wrap gap-2">
+          {PRESETS.map((p) => (
+            <button
+              key={p}
+              type="button"
+              className="btn-ghost"
+              onClick={() => {
+                setAmountStr(String(p));
+                // Keep caret in the input so users can tweak the value immediately
+                requestAnimationFrame(() => {
+                  if (inputRef.current) {
+                    inputRef.current.focus();
+                    inputRef.current.select();
+                  }
+                });
+              }}
+              aria-label={`Set amount to $${p}`}
+            >
+              ${p}
+            </button>
+          ))}
+        </div>
+
+        {/* Amount input */}
+        <div className="mt-4">
+          <label htmlFor="donation" className="block text-sm muted mb-1">
+            Donation amount (USD)
+          </label>
+          <div className="flex gap-2">
+            <span className="inline-flex items-center rounded-md border px-3">$</span>
+            <input
+              ref={inputRef}
+              id="donation"
+              name="donation"
+              inputMode="decimal"
+              placeholder="25"
+              className="w-full rounded-md border bg-transparent px-3 py-2 outline-none"
+              value={amountStr}
+              onChange={(e) => setAmountStr(e.target.value)}
+              onBlur={() => {
+                const c = dollarsToCents(amountStr);
+                if (c) setAmountStr(centsToTidyDollars(c));
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") donate();
+                // (optional) prevent typing 'e'/'E' in some browsers numeric input handling
+                if (e.key.toLowerCase() === "e") e.preventDefault();
+              }}
+              aria-describedby="donation-help"
+            />
+          </div>
+          <p id="donation-help" className="text-xs muted mt-2" aria-live="polite">
+            {amountCents
+              ? `You’re giving $${(amountCents / 100).toFixed(2)}.`
+              : "Enter any amount."}
+          </p>
+        </div>
       </div>
 
-      {/* Custom amount + Donate */}
-      <div className="flex items-center gap-2">
-        <span className="rounded-md border border-zinc-700 px-2 py-2">$</span>
-        <input
-          inputMode="decimal"
-          value={amount}
-          onChange={(e) => {
-            const v = e.target.value.trim();
-            if (v === "") setAmount("");
-            else setAmount(Number(v.replace(/[^\d.]/g, "")));
-          }}
-          placeholder="Enter amount"
-          className="flex-1 rounded-md border border-zinc-700 bg-transparent px-3 py-2 outline-none"
-          aria-label="Donation amount"
-        />
+      {/* Donate button — only disabled while redirecting */}
+      <div>
         <button
           type="button"
+          className="btn"
           onClick={donate}
           disabled={busy}
-          className="rounded-md bg-white/90 px-4 py-2 font-medium text-black hover:bg-white disabled:opacity-50"
+          aria-disabled={busy}
+          aria-busy={busy}
         >
           {busy ? "Redirecting…" : "Donate"}
         </button>
       </div>
 
-      {msg && <p className="text-sm text-red-400">{msg}</p>}
-
-      <StatusNote />
-    </div>
-  );
-}
-
-function StatusNote() {
-  const [status, setStatus] = React.useState<string | null>(null);
-  React.useEffect(() => {
-    const usp = new URLSearchParams(window.location.search);
-    const s = usp.get("status");
-    if (s) setStatus(s);
-  }, []);
-  if (!status) return null;
-  return (
-    <div
-      className={`rounded-md border px-3 py-2 text-sm ${
-        status === "success" ? "border-emerald-600 text-emerald-400" : "border-yellow-600 text-yellow-400"
-      }`}
-    >
-      {status === "success" ? "Thank you for your donation!" : "Donation cancelled."}
-    </div>
+      {/* Status note */}
+      {msg ? (
+        <p className="text-sm text-red-400" role="status" aria-live="polite">
+          {msg}
+        </p>
+      ) : null}
+    </section>
   );
 }

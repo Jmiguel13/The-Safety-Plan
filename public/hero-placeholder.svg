@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0" stop-color="#0a0a0a"></stop>
+      <stop offset="1" stop-color="#1b1b1b"></stop>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#g)"></rect>
+  <circle cx="1050" cy="150" r="70" fill="#2a2a2a"></circle>
+  <text x="60" y="140" fill="#9ca3af" font-family="ui-sans-serif, system-ui" font-size="64">
+    The Safety Plan
+  </text>
+  <text x="60" y="210" fill="#6b7280" font-family="ui-sans-serif, system-ui" font-size="28">
+    Mission-first wellness kits — focus, recovery, hydration, rest.
+  </text>
+</svg>

@@ -1,63 +1,53 @@
-// src/app/api/donate/route.ts
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import Stripe from "stripe";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-type Body = { amount?: number };
+if (!STRIPE_SECRET_KEY) {
+  console.warn("STRIPE_SECRET_KEY is not set — donate will fail.");
+}
+
+const stripe = new Stripe(STRIPE_SECRET_KEY as string, {
+  apiVersion: "2025-08-27.basil",
+});
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json().catch(() => ({}))) as Body;
+    const { amount, currency = "usd", metadata } = await req.json();
 
-    // Expect cents; default $25, min $1, max $10,000.
-    const centsRaw = Number(body.amount ?? 2500);
-    const cents = Math.max(
-      100,
-      Math.min(Number.isFinite(centsRaw) ? Math.round(centsRaw) : 2500, 1_000_000)
-    );
-
-    const origin =
-      req.headers.get("origin") ||
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      "http://localhost:3000";
-
-    if (!process.env.STRIPE_SECRET_KEY) {
-      return NextResponse.json(
-        { ok: false, error: "Stripe is not configured." },
-        { status: 500 }
-      );
+    // amount should be in cents
+    if (
+      typeof amount !== "number" ||
+      !Number.isFinite(amount) ||
+      amount <= 0 ||
+      amount > 9_000_000_00 // safety cap: $9M
+    ) {
+      return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
     }
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      submit_type: "donate",
+      // (Stripe may infer methods; keeping explicit is fine)
       payment_method_types: ["card"],
       line_items: [
         {
           price_data: {
-            currency: "usd",
-            product_data: {
-              name: "Donation — The Safety Plan",
-              description:
-                "Support our mission to fund Resilient & Homefront kits and prevent veteran suicide.",
-            },
-            unit_amount: cents,
+            currency,
+            product_data: { name: "Donation" },
+            unit_amount: Math.round(amount),
           },
           quantity: 1,
         },
       ],
-      success_url: `${origin}/donate?success=1`,
-      cancel_url: `${origin}/donate?canceled=1`,
-      metadata: { campaign: "site_donate_button" },
+      success_url: `${SITE_URL}/donate/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${SITE_URL}/donate`,
+      ...(metadata ? { metadata } : {}),
     });
 
-    return NextResponse.json({ ok: true, url: session.url });
-  } catch (err) {
-    const message =
-      (err as { message?: string })?.message ?? "Stripe error creating checkout session";
-    console.error("[donate] error:", message);
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    return NextResponse.json({ url: session.url });
+  } catch (err: unknown) {
+    console.error("Stripe donate error", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

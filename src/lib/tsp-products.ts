@@ -1,33 +1,30 @@
 // src/lib/tsp-products.ts
-
 export type TspProduct = {
-  id: string;
+  id: string;           // e.g., "morale_patch"
   title: string;
   blurb?: string;
-  url?: string;      // link to PDP, Notion, or placeholder page
-  inStock?: boolean; // drives button label "View" vs "Waitlist"
+  url?: string;         // external or internal; omit to use /gear/[slug]
+  inStock?: boolean;    // false -> shows waitlist form on /gear/[slug]
 };
 
 export const TSP_PRODUCTS: TspProduct[] = [
   {
-    id: "tsp-morale-patch",
-    title: "Morale Patch — The Safety Plan",
-    blurb: "Hook backing, reflective thread. Field-washable.",
-    url: "/products/morale-patch",
+    id: "morale_patch",
+    title: "Morale Patch",
+    blurb: "PVC hook-backed patch — built for rucks, caps, and plate carriers.",
+    inStock: true,
+    // no url -> /gear/morale-patch handled by the dynamic page
+  },
+  {
+    id: "sticker_pack",
+    title: "Sticker Pack",
+    blurb: "Die-cut, weatherproof stickers. Mark your kit, bottle, or case.",
     inStock: true,
   },
   {
-    id: "tsp-beanie",
+    id: "thermal_beanie",
     title: "Thermal Beanie",
-    blurb: "Low-profile, moisture wicking. One size.",
-    url: "/products/beanie",
-    inStock: false, // waitlist state
-  },
-  {
-    id: "tsp-sticker-pack",
-    title: "Sticker Pack (5)",
-    blurb: "Weatherproof vinyl, matte finish.",
-    url: "/products/sticker-pack",
-    inStock: true,
+    blurb: "Cold-weather beanie to keep the mission going in low temps.",
+    inStock: false, // triggers WaitlistForm
   },
 ];

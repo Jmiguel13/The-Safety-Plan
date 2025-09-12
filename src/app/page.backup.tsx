@@ -1,0 +1,33 @@
+﻿import Link from "next/link";
+import { MYSHOP_BASE } from "@/lib/amway";
+
+export default function Home() {
+  return (
+    <section className="space-y-10 max-w-5xl mx-auto">
+      <header className="space-y-4">
+        <h1 className="text-balance text-5xl font-extrabold tracking-tight">The Safety Plan</h1>
+        <p className="muted">Mission-first wellness kits — focus, recovery, hydration, rest.</p>
+
+        <div className="flex flex-wrap gap-3 pt-1">
+          <Link href="/kits" className="btn">Explore Kits</Link>
+          <Link href="/donate" className="btn-ghost">Donate</Link>
+          <a className="btn-ghost" href={MYSHOP_BASE} target="_blank" rel="noopener noreferrer">Open Storefront</a>
+        </div>
+      </header>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="panel p-4"><div className="label">Focus</div><div className="value">XS Energy</div></div>
+        <div className="panel p-4"><div className="label">Hydration</div><div className="value">Electrolytes</div></div>
+        <div className="panel p-4"><div className="label">Recovery</div><div className="value">Essential nutrients</div></div>
+      </div>
+
+      <div className="panel-elevated p-5 space-y-2">
+        <h2 className="text-xl font-semibold">What we do</h2>
+        <p className="muted">
+          We build clean, effective wellness kits to meet real needs: hydration, energy, recovery, and rest.
+          Every purchase advances veteran suicide prevention and frontline support.
+        </p>
+      </div>
+    </section>
+  );
+}

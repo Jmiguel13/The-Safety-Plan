@@ -29,7 +29,7 @@ export default function FaqPage() {
         </p>
         <div className="mt-3 flex gap-2">
           <a
-            href={myShopLink("/", "faq")}
+            href={myShopLink("/")}
             target="_blank"
             rel="noopener noreferrer"
             className="link-chip"
@@ -68,7 +68,7 @@ export default function FaqPage() {
         </p>
         <div className="mt-3 flex gap-2">
           <Link href="/donate" className="btn">Donate</Link>
-          <Link href="/kits" className="btn-ghost">Explore Kits</Link>
+         <Link href="/kits" className="btn">Explore Kits</Link>
         </div>
       </article>
     </section>

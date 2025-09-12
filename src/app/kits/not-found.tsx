@@ -1,15 +1,21 @@
-// app/kits/[slug]/not-found.tsx
+// src/app/kits/[slug]/not-found.tsx
 import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <main className="min-h-screen bg-black text-white grid place-items-center px-6 py-16">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold mb-2">Kit not found</h1>
-        <p className="text-zinc-400">The kit you’re looking for doesn’t exist or isn’t published.</p>
-        <Link href="/kits" className="inline-block mt-6 underline">
-          View all kits
-        </Link>
+    <main className="min-h-[70vh] grid place-items-center px-6">
+      <div className="text-center space-y-3">
+        <div className="tag tag-accent w-max mx-auto">404</div>
+        <h1 className="text-4xl font-extrabold tracking-tight">Kit not found</h1>
+        <p className="muted max-w-md mx-auto">
+          The kit you’re looking for doesn’t exist or isn’t published yet.
+        </p>
+        <div className="flex items-center justify-center gap-3 pt-1">
+          <Link href="/" className="btn">Go home</Link>
+          <Link href="/kits" className="btn-ghost" aria-label="View all kits">
+            View all kits
+          </Link>
+        </div>
       </div>
     </main>
   );
