@@ -6,13 +6,17 @@ export default function Home() {
   return (
     <section className="space-y-10 max-w-5xl mx-auto">
       {/* Hero */}
-      <header className="space-y-4">
-        <h1 className="text-balance text-5xl font-extrabold tracking-tight">The Safety Plan</h1>
-        <p className="muted">
-          Mission-first wellness kits — focus, recovery, hydration, rest.
-        </p>
+      <header className="space-y-5">
+        <div className="space-y-2">
+          <h1 className="text-balance text-5xl font-extrabold leading-tight tracking-tight">
+            The Safety Plan
+          </h1>
+          <p className="muted max-w-prose">
+            Mission-first wellness kits — focus, recovery, hydration, rest.
+          </p>
+        </div>
 
-        <div className="flex flex-wrap gap-3 pt-1">
+        <div className="flex flex-wrap gap-3">
           <Link href="/kits" className="btn">Explore Kits</Link>
           <Link href="/donate" className="btn-ghost">Donate</Link>
           <a
@@ -46,7 +50,7 @@ export default function Home() {
       {/* Mission blurb */}
       <div className="panel-elevated p-5 space-y-2">
         <h2 className="text-xl font-semibold">What we do</h2>
-        <p className="muted">
+        <p className="muted max-w-prose">
           We build clean, effective wellness kits to meet real needs: hydration, energy, recovery,
           and rest. Every purchase advances veteran suicide prevention and frontline support.
         </p>

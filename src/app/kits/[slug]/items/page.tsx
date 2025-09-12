@@ -27,7 +27,7 @@ function normalizeItems(k: Kit): NormItem[] {
     title: it.title,
     sku: String(it.sku),
     qty: typeof it.qty === "number" ? it.qty : 1,
-    buy_url: it.buy_url,
+    buy_url: myShopLink(String(it.sku)),
     note: it.note,
   }));
 }

@@ -21,6 +21,12 @@ const EnvSchema = z.object({
   // Back-compat (optional): if present, we’ll trust/use it as-is
   NEXT_PUBLIC_AMWAY_MYSHOP_URL: z.string().url().optional().nullable(),
 
+  // Cart strategy (optional)
+  NEXT_PUBLIC_AMWAY_CART_STRATEGY: z
+    .enum(["pairs", "indexed", "items"])
+    .optional()
+    .nullable(),
+
   // UTM defaults
   NEXT_PUBLIC_UTM_SOURCE: z.string().default("safety-plan"),
   NEXT_PUBLIC_UTM_MEDIUM: z.string().default("web"),
@@ -38,7 +44,6 @@ const EnvSchema = z.object({
 
 export type Env = z.infer<typeof EnvSchema>;
 
-/** Cache after first successful parse */
 let _env: Env | null = null;
 
 /** Parse and cache env at runtime (server-only) */
@@ -46,7 +51,6 @@ export function getEnv(): Env {
   if (_env) return _env;
   const parsed = EnvSchema.safeParse(process.env);
   if (!parsed.success) {
-    // ZodError.issues is the correct property (not "errors")
     const msg = parsed.error.issues
       .map((issue: ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
       .join("; ");
@@ -68,7 +72,6 @@ function resolveMyShopUrl(e: Env): string | null {
   if (e.NEXT_PUBLIC_AMWAY_SHOP_ID) {
     return `https://www.amway.com/myshop/${e.NEXT_PUBLIC_AMWAY_SHOP_ID}`;
   }
-
   return null;
 }
 
@@ -86,6 +89,7 @@ export const ENV_PUBLIC = {
   NEXT_PUBLIC_UTM_SOURCE: ENV.NEXT_PUBLIC_UTM_SOURCE,
   NEXT_PUBLIC_UTM_MEDIUM: ENV.NEXT_PUBLIC_UTM_MEDIUM,
   NEXT_PUBLIC_AMWAY_MYSHOP_URL: resolveMyShopUrl(ENV),
+  NEXT_PUBLIC_AMWAY_CART_STRATEGY: ENV.NEXT_PUBLIC_AMWAY_CART_STRATEGY ?? "pairs",
 } as const;
 
 /** Mask secrets for JSON responses/logging */

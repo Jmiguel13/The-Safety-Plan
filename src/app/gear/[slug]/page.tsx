@@ -1,46 +1,12 @@
 // src/app/gear/[slug]/page.tsx
-import type { Metadata } from "next";
 import Link from "next/link";
 import WaitlistForm from "@/components/WaitlistForm";
 import { TSP_PRODUCTS } from "@/lib/tsp-products";
 
-export const dynamic = "force-dynamic";
-
-/** Map product id -> route slug (underscores → hyphens) */
-function idToSlug(id: string) {
-  return id.replace(/_/g, "-");
-}
-
-/** Find a product by route slug */
+/** Match /gear/some-slug to product.id (underscores -> hyphens) */
 function findBySlug(slug: string) {
-  return TSP_PRODUCTS.map((p) => ({ ...p, _slug: idToSlug(p.id) }))
-    .find((p) => p._slug === slug) || null;
-}
-
-/** SEO */
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const product = findBySlug(params.slug);
-  if (!product) {
-    return {
-      title: "Gear unavailable — The Safety Plan",
-      description: "This item isn’t published yet.",
-    };
-  }
-  return {
-    title: `${product.title} — The Safety Plan`,
-    description: product.blurb || "The Safety Plan gear.",
-    openGraph: {
-      title: product.title,
-      description: product.blurb || "The Safety Plan gear.",
-      url: `/gear/${params.slug}`,
-      type: "website",
-    },
-    twitter: {
-      card: "summary",
-      title: product.title,
-      description: product.blurb || "The Safety Plan gear.",
-    },
-  };
+  const withSlugs = TSP_PRODUCTS.map((p) => ({ ...p, _slug: p.id.replace(/_/g, "-") }));
+  return withSlugs.find((p) => p._slug === slug) || null;
 }
 
 export default function GearPage({ params }: { params: { slug: string } }) {
@@ -48,7 +14,7 @@ export default function GearPage({ params }: { params: { slug: string } }) {
 
   if (!product) {
     return (
-      <section className="min-h-[60vh] grid place-items-center">
+      <section className="min-h-[60vh] grid place-items-center px-6">
         <div className="text-center space-y-3">
           <div className="tag tag-accent w-max mx-auto">Not found</div>
           <h1 className="text-3xl font-extrabold tracking-tight">Gear unavailable</h1>
@@ -61,24 +27,25 @@ export default function GearPage({ params }: { params: { slug: string } }) {
     );
   }
 
-  const { title, blurb, url, inStock, id } = product;
+  const actionLabel = product.inStock ? "Buy" : "Waitlist";
 
   return (
     <section className="space-y-6 max-w-3xl">
       <header className="space-y-2">
-        <h1 className="text-4xl font-extrabold tracking-tight">{title}</h1>
-        {blurb ? <p className="muted">{blurb}</p> : null}
+        <h1 className="text-4xl font-extrabold tracking-tight">{product.title}</h1>
+        {product.blurb ? <p className="muted">{product.blurb}</p> : null}
       </header>
 
-      {/* If the item is in stock and has a URL, render a Buy button; otherwise render waitlist */}
-      {inStock && url ? (
-        url.startsWith("/") ? (
-          <Link href={url} className="btn">Buy</Link>
+      {product.inStock && product.url ? (
+        product.url.startsWith("/") ? (
+          <Link href={product.url} className="btn">{actionLabel}</Link>
         ) : (
-          <a href={url} target="_blank" rel="noopener noreferrer" className="btn">Buy</a>
+          <a href={product.url} target="_blank" rel="noopener noreferrer" className="btn">
+            {actionLabel}
+          </a>
         )
       ) : (
-        <WaitlistForm productId={id} productTitle={title} />
+        <WaitlistForm productId={product.id} productTitle={product.title} />
       )}
 
       <div>

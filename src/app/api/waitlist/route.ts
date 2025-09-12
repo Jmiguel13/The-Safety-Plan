@@ -1,8 +1,6 @@
 // src/app/api/waitlist/route.ts
 import { NextResponse } from "next/server";
-
-// Ephemeral in-memory list (dev/prototype only)
-const mem: Array<{ email: string; productId: string; ts: number }> = [];
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(req: Request) {
   try {
@@ -17,11 +15,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Missing product id." }, { status: 400 });
     }
 
-    mem.push({ email: cleanEmail, productId: cleanProduct, ts: Date.now() });
-    console.log("[waitlist] saved", { email: cleanEmail, productId: cleanProduct });
+    const { error } = await supabaseAdmin.from("waitlist").insert({
+      email: cleanEmail,
+      product_id: cleanProduct,
+    });
+
+    if (error) {
+      // Log on server; do not leak details to client
+      console.error("[waitlist] insert error:", error);
+      return NextResponse.json({ ok: false, error: "Unable to save. Try again." }, { status: 500 });
+    }
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (e) {
+    console.error("[waitlist] bad request:", e);
     return NextResponse.json({ ok: false, error: "Invalid request." }, { status: 400 });
   }
 }

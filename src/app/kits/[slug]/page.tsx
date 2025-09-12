@@ -16,13 +16,17 @@ function findKit(slug: string): Kit | null {
 
 /** Normalize items[] for display + quick stats */
 function normalizeItems(k: Kit) {
-  const list = (k.items ?? []).map((it) => ({
-    title: it.title,
-    sku: String(it.sku),
-    qty: typeof it.qty === "number" ? it.qty : 1,
-    buy_url: it.buy_url,
-    note: it.note,
-  }));
+  const list = Array.isArray(k.items)
+    ? k.items.map((it) => ({
+        title: it.title,
+        sku: String(it.sku),
+        qty: typeof it.qty === "number" ? it.qty : 1,
+        // `buy_url` isn't in your KitItem type; keep it optional for future use
+        // @ts-expect-error optional external link not in KitItem
+        buy_url: it.buy_url as string | undefined,
+        note: it.note,
+      }))
+    : [];
   const itemCount = list.length;
   const skuCount = new Set(list.map((i) => i.sku)).size;
   return { list, itemCount, skuCount };
@@ -45,10 +49,14 @@ export default function KitPage({ params }: { params: { slug: string } }) {
       : "Focused wellness kit.");
 
   const { list, itemCount, skuCount } = normalizeItems(kit);
-  const weight =
-    typeof kit.weight_lb === "number" ? `${kit.weight_lb} lb` : kit.weight_lb || "-";
 
-  // Optional Safety Plan gear (IDs -> local products)
+  const hasWeight =
+    typeof kit.weight_lb === "number" ||
+    (typeof kit.weight_lb === "string" && kit.weight_lb.trim().length > 0);
+  const weight =
+    typeof kit.weight_lb === "number" ? `${kit.weight_lb} lb` : (kit.weight_lb as string);
+
+  // Optional Safety Plan gear (IDs -> local products) — rendered only if present
   const tspGear = (Array.isArray(kit.gear) ? kit.gear : [])
     .map((id) => TSP_PRODUCTS.find((x) => x.id === id))
     .filter(Boolean) as TspProduct[];
@@ -77,14 +85,20 @@ export default function KitPage({ params }: { params: { slug: string } }) {
             </Link>
           </div>
 
-          {/* Quick stats */}
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="panel p-4">
-              <div className="stat" role="group" aria-label="Weight">
-                <div className="label">Weight</div>
-                <div className="value">{weight}</div>
+          {/* Quick stats (hide Weight if unknown) */}
+          <div
+            className={`mt-4 grid grid-cols-1 gap-3 ${
+              hasWeight ? "sm:grid-cols-3" : "sm:grid-cols-2"
+            }`}
+          >
+            {hasWeight ? (
+              <div className="panel p-4">
+                <div className="stat" role="group" aria-label="Weight">
+                  <div className="label">Weight</div>
+                  <div className="value">{weight}</div>
+                </div>
               </div>
-            </div>
+            ) : null}
             <div className="panel p-4">
               <div className="stat" role="group" aria-label="Items">
                 <div className="label">Items</div>
@@ -137,7 +151,8 @@ export default function KitPage({ params }: { params: { slug: string } }) {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {it.buy_url ? (
+                  {/* If you later add explicit external buy links on items, this supports them */}
+                  {"buy_url" in it && it.buy_url ? (
                     <a href={it.buy_url} target="_blank" rel="noopener noreferrer" className="link-chip">
                       Buy
                     </a>
@@ -157,7 +172,7 @@ export default function KitPage({ params }: { params: { slug: string } }) {
           </ul>
         )}
 
-        {/* The Safety Plan gear (optional) */}
+        {/* The Safety Plan gear (optional; easy to hide later if you want) */}
         {tspGear.length > 0 ? (
           <section className="space-y-3">
             <h2 className="text-xl font-semibold">The Safety Plan gear</h2>

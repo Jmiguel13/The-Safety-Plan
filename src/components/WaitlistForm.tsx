@@ -1,4 +1,3 @@
-// src/components/WaitlistForm.tsx
 "use client";
 
 import { useState } from "react";
@@ -24,8 +23,8 @@ export default function WaitlistForm({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email, productId }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) {
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
         setMsg(data?.error || "Could not save. Try again.");
       } else {
         setMsg("You’re on the list — we’ll email when it’s ready.");
@@ -42,7 +41,9 @@ export default function WaitlistForm({
     <form onSubmit={submit} className="panel p-4 space-y-3">
       <div>
         <div className="label">Waitlist</div>
-        <p className="muted text-sm">Get notified when {productTitle ?? "this item"} is in stock.</p>
+        <p className="muted text-sm">
+          Get notified when {productTitle ?? "this item"} is in stock.
+        </p>
       </div>
       <div className="flex gap-2">
         <input

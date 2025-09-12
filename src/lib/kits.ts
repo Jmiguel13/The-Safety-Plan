@@ -1,78 +1,85 @@
 // src/lib/kits.ts
 
-// Types here are illustrative; align with your existing file if it already defines them.
+// Types for kits and their contents
+export type KitItem = {
+  title?: string;
+  sku: string;
+  qty?: number;
+  note?: string;
+  // buy_url?: string; // intentionally omitted so CTAs route via your MyShop using SKU
+};
+
 export type Kit = {
   slug: string;
   title?: string;
   subtitle?: string;
   description?: string;
   weight_lb?: number | string;
-
-  // Amway contents (what shows under “What’s inside”)
-  items?: Array<{
-    title?: string;
-    sku: string;
-    qty?: number;
-    note?: string;
-    buy_url?: string; // optional hard link override; otherwise the UI will build a MyShop link from the SKU
-  }>;
-
-  // Link Safety Plan products by id (must match TSP_PRODUCTS ids, e.g. "morale_patch", "sticker_pack", "thermal_beanie")
-  gear?: string[];
-
-  // Optional: “you may also like” Amway SKUs (shown as Recommended add-ons)
-  addons?: string[];
-
-  // Optional display image (served from /public)
+  items?: KitItem[];   // Amway contents shown under “What’s inside”
+  gear?: string[];     // Safety Plan product ids (must match TSP_PRODUCTS ids)
+  addons?: string[];   // Optional Amway SKUs to recommend
   image?: string;
   imageAlt?: string;
 };
 
 export const kits: Kit[] = [
-  /**
-   * Resilient — primary EDC kit
-   * - Concrete “What’s inside” list for the product page & items page
-   * - Safety Plan gear included (morale patch + sticker pack)
-   * - Optional upsells via `addons`
-   */
   {
     slug: "resilient",
     title: "Resilient Kit",
     subtitle: "Built for daily carry. Energy, hydration, recovery, morale.",
-    weight_lb: 3,
+    weight_lb: "3.0 lb",
+    items: [
+      // Energy & hydration anchors
+      { title: "XS Energy Drink 12-pack – Variety Case", sku: "127070", qty: 1 },
+      { title: "XS Sports Electrolyte Drink Mix – Strawberry Watermelon", sku: "110601", qty: 1 },
+      { title: "XS Sparkling Juiced Energy – Dragon Fruit (12-pack)", sku: "126985", qty: 1 },
+
+      // Core vitamins & minerals for recovery/focus
+      { title: "Nutrilite Vitamin C Extended Release (180)", sku: "109747", qty: 1 },
+      { title: "Nutrilite Vitamin D (90)", sku: "119346", qty: 1 },
+      { title: "Nutrilite Advanced Omega (60 softgels)", sku: "126136", qty: 1 },
+      { title: "Nutrilite Magnesium (60 caps)", sku: "128032", qty: 1 },
+      { title: "Nutrilite Ultra Focus Energy Pack", sku: "123842", qty: 1 },
+
+      // Protein / recovery + alt energy flavors
+      { title: "XS Protein Pods – Vanilla", sku: "300855", qty: 1 },
+      { title: "XS Energy Drink 12-pack – Tropical", sku: "126199", qty: 1 },
+      { title: "XS Energy – Caffeine Free Cranberry-Grape (12 oz)", sku: "126983", qty: 1 },
+    ],
+    // Safety Plan gear shown under “The Safety Plan gear”
+    gear: ["morale_patch", "sticker_pack"],
+    // Optional upsells on the kit page
+    addons: ["110631", "126883"], // Blue Citrus electrolyte, Classic energy
     image: "/kits/resilient-placeholder.svg",
     imageAlt: "Resilient Kit preview",
-    items: [
-      // ——— Amway products included in the kit ———
-      { title: "XS™ Energy — 12-pack (Variety Case)", sku: "127070", qty: 1 },
-      { title: "XS™ Sports Electrolyte — Strawberry Watermelon", sku: "110601", qty: 1 },
-      { title: "Nutrilite™ Vitamin C Extended Release — 180 tablets", sku: "109747", qty: 1 },
-      // Add/adjust SKUs as inventory evolves. Titles are UI-only.
-    ],
-    // ——— The Safety Plan gear included with this kit ———
-    gear: ["morale_patch", "sticker_pack"],
-    // Optional upsells (Amway → deep links in UI)
-    addons: ["127070", "110601"],
   },
 
-  /**
-   * Homefront — support at home base
-   * Keep/edit as needed. You can flesh this list with final SKUs/titles later.
-   */
   {
     slug: "homefront",
     title: "Homefront Kit",
     subtitle: "Support for home base. Hydration, vitamins, recovery, rest.",
-    weight_lb: 3.5,
+    weight_lb: "2.6 lb",
+    items: [
+      // Hydration & daily support
+      { title: "XS Sports Electrolyte Drink Mix – Blue Citrus", sku: "110631", qty: 1 },
+      { title: "Nutrilite Vitamin C Extended Release (60)", sku: "109745", qty: 1 },
+      { title: "Nutrilite Omega (60 softgels)", sku: "126132", qty: 1 },
+      { title: "Nutrilite Concentrated Fruits & Vegetables (60)", sku: "100648", qty: 1 },
+      { title: "Nutrilite Double X Multivitamin – 10-day", sku: "123364", qty: 1 },
+
+      // Rest & recovery
+      { title: "Nutrilite Sleep Health", sku: "A8992", qty: 1 },
+      { title: "n* by Nutrilite Sweet Dreams Sleep Gummies", sku: "124506", qty: 1 },
+
+      // Protein at home
+      { title: "Nutrilite Organics Plant Protein – Vanilla", sku: "125923", qty: 1 },
+
+      // Practical home hygiene
+      { title: "G&H Protect Hand Sanitizer", sku: "126855", qty: 1 },
+    ],
+    gear: [],
+    addons: ["125894", "110403"], // G&H Hand Soap, Prewash Spray
     image: "/kits/placeholder.svg",
     imageAlt: "Homefront Kit preview",
-    items: [
-      { title: "XS™ Sports Electrolyte — Strawberry Watermelon", sku: "110601", qty: 2 },
-      { title: "Nutrilite™ Vitamin C Extended Release — 180 tablets", sku: "109747", qty: 1 },
-      // Add your actual mix: sleep/recovery aids, etc.
-    ],
-    // If this kit ships with gear, list TSP product ids here:
-    gear: ["thermal_beanie"], // this one can render a Waitlist form if not in stock
-    addons: ["127070"],       // optional Amway upsells
   },
 ];
