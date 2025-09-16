@@ -1,9 +1,9 @@
-// src/app/kits/page.tsx
 import Link from "next/link";
 import { kits, type Kit } from "@/lib/kits";
 import { statsForKit, subtitleForKit } from "@/lib/kits-helpers";
 
-export const dynamic = "force-dynamic";
+// Rebuild this static page at most once per day
+export const revalidate = 86400;
 
 function fallbackTitle(slug: string, title?: string) {
   if (title) return title;
@@ -45,7 +45,11 @@ export default function KitsIndex() {
               </div>
             </div>
             <div className="flex gap-2 shrink-0">
-              <Link href={`/kits/${k.slug}`} className="btn-ghost" aria-label={`View ${k.title}`}>
+              <Link
+                href={`/kits/${k.slug}`}
+                className="btn-ghost"
+                aria-label={`View ${k.title}`}
+              >
                 View
               </Link>
               <Link

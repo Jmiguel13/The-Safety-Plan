@@ -1,4 +1,3 @@
-// src/app/admin/page.tsx
 import EnvRibbon from "@/components/admin/EnvRibbon";
 import Link from "next/link";
 
@@ -7,7 +6,7 @@ export const dynamic = "force-dynamic";
 export default function AdminPage() {
   return (
     <>
-      <EnvRibbon /> {/* ← no props */}
+      <EnvRibbon />
       <main className="space-y-6">
         <h1 className="text-2xl font-bold">Admin</h1>
         <ul className="list-disc pl-6 space-y-1">

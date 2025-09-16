@@ -1,40 +1,57 @@
-// src/app/shop/page.tsx
 import Link from "next/link";
-import { kits, type Kit } from "@/lib/kits";
+import { kits } from "@/lib/kits";
+import { myShopLink, MYSHOP_BASE } from "@/lib/amway";
 import { TSP_PRODUCTS } from "@/lib/tsp-products";
-import { MYSHOP_BASE, myShopLink } from "@/lib/amway";
-import { statsForKit } from "@/lib/kits-helpers";
 
-export const dynamic = "force-dynamic";
+type KitLite = {
+  slug: string;
+  title?: string;
+  items?: Array<{ sku: string; qty?: number; title?: string }>;
+  skus?: string[];
+};
+type SoloItem = { sku: string; title: string; url: string };
 
-type SoloPick = { sku: string; title: string; url: string };
+// Rebuild this static page at most once per day
+export const revalidate = 86400;
 
-function titleFor(slug: string, title?: string) {
-  return title ?? `${slug[0]?.toUpperCase() ?? ""}${slug.slice(1)} Kit`;
+function titleCase(s: string) {
+  return s ? s.replace(/^\w/, (c) => c.toUpperCase()) : s;
 }
-
-function soloItems(): SoloPick[] {
-  // Curated quick-buys (feel free to expand)
+function countsForKit(k: KitLite) {
+  const arr = Array.isArray(k.items)
+    ? k.items.map((i) => i.sku)
+    : Array.isArray(k.skus)
+    ? k.skus
+    : [];
+  const itemCount = Array.isArray(k.items)
+    ? k.items.length
+    : Array.isArray(k.skus)
+    ? k.skus.length
+    : 0;
+  const skuCount = new Set(arr.map(String)).size;
+  return { itemCount, skuCount };
+}
+function soloItems(): SoloItem[] {
   const picks = [
-    { sku: "127070", title: "XS™ Energy — 12-pack (Variety Case)" },
-    { sku: "110601", title: "XS™ Sports Electrolyte — Strawberry Watermelon" },
-    { sku: "109747", title: "Nutrilite™ Vitamin C — 180 tablets" },
+    { sku: "127070", title: "XS Energy 12-pack — Variety Case" },
+    { sku: "110601", title: "XS Sports Electrolyte — Strawberry Watermelon" },
+    { sku: "109747", title: "Nutrilite Vitamin C — 180 tablets" },
   ];
   return picks.map(({ sku, title }) => ({ sku, title, url: myShopLink(sku) }));
 }
 
 export default function ShopPage() {
-  const kitsList = (kits as Kit[]).map((k) => ({
+  const kitsList = (kits as unknown as KitLite[]).map((k) => ({
     slug: k.slug,
-    title: titleFor(k.slug, k.title),
-    stats: statsForKit(k),
+    title: k.title ?? `${titleCase(k.slug)} Kit`,
+    stats: countsForKit(k),
   }));
   const solos = soloItems();
   const hasTsp = Array.isArray(TSP_PRODUCTS) && TSP_PRODUCTS.length > 0;
 
   return (
-    <section className="space-y-10 max-w-5xl mx-auto">
-      {/* Hero / header */}
+    <section className="space-y-10 max-w-4xl">
+      {/* Header */}
       <header className="space-y-3">
         <h1 className="text-5xl font-extrabold tracking-tight">Shop</h1>
         <p className="muted">
@@ -69,8 +86,8 @@ export default function ShopPage() {
       <div className="panel-elevated p-5 space-y-1">
         <h3 className="font-semibold">Our mission</h3>
         <p className="muted">
-          The Safety Plan exists to save lives. We provide clean, effective wellness kits that meet
-          real needs: hydration, energy, recovery, and rest. Profits support veteran suicide
+          The Safety Plan exists to save lives. We provide clean, effective wellness kits that
+          meet real needs: hydration, energy, recovery, and rest. Profits support veteran suicide
           prevention and frontline support.
         </p>
       </div>
@@ -88,8 +105,12 @@ export default function ShopPage() {
                 </div>
               </div>
               <div className="flex gap-2">
-                {/* Single, clear CTA → take users to the kit detail page */}
-                <Link href={`/kits/${k.slug}`} className="btn-ghost" aria-label={`View ${k.title}`}>
+                {/* Single clear CTA: send users to the kit detail page */}
+                <Link
+                  href={`/kits/${k.slug}`}
+                  className="btn-ghost"
+                  aria-label={`View ${k.title}`}
+                >
                   View kit
                 </Link>
               </div>
@@ -154,7 +175,7 @@ export default function ShopPage() {
               const slug = p.id.replace(/_/g, "-");
               const label = p.inStock ? "View" : "Waitlist";
               const href = p.url ? (p.url.startsWith("/") ? p.url : p.url) : `/gear/${slug}`;
-              const isInternal = (p.url?.startsWith("/")) || !p.url;
+              const isInternal = p.url?.startsWith("/") || !p.url;
 
               return (
                 <li key={p.id} className="glow-row">
@@ -183,3 +204,4 @@ export default function ShopPage() {
     </section>
   );
 }
+
