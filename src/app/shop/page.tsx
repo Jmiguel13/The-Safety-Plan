@@ -1,73 +1,57 @@
+// src/app/shop/page.tsx
 import Link from "next/link";
-import { kits } from "@/lib/kits";
-import { myShopLink, MYSHOP_BASE } from "@/lib/amway";
+import { kits, type Kit } from "@/lib/kits";
 import { TSP_PRODUCTS } from "@/lib/tsp-products";
+import { MYSHOP_BASE, myShopLink } from "@/lib/amway";
+import { statsForKit } from "@/lib/kits-helpers";
 
-/** ---------- Types & helpers ---------- */
-type KitLite = {
-  slug: string;
-  title?: string;
-  items?: Array<{ sku: string; qty?: number; title?: string }>;
-  skus?: string[]; // tolerated, but we read from items[]
-};
+export const dynamic = "force-dynamic";
 
-type SoloItem = { sku: string; title: string; url: string };
+type SoloPick = { sku: string; title: string; url: string };
 
-function titleCase(s: string) {
-  return s ? s.replace(/^\w/, (c) => c.toUpperCase()) : s;
+function titleFor(slug: string, title?: string) {
+  return title ?? `${slug[0]?.toUpperCase() ?? ""}${slug.slice(1)} Kit`;
 }
 
-/** Count items/SKUs from items[] (falls back to skus[] if present) */
-function countsForKit(k: KitLite) {
-  const arr = Array.isArray(k.items)
-    ? k.items.map((i) => i.sku)
-    : Array.isArray(k.skus)
-    ? k.skus
-    : [];
-  const itemCount = Array.isArray(k.items)
-    ? k.items.length
-    : Array.isArray(k.skus)
-    ? k.skus.length
-    : 0;
-  const skuCount = new Set(arr.map(String)).size;
-  return { itemCount, skuCount };
-}
-
-/** Curated solo items (always deep link to MyShop) */
-function soloItems(): SoloItem[] {
-  const picks: Array<{ sku: string; title: string }> = [
-    { sku: "127070", title: "XS Energy 12-pack — Variety Case" },
-    { sku: "110601", title: "XS Sports Electrolyte — Strawberry Watermelon" },
-    { sku: "109747", title: "Nutrilite Vitamin C — 180 tablets" },
+function soloItems(): SoloPick[] {
+  // Curated quick-buys (feel free to expand)
+  const picks = [
+    { sku: "127070", title: "XS™ Energy — 12-pack (Variety Case)" },
+    { sku: "110601", title: "XS™ Sports Electrolyte — Strawberry Watermelon" },
+    { sku: "109747", title: "Nutrilite™ Vitamin C — 180 tablets" },
   ];
   return picks.map(({ sku, title }) => ({ sku, title, url: myShopLink(sku) }));
 }
 
-export const dynamic = "force-dynamic";
-
 export default function ShopPage() {
-  const kitsList = (kits as unknown as KitLite[]).map((k) => ({
+  const kitsList = (kits as Kit[]).map((k) => ({
     slug: k.slug,
-    title: k.title ?? `${titleCase(k.slug)} Kit`,
-    stats: countsForKit(k),
+    title: titleFor(k.slug, k.title),
+    stats: statsForKit(k),
   }));
-
   const solos = soloItems();
   const hasTsp = Array.isArray(TSP_PRODUCTS) && TSP_PRODUCTS.length > 0;
 
   return (
-    <section className="space-y-10 max-w-4xl">
-      {/* Header */}
+    <section className="space-y-10 max-w-5xl mx-auto">
+      {/* Hero / header */}
       <header className="space-y-3">
         <h1 className="text-5xl font-extrabold tracking-tight">Shop</h1>
-        <p className="muted">Visit our official Amway storefront. Every order advances the mission.</p>
+        <p className="muted">
+          Visit our official Amway storefront. Every order advances the mission.
+        </p>
         <div className="flex flex-wrap gap-3 pt-1">
-          <a href={MYSHOP_BASE} target="_blank" rel="noopener noreferrer" className="btn">
+          <a
+            href={MYSHOP_BASE}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn"
+            aria-label="Open our official Amway storefront"
+          >
             Open Storefront
           </a>
         </div>
 
-        {/* local section nav */}
         <nav className="flex flex-wrap gap-2 pt-2" aria-label="Shop sections">
           <a href="#kits" className="pill" data-active="true">
             The Kits
@@ -81,7 +65,7 @@ export default function ShopPage() {
         </nav>
       </header>
 
-      {/* Our mission */}
+      {/* Mission blurb */}
       <div className="panel-elevated p-5 space-y-1">
         <h3 className="font-semibold">Our mission</h3>
         <p className="muted">
@@ -91,36 +75,39 @@ export default function ShopPage() {
         </p>
       </div>
 
-      {/* Section 1: The Kits */}
+      {/* Kits */}
       <section id="kits" className="space-y-4 scroll-mt-24">
         <h2 className="text-2xl font-semibold">The Kits</h2>
         <ul className="grid gap-3 sm:grid-cols-2">
           {kitsList.map((k) => (
             <li key={k.slug} className="panel p-4 flex items-center justify-between">
-              <div>
-                <div className="font-medium">{k.title}</div>
+              <div className="min-w-0">
+                <div className="font-medium truncate">{k.title}</div>
                 <div className="muted text-sm">
                   {k.stats.itemCount} items • {k.stats.skuCount} SKUs
                 </div>
               </div>
               <div className="flex gap-2">
-                <Link href={`/kits/${k.slug}/items`} className="btn-ghost">
-                  View items
+                {/* Single, clear CTA → take users to the kit detail page */}
+                <Link href={`/kits/${k.slug}`} className="btn-ghost" aria-label={`View ${k.title}`}>
+                  View kit
                 </Link>
-                <a href={MYSHOP_BASE} target="_blank" rel="noopener noreferrer" className="btn">
-                  Buy now
-                </a>
               </div>
             </li>
           ))}
         </ul>
       </section>
 
-      {/* Section 2: Solo Amway Products */}
+      {/* Solo Amway products */}
       <section id="solo" className="space-y-4 scroll-mt-24">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl font-semibold">Solo Amway Products</h2>
-          <a href={MYSHOP_BASE} target="_blank" rel="noopener noreferrer" className="btn-ghost text-sm">
+          <a
+            href={MYSHOP_BASE}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-ghost text-sm"
+          >
             Open MyShop
           </a>
         </div>
@@ -154,7 +141,7 @@ export default function ShopPage() {
         )}
       </section>
 
-      {/* Section 3: The Safety Plan Products */}
+      {/* The Safety Plan gear */}
       <section id="tsp" className="space-y-4 scroll-mt-24">
         <h2 className="text-2xl font-semibold">The Safety Plan Products</h2>
         {!hasTsp ? (
@@ -168,12 +155,14 @@ export default function ShopPage() {
               const label = p.inStock ? "View" : "Waitlist";
               const href = p.url ? (p.url.startsWith("/") ? p.url : p.url) : `/gear/${slug}`;
               const isInternal = (p.url?.startsWith("/")) || !p.url;
+
               return (
                 <li key={p.id} className="glow-row">
                   <div className="min-w-0">
                     <div className="font-medium truncate">{p.title}</div>
                     {p.blurb ? <div className="muted text-sm">{p.blurb}</div> : null}
                   </div>
+
                   <div className="flex gap-2">
                     {isInternal ? (
                       <Link href={href} className="btn-ghost">

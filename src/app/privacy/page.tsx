@@ -1,70 +1,106 @@
 // src/app/privacy/page.tsx
+import Link from "next/link";
+
 export const metadata = {
-  title: "Privacy Policy",
+  title: "Privacy Policy — The Safety Plan",
   description:
     "How The Safety Plan collects, uses, and protects your information.",
 };
 
 export default function PrivacyPage() {
+  const year = new Date().getFullYear();
+
   return (
-    <section className="prose prose-invert max-w-3xl">
-      <h1>Privacy Policy</h1>
+    <section className="space-y-8 max-w-3xl">
+      <header className="space-y-2">
+        <h1 className="text-4xl font-extrabold tracking-tight">Privacy Policy</h1>
+        <p className="muted text-sm">Effective {year}</p>
+      </header>
 
-      <p className="lead">
-        We respect your privacy. This page explains what we collect and how we
-        use it.
-      </p>
+      <div className="space-y-6">
+        <section className="panel p-5 space-y-3">
+          <h2 className="text-xl font-semibold">Overview</h2>
+          <p className="muted">
+            We collect the minimum information needed to operate our site,
+            fulfill purchases via Amway, and communicate about new products or
+            restocks (like our waitlist).
+          </p>
+        </section>
 
-      <h2>Information we collect</h2>
-      <ul>
-        <li>
-          <strong>Contact info</strong> you submit (e.g., email for waitlists or
-          donations).
-        </li>
-        <li>
-          <strong>Basic analytics</strong> (aggregate usage, pages visited).
-        </li>
-        <li>
-          <strong>Purchase links</strong> to Amway MyShop (we don’t see your
-          payment info there).
-        </li>
-      </ul>
+        <section className="panel p-5 space-y-3">
+          <h2 className="text-xl font-semibold">What we collect</h2>
+          <ul className="list-disc pl-6 space-y-1 text-sm text-zinc-400">
+            <li>Email and product of interest when you join a waitlist.</li>
+            <li>Basic analytics (aggregate, non-identifying).</li>
+            <li>
+              Order details are processed by Amway on their systems; we don’t
+              receive your payment data.
+            </li>
+          </ul>
+        </section>
 
-      <h2>How we use it</h2>
-      <ul>
-        <li>To provide kit, shop, and donation features.</li>
-        <li>To notify you about restocks or launches you asked about.</li>
-        <li>To improve the site and prevent abuse.</li>
-      </ul>
+        <section className="panel p-5 space-y-3">
+          <h2 className="text-xl font-semibold">How we use it</h2>
+          <ul className="list-disc pl-6 space-y-1 text-sm text-zinc-400">
+            <li>To notify you about availability and updates.</li>
+            <li>To improve site performance and product fit.</li>
+            <li>To prevent abuse and secure our services.</li>
+          </ul>
+        </section>
 
-      <h2>Sharing</h2>
-      <p>
-        We don’t sell your data. We share only what’s necessary with service
-        providers (e.g., Supabase for forms, Amway for storefront). Payment data
-        on Amway is handled by Amway.
-      </p>
+        <section className="panel p-5 space-y-3">
+          <h2 className="text-xl font-semibold">Data sharing</h2>
+          <p className="muted">
+            We don’t sell your data. We share data with service providers that
+            help us run the site (e.g., hosting, analytics) under
+            confidentiality terms. Purchases happen on{" "}
+            <a
+              href="https://www.amway.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2"
+            >
+              Amway
+            </a>
+            ; their privacy policy applies to checkout.
+          </p>
+        </section>
 
-      <h2>Retention</h2>
-      <p>
-        We keep data only as long as necessary for the stated purpose or as
-        required by law. You can request deletion at any time.
-      </p>
+        <section className="panel p-5 space-y-3">
+          <h2 className="text-xl font-semibold">Your choices</h2>
+          <ul className="list-disc pl-6 space-y-1 text-sm text-zinc-400">
+            <li>Unsubscribe links are included in our emails.</li>
+            <li>
+              To request deletion of waitlist info, contact{" "}
+              <a
+                href="mailto:privacy@thesafetyplan.org"
+                className="underline underline-offset-2"
+              >
+                privacy@thesafetyplan.org
+              </a>
+              .
+            </li>
+          </ul>
+        </section>
 
-      <h2>Your choices</h2>
-      <ul>
-        <li>Unsubscribe from emails using the link we include.</li>
-        <li>Contact us to access or delete your data.</li>
-      </ul>
-
-      <h2>Contact</h2>
-      <p>
-        Questions? Email{" "}
-        <a href="mailto:hello@thesafetyplan.org">hello@thesafetyplan.org</a>.
-      </p>
-
-      <p className="text-sm text-zinc-400">
-        Last updated: {new Date().toLocaleDateString()}
-      </p>
+        <section className="panel p-5 space-y-3">
+          <h2 className="text-xl font-semibold">Contact</h2>
+          <p className="muted">
+            Questions?{" "}
+            <a
+              href="mailto:privacy@thesafetyplan.org"
+              className="underline underline-offset-2"
+            >
+              Email us
+            </a>{" "}
+            or see our{" "}
+            <Link href="/terms" className="underline underline-offset-2">
+              Terms
+            </Link>
+            .
+          </p>
+        </section>
+      </div>
     </section>
   );
 }

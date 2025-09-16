@@ -1,13 +1,17 @@
-// app/contact/page.tsx
+// src/app/contact/page.tsx
 import React from "react";
 
-export default function ContactPage({
+type SearchParams = { sent?: string; error?: string };
+
+export default async function ContactPage({
   searchParams,
 }: {
-  searchParams?: { sent?: string; error?: string };
+  /** Next 15: searchParams may be a Promise */
+  searchParams?: Promise<SearchParams>;
 }) {
-  const sent = searchParams?.sent === "1";
-  const error = searchParams?.error;
+  const sp = (await searchParams) ?? {};
+  const sent = sp.sent === "1";
+  const error = sp.error;
 
   return (
     <main className="min-h-screen bg-black text-white px-6 py-20">
@@ -18,12 +22,20 @@ export default function ContactPage({
         </p>
 
         {sent && (
-          <div className="mb-6 rounded-xl border border-green-700 bg-green-900/30 px-4 py-3 text-sm">
+          <div
+            className="mb-6 rounded-xl border border-green-700 bg-green-900/30 px-4 py-3 text-sm"
+            role="status"
+            aria-live="polite"
+          >
             ✅ Message received. We’ll get back to you shortly.
           </div>
         )}
         {error && (
-          <div className="mb-6 rounded-xl border border-red-700 bg-red-900/30 px-4 py-3 text-sm">
+          <div
+            className="mb-6 rounded-xl border border-red-700 bg-red-900/30 px-4 py-3 text-sm"
+            role="alert"
+            aria-live="assertive"
+          >
             ❌ Something went wrong ({error}). Please try again.
           </div>
         )}

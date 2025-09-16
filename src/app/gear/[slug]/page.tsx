@@ -9,8 +9,14 @@ function findBySlug(slug: string) {
   return withSlugs.find((p) => p._slug === slug) || null;
 }
 
-export default function GearPage({ params }: { params: { slug: string } }) {
-  const product = findBySlug(params.slug);
+export default async function GearPage({
+  params,
+}: {
+  /** Next 15: params must be a Promise */
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const product = findBySlug(slug);
 
   if (!product) {
     return (

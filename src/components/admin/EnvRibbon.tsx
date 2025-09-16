@@ -1,13 +1,15 @@
+// src/components/admin/EnvRibbon.tsx
 import React from "react";
-import { ENV } from "@/lib/env";
-import type { AppEnv } from "@/lib/env";
+
+/** Optional label you can pass, otherwise we read NODE_ENV. */
+type AppEnv = "development" | "production" | "staging" | "preview" | "test";
 
 type Props = {
-  /** Optional override. Defaults to ENV from lib/env. */
+  /** Optional override; pass "staging", "preview", etc. */
   env?: AppEnv | string;
 };
 
-// Use a generic string-keyed map so extra keys (e.g. "staging") don't break types.
+// Use a string-keyed map so unknown values degrade gracefully.
 const LABELS: Record<string, string> = {
   production: "PROD",
   development: "DEV",
@@ -16,11 +18,12 @@ const LABELS: Record<string, string> = {
   test: "TEST",
 };
 
-export default function EnvRibbon({ env = ENV }: Props) {
-  const current = String(env);
+export default function EnvRibbon({ env }: Props) {
+  // Prefer an explicit prop; otherwise rely on the build-time NODE_ENV
+  const current = (env ?? process.env.NODE_ENV ?? "development") as string;
 
   // Hide the ribbon for true production
-  if (current === "production" || process.env.NODE_ENV === "production") return null;
+  if (current === "production") return null;
 
   const label = LABELS[current] ?? current.toUpperCase();
 

@@ -6,7 +6,21 @@ import { createClient } from "@supabase/supabase-js";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type RouteCtx = { params: { id: string } };
+/** In Next 15, context.params may be a plain object or a Promise. */
+type Params = { id: string };
+type CtxLike = { params: Params | Promise<Params> } | unknown;
+
+function hasParams(x: unknown): x is { params: Params | Promise<Params> } {
+  return typeof x === "object" && x !== null && "params" in (x as Record<string, unknown>);
+}
+async function resolveParams(ctx: CtxLike): Promise<Params> {
+  if (hasParams(ctx)) {
+    const p = ctx.params;
+    return p instanceof Promise ? await p : p;
+  }
+  // Will fail Zod validation downstream if id is empty
+  return { id: "" };
+}
 
 // -------- Auth (Basic) --------
 function unauthorized(message = "Unauthorized") {
@@ -16,7 +30,7 @@ function unauthorized(message = "Unauthorized") {
   );
 }
 function b64decode(input: string): string {
-  if (typeof globalThis.atob === "function") return globalThis.atob(input);
+  // Node runtime is guaranteed; Buffer is safe here.
   return Buffer.from(input, "base64").toString("utf8");
 }
 function requireBasicAuth(req: Request) {
@@ -26,8 +40,10 @@ function requireBasicAuth(req: Request) {
   const idx = decoded.indexOf(":");
   const user = idx >= 0 ? decoded.slice(0, idx) : decoded;
   const pass = idx >= 0 ? decoded.slice(idx + 1) : "";
-  const envUser = process.env.ADMIN_USER ?? "";
-  const envPass = process.env.ADMIN_PASS ?? "";
+
+  // Prefer ADMIN_BASIC_*; fall back to legacy names if present.
+  const envUser = process.env.ADMIN_BASIC_USER ?? process.env.ADMIN_USER ?? "";
+  const envPass = process.env.ADMIN_BASIC_PASS ?? process.env.ADMIN_PASS ?? "";
   return user === envUser && pass === envPass ? { user } : null;
 }
 
@@ -60,7 +76,7 @@ const DbKitRowSchema = z.object({
   subtitle: z.string().nullable(),
   description: z.string().nullable(),
   buy_url: z.string().nullable(),
-  is_published: z.boolean(), // ← change to `published` if that's your actual column
+  is_published: z.boolean(), // change if your column is named differently
 });
 type DbKitRow = z.infer<typeof DbKitRowSchema>;
 
@@ -81,9 +97,7 @@ function jsonErr(message: string, status = 400) {
 
 // -------- Supabase (Service role) --------
 function getAdminClient() {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_URL || // keep parity with other routes
-    process.env.SUPABASE_URL;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
     throw new Error("Supabase env missing: URL and SUPABASE_SERVICE_ROLE_KEY are required.");
@@ -102,7 +116,7 @@ function toCamel(row: DbKitRow): KitRow {
     subtitle: row.subtitle,
     description: row.description,
     buyUrl: row.buy_url,
-    published: row.is_published, // ← or `row.published` if you change the select below
+    published: row.is_published,
   };
 }
 function toSnake(patch: KitUpdate): {
@@ -166,10 +180,11 @@ async function dbDeleteKit(id: string): Promise<void> {
 }
 
 // -------- Handlers --------
-export async function GET(req: Request, ctx: RouteCtx) {
+export async function GET(req: Request, ctx: CtxLike) {
   if (!requireBasicAuth(req)) return unauthorized();
 
-  const idParse = KitIdSchema.safeParse(ctx.params);
+  const params = await resolveParams(ctx);
+  const idParse = KitIdSchema.safeParse(params);
   if (!idParse.success) return jsonErr(idParse.error.message, 400);
 
   const row = await dbGetKit(idParse.data.id);
@@ -178,10 +193,11 @@ export async function GET(req: Request, ctx: RouteCtx) {
   return jsonOK(row);
 }
 
-export async function PATCH(req: Request, ctx: RouteCtx) {
+export async function PATCH(req: Request, ctx: CtxLike) {
   if (!requireBasicAuth(req)) return unauthorized();
 
-  const idParse = KitIdSchema.safeParse(ctx.params);
+  const params = await resolveParams(ctx);
+  const idParse = KitIdSchema.safeParse(params);
   if (!idParse.success) return jsonErr(idParse.error.message, 400);
 
   let body: unknown;
@@ -203,10 +219,11 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
   }
 }
 
-export async function DELETE(req: Request, ctx: RouteCtx) {
+export async function DELETE(req: Request, ctx: CtxLike) {
   if (!requireBasicAuth(req)) return unauthorized();
 
-  const idParse = KitIdSchema.safeParse(ctx.params);
+  const params = await resolveParams(ctx);
+  const idParse = KitIdSchema.safeParse(params);
   if (!idParse.success) return jsonErr(idParse.error.message, 400);
 
   try {

@@ -1,16 +1,13 @@
-﻿// src/app/kits/[slug]/items/page.tsx
+﻿// src/app/kits/[slug]/page.tsx
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { kits, type Kit } from "@/lib/kits";
-import { myShopLink, MYSHOP_BASE } from "@/lib/amway";
 
-type NormItem = {
-  title?: string;
-  sku: string;
-  qty: number;
-  buy_url?: string;
-  note?: string;
-};
+import { kits, type Kit } from "@/lib/kits";
+import { MYSHOP_BASE } from "@/lib/amway";
+import KitHeader from "@/components/KitHeader";
+import KitItemsList from "@/components/KitItemsList";
+import { normalizeItems, fullKitCartUrl } from "@/lib/kits-helpers";
+import { TSP_PRODUCTS } from "@/lib/tsp-products";
 
 export const dynamic = "force-dynamic";
 
@@ -20,100 +17,89 @@ function findKit(slug: string): Kit | null {
   return list.find((k) => k.slug === slug) ?? null;
 }
 
-/** Normalize items[] for display */
-function normalizeItems(k: Kit): NormItem[] {
-  if (!Array.isArray(k.items)) return [];
-  return k.items.map((it) => ({
-    title: it.title,
-    sku: String(it.sku),
-    qty: typeof it.qty === "number" ? it.qty : 1,
-    buy_url: myShopLink(String(it.sku)),
-    note: it.note,
-  }));
-}
+export default async function KitPage({
+  params,
+}: {
+  /** Next 15 type checker expects Promise for params */
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
 
-export default function KitItemsPage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
   const kit = findKit(slug);
   if (!kit) notFound();
 
-  const title = kit.title ?? `${slug[0]?.toUpperCase() ?? ""}${slug.slice(1)} Kit`;
   const items = normalizeItems(kit);
+  const addAllUrl = fullKitCartUrl(kit) ?? undefined;
+
+  // KitHeader requires a string; fall back to MyShop root if we can't build a cart URL
+  const buyUrl = addAllUrl || MYSHOP_BASE;
+
+  // Optional Safety Plan gear section
+  const gear =
+    Array.isArray(kit.gear)
+      ? kit.gear
+          .map((id) => TSP_PRODUCTS.find((g) => g.id === id) || null)
+          .filter((g): g is NonNullable<typeof g> => Boolean(g))
+      : [];
 
   return (
-    <section className="space-y-8 max-w-4xl">
+    <section className="space-y-10 max-w-5xl mx-auto">
       {/* Header */}
-      <header className="space-y-2">
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
-          {title}
-          <span aria-hidden="true"> — </span>
-          Items
-        </h1>
-        <p className="muted">Everything included in this kit. View individual SKUs on MyShop.</p>
-        <div className="flex flex-wrap gap-3 pt-2">
-          <a href={MYSHOP_BASE} target="_blank" rel="noopener noreferrer" className="btn">
-            Open MyShop
-          </a>
-          <Link href={`/kits/${slug}`} className="btn-ghost">
-            Back to kit
-          </Link>
-        </div>
-      </header>
+      <KitHeader slug={slug} kit={kit} buyUrl={buyUrl} />
 
-      {/* Items list */}
-      {items.length === 0 ? (
-        <div className="panel-elevated p-6">
-          <p className="muted">
-            No items yet. Add SKUs under <code>items[]</code> in <code>src/lib/kits.ts</code>.
-          </p>
-        </div>
-      ) : (
-        <ul className="space-y-3">
-          {items.map((it) => (
-            <li key={it.sku} className="glow-row">
-              <div className="min-w-0">
-                <div className="font-medium truncate">{it.title ?? "Product"}</div>
-                <div className="text-sm muted">
-                  SKU: {it.sku}
-                  {it.qty > 1 ? (
-                    <>
-                      <span aria-hidden="true"> • Qty </span>
-                      {it.qty}
-                    </>
-                  ) : null}
-                </div>
-                {it.note ? <div className="text-sm muted">{it.note}</div> : null}
-              </div>
+      {/* What's inside */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">What’s inside</h2>
+        {items.length ? (
+          <KitItemsList items={items} />
+        ) : (
+          <div className="panel-elevated p-6">
+            <p className="muted">
+              No items yet. Add SKUs under <code>items[]</code> in{" "}
+              <code>src/lib/kits.ts</code>.
+            </p>
+          </div>
+        )}
+      </div>
 
-              <div className="flex items-center gap-2">
-                {it.buy_url ? (
-                  <a href={it.buy_url} target="_blank" rel="noopener noreferrer" className="link-chip">
-                    Buy
-                  </a>
-                ) : (
-                  <a
-                    href={myShopLink(it.sku)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="link-chip"
-                    aria-label={`View SKU ${it.sku} on MyShop`}
-                  >
-                    View on MyShop
-                  </a>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+      {/* Optional Safety Plan gear */}
+      {gear.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">The Safety Plan gear</h2>
+          <ul className="space-y-3">
+            {gear.map((g) => {
+              const href = `/gear/${g.id.replace(/_/g, "-")}`;
+              return (
+                <li key={g.id} className="glow-row">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{g.title}</div>
+                    {g.blurb ? <div className="text-sm muted">{g.blurb}</div> : null}
+                  </div>
+                  <Link href={href} className="link-chip" aria-label={`View ${g.title}`}>
+                    View
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
 
-      {/* Bottom CTA */}
+      {/* Bottom CTAs */}
       <div className="flex flex-wrap gap-3">
-        <a href={MYSHOP_BASE} target="_blank" rel="noopener noreferrer" className="btn">
-          Open MyShop
-        </a>
-        <Link href={`/kits/${slug}`} className="btn-ghost">
-          Back to kit
+        {items.length > 0 && addAllUrl ? (
+          <a
+            href={addAllUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn"
+            aria-label={`Add full ${kit.title ?? "kit"} to MyShop cart`}
+          >
+            Add full kit to cart
+          </a>
+        ) : null}
+        <Link href={`/kits/${slug}/items`} className="btn-ghost">
+          View items
         </Link>
       </div>
     </section>

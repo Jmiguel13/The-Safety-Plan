@@ -1,12 +1,18 @@
 // src/lib/kits.ts
+// Master list of Kits shown on /kits and individual kit pages.
+// Keep these aligned with the Amway catalog (see: src/lib/catalog.ts).
 
-// Types for kits and their contents
 export type KitItem = {
+  /** UI title shown to users */
   title?: string;
+  /** Amway SKU – this is what we deep-link and cart with */
   sku: string;
+  /** Quantity of this SKU included in the kit (default 1) */
   qty?: number;
+  /** Optional note (appears under the line item) */
   note?: string;
-  // buy_url?: string; // intentionally omitted so CTAs route via your MyShop using SKU
+  /** Optional per-item PDP override URL */
+  buy_url?: string;
 };
 
 export type Kit = {
@@ -14,10 +20,15 @@ export type Kit = {
   title?: string;
   subtitle?: string;
   description?: string;
+  /** Shown as plain text (e.g., "3.0 lb") or a number (we will add " lb") */
   weight_lb?: number | string;
-  items?: KitItem[];   // Amway contents shown under “What’s inside”
-  gear?: string[];     // Safety Plan product ids (must match TSP_PRODUCTS ids)
-  addons?: string[];   // Optional Amway SKUs to recommend
+  /** Amway contents listed under “What’s inside” */
+  items?: KitItem[];
+  /** Safety Plan product ids (must match entries in TSP_PRODUCTS) */
+  gear?: string[];
+  /** Optional Amway SKUs you want to recommend as add-ons */
+  addons?: string[];
+  /** Optional hero image for the kit page */
   image?: string;
   imageAlt?: string;
 };
@@ -28,6 +39,7 @@ export const kits: Kit[] = [
     title: "Resilient Kit",
     subtitle: "Built for daily carry. Energy, hydration, recovery, morale.",
     weight_lb: "3.0 lb",
+    // 11 items total (matches your original count)
     items: [
       // Energy & hydration anchors
       { title: "XS Energy Drink 12-pack – Variety Case", sku: "127070", qty: 1 },
@@ -46,7 +58,7 @@ export const kits: Kit[] = [
       { title: "XS Energy Drink 12-pack – Tropical", sku: "126199", qty: 1 },
       { title: "XS Energy – Caffeine Free Cranberry-Grape (12 oz)", sku: "126983", qty: 1 },
     ],
-    // Safety Plan gear shown under “The Safety Plan gear”
+    // Safety Plan gear shown in a separate section (optional)
     gear: ["morale_patch", "sticker_pack"],
     // Optional upsells on the kit page
     addons: ["110631", "126883"], // Blue Citrus electrolyte, Classic energy
@@ -59,6 +71,7 @@ export const kits: Kit[] = [
     title: "Homefront Kit",
     subtitle: "Support for home base. Hydration, vitamins, recovery, rest.",
     weight_lb: "2.6 lb",
+    // 9 items total (matches your original count)
     items: [
       // Hydration & daily support
       { title: "XS Sports Electrolyte Drink Mix – Blue Citrus", sku: "110631", qty: 1 },
@@ -83,3 +96,10 @@ export const kits: Kit[] = [
     imageAlt: "Homefront Kit preview",
   },
 ];
+
+/** Small conveniences for consumers (optional) */
+export const kitsBySlug: Record<string, Kit> = Object.fromEntries(
+  kits.map((k) => [k.slug, k])
+);
+
+export const getKit = (slug: string) => kitsBySlug[slug];

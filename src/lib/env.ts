@@ -1,4 +1,3 @@
-// src/lib/env.ts
 import { z, type ZodIssue } from "zod";
 
 /**
@@ -31,11 +30,17 @@ const EnvSchema = z.object({
   NEXT_PUBLIC_UTM_SOURCE: z.string().default("safety-plan"),
   NEXT_PUBLIC_UTM_MEDIUM: z.string().default("web"),
 
+  // Optional public stage indicator for ribbons/badges
+  NEXT_PUBLIC_STAGE: z
+    .enum(["production", "development", "staging", "preview", "test"])
+    .optional()
+    .nullable(),
+
   // Server-side (optional for some features)
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
 
-  // Admin (server-only)
+  // Admin (server-only; keep both names for back-compat)
   ADMIN_BASIC_USER: z.string().optional(),
   ADMIN_BASIC_PASS: z.string().optional(),
   ADMIN_USER: z.string().optional(),
@@ -90,6 +95,7 @@ export const ENV_PUBLIC = {
   NEXT_PUBLIC_UTM_MEDIUM: ENV.NEXT_PUBLIC_UTM_MEDIUM,
   NEXT_PUBLIC_AMWAY_MYSHOP_URL: resolveMyShopUrl(ENV),
   NEXT_PUBLIC_AMWAY_CART_STRATEGY: ENV.NEXT_PUBLIC_AMWAY_CART_STRATEGY ?? "pairs",
+  NEXT_PUBLIC_STAGE: ENV.NEXT_PUBLIC_STAGE ?? null,
 } as const;
 
 /** Mask secrets for JSON responses/logging */
@@ -104,3 +110,10 @@ export function maskSecret(v?: string | null): string | null {
 export function getMyShopUrl(): string | null {
   return resolveMyShopUrl(ENV);
 }
+
+/** Public app environment type + resolved value for ribbons, etc. */
+export type AppEnv = "production" | "development" | "staging" | "preview" | "test";
+
+/** Uses NEXT_PUBLIC_STAGE if set, else falls back to NODE_ENV. */
+export const APP_ENV: AppEnv =
+  ((ENV.NEXT_PUBLIC_STAGE ?? process.env.NODE_ENV ?? "development") as AppEnv);

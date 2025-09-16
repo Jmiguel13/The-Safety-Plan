@@ -140,12 +140,14 @@ async function resolveFromDb(
 }
 
 /** ---------- Handler ---------- */
-export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
+type RouteCtx = { params: Promise<{ slug: string }> };
+
+export async function GET(req: NextRequest, ctx: RouteCtx) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   const url = new URL(req.url);
-  const slug = params.slug;
+  const { slug } = await ctx.params;
 
   // Controls:
   //  - dry=1   → return JSON instead of redirect
