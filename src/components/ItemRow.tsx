@@ -51,13 +51,13 @@ export default function ItemRow({
           </a>
         ) : (
           <a
-            href={myShopLink()}
+            href={myShopLink(sku || "/")}
             target="_blank"
             rel="noopener noreferrer"
             className="link-chip"
-            aria-label={`Open storefront for ${title ?? sku}`}
+            aria-label={`View ${title ?? sku} on MyShop`}
           >
-            Open Storefront
+            View on MyShop
           </a>
         )}
 

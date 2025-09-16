@@ -1,6 +1,6 @@
 // src/app/page.tsx
 import Link from "next/link";
-import Image from "next/image";
+import NextImage from "next/image"; // <-- alias to avoid any shadowing
 import { MYSHOP_BASE } from "@/lib/amway";
 import { kits, type Kit } from "@/lib/kits";
 import { heroForKit, statsForKit } from "@/lib/kits-helpers";
@@ -10,13 +10,16 @@ function titleCase(s: string) {
 }
 
 export default function Home() {
-  const featured = (kits as Kit[]).slice(0, 2).map((k) => ({
-    slug: k.slug,
-    title: k.title ?? `${titleCase(k.slug)} Kit`,
-    hero: heroForKit(k.slug, k),
-    stats: statsForKit(k),
-    subtitle: k.subtitle ?? k.description ?? "",
-  }));
+  const featured = (kits as Kit[]).slice(0, 2).map((k) => {
+    const hero = heroForKit(k.slug, k); // always returns { src, alt }
+    return {
+      slug: k.slug,
+      title: k.title ?? `${titleCase(k.slug)} Kit`,
+      hero,
+      stats: statsForKit(k),
+      subtitle: k.subtitle ?? k.description ?? "",
+    };
+  });
 
   return (
     <section className="space-y-10 max-w-6xl mx-auto">
@@ -80,7 +83,7 @@ export default function Home() {
               <div className="grid grid-cols-[136px_1fr]">
                 {/* Thumb */}
                 <div className="relative aspect-square">
-                  <Image
+                  <NextImage
                     src={k.hero.src}
                     alt={k.hero.alt}
                     fill

@@ -10,27 +10,33 @@ export type NormalizedItem = {
   buy_url?: string;
 };
 
+const isNonEmpty = (v: unknown): v is string =>
+  typeof v === "string" && v.trim().length > 0;
+
 /** Normalize to a consistent, safe display shape */
 export function normalizeItems(kit: Kit): NormalizedItem[] {
   const items: KitItem[] = kit.items ?? [];
-  return items.map((it) => {
-    const sku = String(it.sku || "").trim();
-    const qty = Number(it.qty ?? 1) || 1;
+  return items
+    .map((it) => {
+      const rawSku = String(it.sku ?? "").trim(); // keep original case (SKUs like A8992/E0001)
+      const qty = Number(it.qty ?? 1) || 1;
 
-    return {
-      sku,
-      qty,
-      title: it.title?.trim(),
-      note: it.note ?? undefined,
-      buy_url: it.buy_url ?? undefined,
-    };
-  });
+      return {
+        sku: rawSku,
+        qty,
+        title: isNonEmpty(it.title) ? it.title.trim() : undefined,
+        note: isNonEmpty(it.note) ? it.note : undefined,
+        buy_url: isNonEmpty(it.buy_url) ? it.buy_url : undefined,
+      };
+    })
+    // drop any accidental blanks to avoid broken links/carts
+    .filter((it) => it.sku.length > 0);
 }
 
-/** { itemCount, skuCount } for stat chips */
+/** { itemCount, skuCount } for stat chips (line items vs unique SKUs) */
 export function statsForKit(kit: Kit) {
   const items = normalizeItems(kit);
-  const unique = new Set(items.map((i) => i.sku).filter(Boolean));
+  const unique = new Set(items.map((i) => i.sku));
   return { itemCount: items.length, skuCount: unique.size };
 }
 
@@ -45,7 +51,7 @@ export function weightLabel(kit: Kit) {
 
 /** Title with clean fallback from slug */
 export function titleForKit(slug: string, kit: Pick<Kit, "title">) {
-  if (kit.title && kit.title.trim()) return kit.title.trim();
+  if (isNonEmpty(kit.title)) return kit.title.trim();
   return (
     slug
       .split("-")
@@ -56,7 +62,7 @@ export function titleForKit(slug: string, kit: Pick<Kit, "title">) {
 
 /** Subtitle with a simple, nice fallback */
 export function subtitleForKit(slug: string, kit: Pick<Kit, "subtitle">) {
-  if (kit.subtitle && kit.subtitle.trim()) return kit.subtitle.trim();
+  if (isNonEmpty(kit.subtitle)) return kit.subtitle.trim();
   const nice = slug
     .split("-")
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
@@ -64,13 +70,16 @@ export function subtitleForKit(slug: string, kit: Pick<Kit, "subtitle">) {
   return `${nice} essentials for everyday readiness`;
 }
 
-/** Hero image with sensible fallbacks */
+/** Hero image with sensible fallbacks (always a local asset) */
 export function heroForKit(
   slug: string,
   kit: Pick<Kit, "image" | "imageAlt" | "title">
 ) {
-  const src = kit.image ?? `/images/kits/${slug}.jpg`;
-  const alt = kit.imageAlt ?? `${titleForKit(slug, kit)} hero image`;
+  // Prefer explicit image; otherwise use your generic placeholder that exists in /public/kits
+  const src = isNonEmpty(kit.image) ? kit.image : "/kits/placeholder.svg";
+  const alt = isNonEmpty(kit.imageAlt)
+    ? kit.imageAlt
+    : `${titleForKit(slug, kit)} hero image`;
   return { src, alt };
 }
 
