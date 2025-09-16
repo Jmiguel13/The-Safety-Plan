@@ -2,22 +2,18 @@
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
-
 const useReactCompiler =
   process.env.REACT_COMPILER === "1" ||
   process.env.REACT_COMPILER?.toLowerCase() === "true";
 
-// Build a CSP string. In dev we allow react-refresh requirements.
+// Content Security Policy
 const csp = [
   "default-src 'self'",
-  // Dev needs 'unsafe-eval' (react-refresh) and sometimes blob: for chunks
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval' blob:" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
-  // Dev needs websocket + localhost for HMR / refresh overlay
   `connect-src 'self' https:${isDev ? " ws: http://localhost:*" : ""}`,
   "font-src 'self' https: data:",
-  // Dev may create workers from blob:
   `worker-src 'self'${isDev ? " blob:" : ""}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
@@ -25,7 +21,11 @@ const csp = [
 
 const baseConfig: NextConfig = {
   reactStrictMode: true,
-  images: { remotePatterns: [{ protocol: "https", hostname: "**" }] },
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "**" }],
+    formats: ["image/avif", "image/webp"],
+    dangerouslyAllowSVG: true, // ✅ play nice with SVG placeholders
+  },
   async headers() {
     return [
       {

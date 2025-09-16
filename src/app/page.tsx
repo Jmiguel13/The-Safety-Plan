@@ -12,12 +12,15 @@ function titleCase(s: string) {
 export default function Home() {
   const featured = (kits as Kit[]).slice(0, 2).map((k) => {
     const hero = heroForKit(k.slug, k);
-    const src = typeof hero?.src === "string" && hero.src.trim()
-      ? hero.src
-      : "/images/hero-placeholder.svg"; // make sure this exists
-    const alt = typeof hero?.alt === "string" && hero.alt.trim()
-      ? hero.alt
-      : `${titleCase(k.slug)} hero image`;
+    const src =
+      typeof hero?.src === "string" && hero.src.trim()
+        ? hero.src.trim()
+        : "/kits/placeholder.svg"; // ✅ confirmed present in /public/kits
+    const alt =
+      typeof hero?.alt === "string" && hero.alt.trim()
+        ? hero.alt.trim()
+        : `${titleCase(k.slug)} hero image`;
+
     return {
       slug: k.slug,
       title: k.title ?? `${titleCase(k.slug)} Kit`,
@@ -95,6 +98,7 @@ export default function Home() {
                     fill
                     className="object-cover"
                     sizes="(min-width: 640px) 136px, 40vw"
+                    unoptimized  // ✅ avoids optimizer weirdness with SVG/placeholders
                     priority={false}
                   />
                 </div>
