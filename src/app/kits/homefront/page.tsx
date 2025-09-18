@@ -1,4 +1,4 @@
-﻿import type { Metadata, Viewport } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import SpecGrid from "@/components/SpecGrid";
 import CopySkus from "@/components/CopySkus";
@@ -7,7 +7,7 @@ import { kits } from "@/lib/kits";
 
 export const viewport: Viewport = { themeColor: "#0b0f10" };
 export const metadata: Metadata = {
-  title: "Homefront Kit — The Safety Plan",
+  title: "Homefront Kit � The Safety Plan",
   description: "Support for home base. Hydration, vitamins, recovery, rest.",
 };
 export const dynamic = "error";
@@ -114,3 +114,4 @@ export default function HomefrontPage() {
     </main>
   );
 }
+

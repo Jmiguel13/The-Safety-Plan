@@ -1,4 +1,4 @@
-﻿type Spec = { label: string; value: string };
+type Spec = { label: string; value: string };
 
 export default function SpecGrid({ specs }: { specs: Spec[] }) {
   return (
@@ -14,3 +14,4 @@ export default function SpecGrid({ specs }: { specs: Spec[] }) {
     </div>
   );
 }
+

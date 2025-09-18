@@ -37,3 +37,4 @@ export default function KitHeader({ slug, kit, buyUrl }: { slug: string; kit: Ki
     </header>
   );
 }
+

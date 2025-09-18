@@ -1,4 +1,4 @@
-﻿import * as React from "react";
+import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export const Card = (props: React.HTMLAttributes<HTMLDivElement>) => {
@@ -17,3 +17,4 @@ export const CardContent = (props: React.HTMLAttributes<HTMLDivElement>) => {
 };
 
 export default Card;
+

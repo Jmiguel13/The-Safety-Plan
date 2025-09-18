@@ -16,3 +16,4 @@ export default function QuickDonate({ className = "" }: { className?: string }) 
     </div>
   );
 }
+

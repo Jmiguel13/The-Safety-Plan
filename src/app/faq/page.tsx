@@ -1,8 +1,8 @@
-﻿// src/app/faq/page.tsx
+// src/app/faq/page.tsx
 import Link from "next/link";
 import { myShopLink } from "@/lib/amway";
 
-export const metadata = { title: "FAQ — The Safety Plan" };
+export const metadata = { title: "FAQ � The Safety Plan" };
 
 export default function FaqPage() {
   return (
@@ -13,7 +13,7 @@ export default function FaqPage() {
       </header>
 
       <article id="kits" className="faq-card">
-        <h2 className="text-xl font-semibold">What’s in the kits?</h2>
+        <h2 className="text-xl font-semibold">What�s in the kits?</h2>
         <p className="muted">
           Each kit focuses on clean energy, hydration, recovery, and rest. Contents may vary by availability.
         </p>
@@ -49,11 +49,11 @@ export default function FaqPage() {
         <ul className="mt-3 grid gap-2 text-sm">
           <li>
             <a className="link-chip tel" href="tel:988">Call 988 (US)</a>
-            <span className="muted ml-2">— 24/7 Suicide & Crisis Lifeline</span>
+            <span className="muted ml-2">� 24/7 Suicide & Crisis Lifeline</span>
           </li>
           <li>
             <a className="link-chip sms" href="sms:988">Text 988 (US)</a>
-            <span className="muted ml-2">— Text line for crisis support</span>
+            <span className="muted ml-2">� Text line for crisis support</span>
           </li>
         </ul>
         <p className="mt-3 text-xs text-zinc-500">
@@ -74,3 +74,4 @@ export default function FaqPage() {
     </section>
   );
 }
+

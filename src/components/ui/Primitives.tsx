@@ -1,4 +1,4 @@
-﻿export function Divider() {
+export function Divider() {
   return <div className="separator my-8" />;
 }
 
@@ -10,3 +10,4 @@ export function Callout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+

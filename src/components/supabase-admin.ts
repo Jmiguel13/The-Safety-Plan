@@ -13,3 +13,4 @@ if (!supabaseAdmin) {
     "[waitlist] Supabase not configured (NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing). Falling back to dev log."
   );
 }
+

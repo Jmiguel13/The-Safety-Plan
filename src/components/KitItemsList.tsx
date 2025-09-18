@@ -48,3 +48,4 @@ export default function KitItemsList({ items }: { items: NormalizedItem[] }) {
     </div>
   );
 }
+

@@ -87,3 +87,4 @@ export async function GET() {
 
   return NextResponse.json(body, { status: overallOk ? 200 : 500 });
 }
+

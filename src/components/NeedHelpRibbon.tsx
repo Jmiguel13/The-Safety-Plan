@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
 export default function NeedHelpRibbon() {
   return (
@@ -16,3 +16,4 @@ export default function NeedHelpRibbon() {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-﻿import Image from "next/image";
+import Image from "next/image";
 
 // Swap these out with your real CDN/asset URLs later.
 // Aspect ratio is fixed for a tidy grid; captions are short and readable.
@@ -39,3 +39,4 @@ export default function Gallery() {
     </section>
   );
 }
+

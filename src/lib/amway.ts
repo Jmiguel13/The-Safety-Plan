@@ -110,3 +110,4 @@ function normalizeItems(items: CartItem[]) {
     }))
     .filter((i) => i.sku.length > 0);
 }
+

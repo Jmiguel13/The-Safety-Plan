@@ -89,3 +89,4 @@ export function fullKitCartUrl(kit: Kit): string | null {
   if (items.length === 0) return null;
   return buildCartLink(items.map(({ sku, qty }) => ({ sku, qty })));
 }
+

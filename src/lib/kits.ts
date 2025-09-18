@@ -103,3 +103,4 @@ export const kitsBySlug: Record<string, Kit> = Object.fromEntries(
 );
 
 export const getKit = (slug: string) => kitsBySlug[slug];
+

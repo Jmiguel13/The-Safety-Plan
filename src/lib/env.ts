@@ -117,3 +117,4 @@ export type AppEnv = "production" | "development" | "staging" | "preview" | "tes
 /** Uses NEXT_PUBLIC_STAGE if set, else falls back to NODE_ENV. */
 export const APP_ENV: AppEnv =
   ((ENV.NEXT_PUBLIC_STAGE ?? process.env.NODE_ENV ?? "development") as AppEnv);
+

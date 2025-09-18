@@ -6,3 +6,4 @@ export function getSupabase() {
   if (!url || !key) throw new Error("Missing Supabase envs for public reads");
   return createClient(url, key, { auth: { persistSession: false } });
 }
+

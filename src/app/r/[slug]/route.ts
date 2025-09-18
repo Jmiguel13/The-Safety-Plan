@@ -227,3 +227,4 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
 
   return NextResponse.redirect(destination, { status: 302 });
 }
+

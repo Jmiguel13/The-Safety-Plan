@@ -11,3 +11,4 @@ export default function AdminInboxLayout({ children }: { children: ReactNode }) 
     </>
   );
 }
+

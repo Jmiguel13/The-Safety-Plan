@@ -15,3 +15,4 @@ export async function GET() {
   if (error) return NextResponse.json({ products: [] });
   return NextResponse.json({ products: data ?? [] });
 }
+

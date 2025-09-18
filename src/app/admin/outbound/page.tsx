@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -70,7 +70,7 @@ export default function AdminOutbound() {
   return (
     <main className="min-h-screen bg-black text-white px-6 py-16">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Admin â€¢ Outbound report</h1>
+        <h1 className="text-3xl font-bold mb-6">Admin • Outbound report</h1>
 
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 mb-6">
           <form
@@ -143,14 +143,14 @@ export default function AdminOutbound() {
           </form>
 
           <p className="text-xs text-zinc-500 mt-2">
-            Range: {data?.range?.from?.slice(0, 10)} â†’ {data?.range?.to?.slice(0, 10)} â€¢{" "}
+            Range: {data?.range?.from?.slice(0, 10)} → {data?.range?.to?.slice(0, 10)} •{" "}
             {data?.rows ?? 0} rows scanned
           </p>
         </div>
 
         {err && <p className="text-red-400 mb-4">{err}</p>}
         {loading ? (
-          <p className="text-zinc-400">Loadingâ€¦</p>
+          <p className="text-zinc-400">Loading…</p>
         ) : (
           <>
             {/* Stats */}
@@ -272,5 +272,6 @@ export default function AdminOutbound() {
 
 
 void srOnly;
+
 
 

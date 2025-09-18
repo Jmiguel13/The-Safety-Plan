@@ -16,3 +16,4 @@ export const DbKitItem = z.object({
   product: z.object({ id: z.string(), sku: z.string(), title: z.string(), url: z.string().nullable().optional() }),
 });
 export type DbKitItem = z.infer<typeof DbKitItem>;
+

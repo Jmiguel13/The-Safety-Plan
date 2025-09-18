@@ -14,3 +14,4 @@ export async function GET() {
     headers: { "content-type": "text/plain; charset=utf-8" },
   });
 }
+

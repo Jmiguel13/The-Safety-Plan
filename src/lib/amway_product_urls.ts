@@ -23,3 +23,4 @@ export const PRODUCT_URLS: Record<string, string> = {
   "123781V": `https://www.amway.com/Artistry-Skin-Nutrition%E2%84%A2-Renewing-Foaming-Cleanser-p-123781V`,
   "125897TR": `https://www.amway.com/g%26h%E2%84%A2-Protect-Bar-Soap-p-125897TR`,
 };
+

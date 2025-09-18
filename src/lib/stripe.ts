@@ -8,3 +8,4 @@ if (!key) {
 export const stripe = new Stripe(key, {
   appInfo: { name: "The Safety Plan", version: "0.1.0" },
 });
+

@@ -10,3 +10,4 @@ export function supabaseServer() {
     global: { headers: { "x-application-name": "safety-plan-admin" } },
   });
 }
+

@@ -3,130 +3,229 @@
 /* ===================== BASE (tokens, background, type) ===================== */
 @layer base {
   :root {
-    /* Slightly lighter, less contrasty palette */
+    /* Palette */
     --bg: #0d1315;
     --panel: #121a1d;
-    --panel-elevated: #152126; /* ← used by bg-[var(--panel-elevated)] */
-    --panel-elev: 0 6px 24px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.02);
-
+    --panel-elevated: #152126;
     --border: #1f2a2f;
     --border-strong: #39464e;
 
-    --ok: #36d399;    /* emerald-ish */
-    --warn: #f4bf50;  /* amber */
-    --ring: #10b981;  /* focus ring */
+    /* Brand tokens */
+    --ok: #36d399;
+    --warn: #f4bf50;
+    --ring: #10b981;
 
+    /* Typography */
     --fg: #e8f1f2;
     --fg-muted: #a9b5b7;
     --link: #c9e8ff;
 
     --radius: 12px;
-    --grid-alpha: 0.025; /* a touch calmer than before */
+    --grid-alpha: 0.025;
+
+    --panel-elev: 0 6px 24px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.02);
   }
 
-  html, body { color: var(--fg); background: var(--bg); }
+  html,
+  body {
+    color: var(--fg);
+    background: var(--bg);
+    min-height: 100%;
+  }
 
-  /* Selection: fallback first, then modern override */
-  ::selection { background: rgba(16,185,129,.28); color: #fff; }
+  /* Selection */
+  ::selection {
+    background: rgba(16, 185, 129, 0.28);
+    color: #fff;
+  }
   @supports (color: color-mix(in oklab, black 90%)) {
-    ::selection { background: color-mix(in oklab, var(--ok) 28%, transparent); }
+    ::selection {
+      background: color-mix(in oklab, var(--ok) 28%, transparent);
+    }
   }
 
-  /* Tactical grid background + subtle vignette (muted) */
+  /* Tactical grid background */
   .bg-grid {
     background:
-      radial-gradient(1200px 600px at 75% -10%, rgba(0,0,0,.28), transparent 60%),
-      repeating-linear-gradient(0deg, rgba(255,255,255,var(--grid-alpha)) 0px, rgba(255,255,255,var(--grid-alpha)) 1px, transparent 1px, transparent 24px),
-      repeating-linear-gradient(90deg, rgba(255,255,255,var(--grid-alpha)) 0px, rgba(255,255,255,var(--grid-alpha)) 1px, transparent 1px, transparent 24px),
+      radial-gradient(
+        1200px 600px at 75% -10%,
+        rgba(0, 0, 0, 0.28),
+        transparent 60%
+      ),
+      repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, var(--grid-alpha)) 0px,
+        rgba(255, 255, 255, var(--grid-alpha)) 1px,
+        transparent 1px,
+        transparent 24px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, var(--grid-alpha)) 0px,
+        rgba(255, 255, 255, var(--grid-alpha)) 1px,
+        transparent 1px,
+        transparent 24px
+      ),
       linear-gradient(#0c1214, #0c1214);
     color: var(--fg);
   }
 
   /* Headings */
-  h1 { @apply font-extrabold tracking-tight; font-size: clamp(2.25rem, 4vw, 3.5rem); line-height: 1.06; }
-  h2 { @apply font-semibold; font-size: clamp(1.25rem, 2vw, 1.875rem); line-height: 1.2; }
+  h1 {
+    @apply font-extrabold tracking-tight;
+    font-size: clamp(2.25rem, 4vw, 3.5rem);
+    line-height: 1.06;
+  }
+  h2 {
+    @apply font-semibold;
+    font-size: clamp(1.25rem, 2vw, 1.875rem);
+    line-height: 1.2;
+  }
 
-  /* Balanced headings – progressive enhancement only */
-  @supports (text-wrap: balance) { .text-balance { text-wrap: balance; } }
+  @supports (text-wrap: balance) {
+    .text-balance {
+      text-wrap: balance;
+    }
+  }
 
-  .muted { color: var(--fg-muted); }
+  .muted {
+    color: var(--fg-muted);
+  }
 
-  /* Base link tweaks */
-  a { text-underline-offset: 3px; }
-  a:hover { text-decoration-thickness: 2px; }
+  a {
+    text-underline-offset: 3px;
+  }
+  a:hover {
+    text-decoration-thickness: 2px;
+  }
 
-  /* Global focus (fallback; components refine further) */
-  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 8px; }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
 
-  /* Skip link */
-  .skip-link { position: absolute; left: 0; top: -40px; background: #111; color: #fff; padding: 8px 12px; border-radius: 8px; z-index: 50; }
-  .skip-link:focus { top: 8px; }
+  body {
+    padding-bottom: 64px; /* space for help ribbon */
+  }
 
-  /* Footer breathing room for help ribbon */
-  body { padding-bottom: 64px; }
-
-  /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
-    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+    * {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
-/* ===================== COMPONENTS (btns, cards, pills) ===================== */
+/* ===================== COMPONENTS ===================== */
 @layer components {
-  .container { width: 100%; max-width: 72rem; margin-inline: auto; padding-inline: 1rem; }
-  @media (min-width: 768px) { .container { padding-inline: 2rem; } }
+  .container {
+    width: 100%;
+    max-width: 72rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 768px) {
+    .container {
+      padding-inline: 2rem;
+    }
+  }
 
-  /* Tiny status dot used in kit previews */
-  .preview-dot { width: 28px; height: 28px; border-radius: 9999px; background: var(--ok); }
-
-  /* Buttons */
-  .btn, .btn-ghost {
+  .btn,
+  .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 transition;
     border: 1px solid var(--border);
-    -webkit-user-select: none; user-select: none;
+    -webkit-user-select: none; /* Safari / iOS */
+    user-select: none;          /* Standard */
     will-change: transform, background-color, border-color;
   }
   .btn {
-    background: rgba(255,255,255,0.06);
+    background: rgba(255, 255, 255, 0.06);
     color: var(--fg);
   }
-  .btn:hover { transform: translateY(-1px); background: rgba(255,255,255,0.10); }
-  .btn:active { transform: translateY(0); }
-
-  .btn-ghost { background: transparent; color: var(--fg); }
-  .btn-ghost:hover { background: rgba(255,255,255,0.05); }
-  .btn:focus-visible, .btn-ghost:focus-visible, a:focus-visible, button:focus-visible {
-    outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 9999px;
+  .btn:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.1);
   }
-  .btn[disabled], .btn-ghost[disabled] { opacity: .55; cursor: not-allowed; transform: none; }
+  .btn:active {
+    transform: translateY(0);
+  }
 
-  /* Tags */
+  .btn-ghost {
+    background: transparent;
+    color: var(--fg);
+  }
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .btn[disabled],
+  .btn-ghost[disabled] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
   .tag {
-    display:inline-flex; align-items:center; gap:.4ch; padding:2px 8px; border-radius:9999px;
-    border:1px solid var(--border); background:rgba(255,255,255,.03);
-    font-size:10px; letter-spacing:.06em; text-transform:uppercase; color: var(--fg);
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03);
+    letter-spacing: 0.06em;
+    color: var(--fg);
   }
-  .tag-accent { border-color: var(--border-strong); color:#c7ecff; background: rgba(125,211,252,.10); }
+  .tag-accent {
+    border-color: var(--border-strong);
+    color: #c7ecff;
+    background: rgba(125, 211, 252, 0.1);
+  }
 
-  /* Panels & cards */
-  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); }
-  .panel-elevated { background: var(--panel-elevated); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--panel-elev); }
-  .panel-inset { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: var(--radius); }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .panel-elevated {
+    background: var(--panel-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--panel-elev);
+  }
+  .panel-inset {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
 
-  .divider { height: 1px; background: var(--border); opacity: .6; margin: 2rem 0; }
+  .divider {
+    height: 1px;
+    background: var(--border);
+    opacity: 0.6;
+    margin: 2rem 0;
+  }
 
-  .pill { @apply rounded-full px-3 py-1 border transition; border-color: var(--border); }
-  .pill[data-active="true"] { background: rgba(54,211,153,0.14); box-shadow: inset 0 0 0 1px rgba(54,211,153,0.35); }
-  .pill:hover { background: rgba(255,255,255,0.06); }
+  .pill {
+    @apply rounded-full px-3 py-1 border transition;
+    border-color: var(--border);
+  }
+  .pill[data-active="true"] {
+    background: rgba(54, 211, 153, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(54, 211, 153, 0.35);
+  }
+  .pill:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
 
-  /* Reusable row with token border */
   .glow-row {
     @apply flex items-center justify-between rounded-lg border px-4 py-3 transition;
     border-color: var(--border);
   }
-  .glow-row:hover { background: rgba(255,255,255,0.05); }
+  .glow-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
 
-  /* FAQ Card wrapper */
   .faq-card {
     @apply rounded-xl border p-4 md:p-6 space-y-3;
     background: var(--panel);
@@ -134,72 +233,118 @@
     box-shadow: var(--panel-elev);
   }
 
-  /* Chip-style action links (great for tel:/sms:) */
   .link-chip {
     @apply inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm no-underline transition;
     border-color: var(--border);
-    background: rgba(255,255,255,0.03);
+    background: rgba(255, 255, 255, 0.03);
     color: var(--link);
   }
-  .link-chip:hover { background: rgba(255,255,255,0.06); }
-  .link-chip:focus-visible { outline: 2px solid var(--ok); outline-offset: 2px; }
-  .link-chip.tel::before { content: "📞"; font-size: 1rem; }
-  .link-chip.sms::before { content: "💬"; font-size: 1rem; }
-
-  /* Gallery tiles */
-  .gallery-figure { @apply relative overflow-hidden rounded-xl border; border-color: var(--border); background: var(--panel); }
-  .gallery-img { @apply object-cover transition-transform duration-300; }
-  .gallery-figure:hover .gallery-img { transform: scale(1.05); }
-  .gallery-caption { @apply absolute inset-0 flex items-end bg-black/0 transition-colors; }
-  .gallery-figure:hover .gallery-caption { background: rgba(0,0,0,.30); }
-
-  /* Fallback color (broad support) */
-  .gallery-caption > div { @apply w-full p-3 text-[13px]; color: var(--fg); opacity: .9; }
-  /* Progressive enhancement where supported */
-  @supports (color: color-mix(in oklab, black 90%)) {
-    .gallery-caption > div { color: color-mix(in oklab, var(--fg) 92%, transparent); opacity: 1; }
+  .link-chip:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .link-chip:focus-visible {
+    outline: 2px solid var(--ok);
+    outline-offset: 2px;
+  }
+  .link-chip.tel::before {
+    content: "📞";
+  }
+  .link-chip.sms::before {
+    content: "💬";
   }
 
-  /* Stat blocks (used on home preview) */
-  .stat .label { font-size: .75rem; color: rgb(161 161 170); }
-  .stat .value { font-weight: 600; letter-spacing: -0.01em; }
+  .gallery-figure {
+    @apply relative overflow-hidden rounded-xl border;
+    border-color: var(--border);
+    background: var(--panel);
+  }
+  .gallery-img {
+    @apply object-cover transition-transform duration-300;
+  }
+  .gallery-figure:hover .gallery-img {
+    transform: scale(1.05);
+  }
+  .gallery-caption {
+    @apply absolute inset-0 flex items-end bg-black/0 transition-colors;
+  }
+  .gallery-figure:hover .gallery-caption {
+    background: rgba(0, 0, 0, 0.3);
+  }
+  .gallery-caption > div {
+    @apply w-full p-3 text-[13px];
+    color: var(--fg);
+    opacity: 0.9;
+  }
+  @supports (color: color-mix(in oklab, black 90%)) {
+    .gallery-caption > div {
+      color: color-mix(in oklab, var(--fg) 92%, transparent);
+      opacity: 1;
+    }
+  }
 }
 
-/* ===================== UTILITIES (tiny helpers) ===================== */
+/* ===================== UTILITIES ===================== */
 @layer utilities {
-  .ring-ok { outline: 2px solid var(--ring); outline-offset: 2px; }
-  .shadow-subtle { box-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 8px 24px rgba(0,0,0,.18); }
+  .ring-ok {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  .shadow-subtle {
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset,
+      0 8px 24px rgba(0, 0, 0, 0.18);
+  }
 }
 
-/* ===================== Hero preview polish ===================== */
-.preview-surface { position: relative; }
+/* ===================== PREVIEW EFFECTS ===================== */
+.preview-surface {
+  position: relative;
+}
 .preview-surface::before {
   content: "";
-  position: absolute; inset: 0; pointer-events: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   background:
-    radial-gradient(600px 300px at 50% -20%, rgba(16,185,129,.10), transparent 60%),
-    linear-gradient(to bottom, rgba(255,255,255,.03), rgba(255,255,255,.01));
+    radial-gradient(
+      600px 300px at 50% -20%,
+      rgba(16, 185, 129, 0.1),
+      transparent 60%
+    ),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
 }
 
-/* Pulsing status dot (GPU-friendly: transform/opacity only) */
 .pulse-dot {
-  width: 28px; height: 28px; border-radius: 9999px;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
   background: var(--ok);
   position: relative;
   will-change: transform, opacity;
 }
 .pulse-dot::after {
   content: "";
-  position: absolute; inset: -12px;
+  position: absolute;
+  inset: -12px;
   border-radius: 9999px;
-  border: 2px solid rgba(16,185,129,.45);
+  border: 2px solid rgba(16, 185, 129, 0.45);
   animation: sp-pulse 2s ease-out infinite;
 }
 @supports (color: color-mix(in oklab, black 90%)) {
-  .pulse-dot::after { border-color: color-mix(in oklab, var(--ok) 65%, transparent); }
+  .pulse-dot::after {
+    border-color: color-mix(in oklab, var(--ok) 65%, transparent);
+  }
 }
 @keyframes sp-pulse {
-  0%   { transform: scale(.6); opacity: .8; }
-  70%  { transform: scale(1.25); opacity: 0; }
-  100% { transform: scale(1.25); opacity: 0; }
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(1.25);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.25);
+    opacity: 0;
+  }
 }

@@ -253,3 +253,4 @@ export default function KitComposer({ params }: { params: { slug: string } }) {
     </main>
   );
 }
+

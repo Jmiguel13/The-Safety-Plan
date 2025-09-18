@@ -4,3 +4,4 @@ export const RECOMMENDED_BY_KIT: Record<string, string[]> = {
   homefront: ["109747", "126132", "100648"], // Vit C (180), Omega, Fruits & Veg
   // add more kits as you create them…
 };
+

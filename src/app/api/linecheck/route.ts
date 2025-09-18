@@ -248,3 +248,4 @@ export async function GET(req: Request) {
 
   return NextResponse.json(summary, { headers: { "cache-control": "no-store" } });
 }
+

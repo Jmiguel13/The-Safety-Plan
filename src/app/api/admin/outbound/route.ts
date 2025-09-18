@@ -106,3 +106,4 @@ export async function GET(req: Request) {
     rows: rows?.length ?? 0,
   });
 }
+

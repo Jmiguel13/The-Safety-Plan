@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 export async function track(event: string, data?: Record<string, unknown>) {
   try {
     await fetch("/api/track", {
@@ -9,3 +9,4 @@ export async function track(event: string, data?: Record<string, unknown>) {
     });
   } catch { /* ignore */ }
 }
+

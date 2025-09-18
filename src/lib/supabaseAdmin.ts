@@ -31,3 +31,4 @@ export function createSupabaseAdmin(): SupabaseClient {
 
 /** Default export allows: import supabaseAdmin from "@/lib/supabaseAdmin" */
 export default supabaseAdmin;
+

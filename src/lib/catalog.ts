@@ -305,3 +305,4 @@ export const catalogUrl = (sku: string | number) =>
 
 export const isKnownSku = (sku: string | number) =>
   Object.prototype.hasOwnProperty.call(CATALOG, normSku(sku));
+

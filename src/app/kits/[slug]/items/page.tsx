@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { kits, type Kit } from "@/lib/kits";
@@ -37,13 +37,13 @@ export default async function KitItemsPage({
   return (
     <section className="space-y-6">
       <header className="space-y-2">
-        <h1 className="text-3xl font-extrabold tracking-tight">{title} • Items</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">{title} � Items</h1>
         <p className="muted">
-          {subtitle || `${stats.itemCount} items • ${stats.skuCount} SKUs`}
+          {subtitle || `${stats.itemCount} items � ${stats.skuCount} SKUs`}
         </p>
 
         <div className="flex flex-wrap gap-3 pt-2">
-          <BuyButtons items={cartItems} fallbackSkusTitle={`${title} — SKUs`} />
+          <BuyButtons items={cartItems} fallbackSkusTitle={`${title} � SKUs`} />
           <CopySkus items={cartItems} />
           <Link href={`/kits/${slug}`} className="btn-ghost">
             Back to kit
@@ -73,3 +73,4 @@ export default async function KitItemsPage({
     </section>
   );
 }
+

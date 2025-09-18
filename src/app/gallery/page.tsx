@@ -1,4 +1,4 @@
-﻿// src/app/gallery/page.tsx
+// src/app/gallery/page.tsx
 import Image from "next/image";
 import fs from "node:fs";
 import path from "node:path";
@@ -105,3 +105,4 @@ export default async function GalleryPage() {
     </section>
   );
 }
+

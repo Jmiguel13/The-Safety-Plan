@@ -53,3 +53,4 @@ export const SKU_NAME: Record<string, string> = {
 export function nameForSku(sku: string): string {
   return SKU_NAME[sku] || sku;
 }
+

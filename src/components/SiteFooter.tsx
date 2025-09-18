@@ -1,4 +1,4 @@
-﻿export default function SiteFooter() {
+export default function SiteFooter() {
   return (
     <footer className="mt-12 border-t border-[var(--border)]">
       <div className="container">
@@ -10,3 +10,4 @@
     </footer>
   );
 }
+

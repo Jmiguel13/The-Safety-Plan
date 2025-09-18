@@ -1,6 +1,6 @@
-﻿// src/app/error.tsx
 "use client";
-import Link from "next/link";
+
+import { useEffect } from "react";
 
 export default function Error({
   error,
@@ -9,20 +9,23 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    // optionally log to your APM
+    console.error(error);
+  }, [error]);
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-16">
       <h1 className="text-2xl font-semibold">Something went wrong</h1>
-      <p className="mt-2 text-sm text-neutral-400">
-        {error?.message || "An unexpected error occurred."}
+      <p className="mt-2 text-sm text-zinc-400">
+        {error?.message ?? "Unexpected error."}
       </p>
-      <div className="mt-6 flex gap-3">
-        <button onClick={() => reset()} className="rounded-md border px-3 py-2 text-sm">
-          Try again
-        </button>
-        <Link href="/" className="rounded-md bg-white/10 px-3 py-2 text-sm">
-          Go home
-        </Link>
-      </div>
+      {error?.digest && (
+        <p className="mt-1 text-xs text-zinc-500">Digest: {error.digest}</p>
+      )}
+      <button onClick={() => reset()} className="btn mt-6">
+        Try again
+      </button>
     </div>
   );
 }
