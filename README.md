@@ -57,67 +57,13 @@ git clone https://github.com/your-org/safety-plan.git
 cd safety-plan
 pnpm install
 pnpm dev
-
-
-Mission-driven wellness kits that support frontline fighters and help prevent veteran suicide.  
-Every purchase funds resources for veterans in crisis.  
-
-Built with [Next.js](https://nextjs.org), [Stripe](https://stripe.com), [Supabase](https://supabase.com), and Amway’s MyShop platform.
-
----
-
-## 🚀 Features
-
-- **Kits**  
-  - `/kits` — browse Resilient & Homefront kits  
-  - `/kits/[slug]` — kit details, recommended add-ons, and Safety Plan gear  
-  - `/kits/[slug]/items` — copy full SKU list or add to cart  
-
-- **Shop**  
-  - `/shop` — structured into:  
-    1. The Kits  
-    2. Solo Amway products (curated picks)  
-    3. The Safety Plan gear/merch  
-
-- **Donate**  
-  - `/donate` — preset or custom amounts via Stripe Checkout  
-
-- **Redirects**  
-  - `/r/[slug]` — one-click add-to-cart redirect (logs outbound clicks with Supabase)
-
----
-
-## 🛠 Tech Stack
-
-- **Framework**: Next.js 15 (App Router) + React 19  
-- **Styling**: Tailwind CSS v4  
-- **Payments**: Stripe Checkout  
-- **Database/Auth**: Supabase  
-- **E-commerce**: Amway MyShop deep links  
-- **Deployment**: Vercel  
-
----
-
-## ⚙️ Local Development
-
-Clone and install dependencies:
-
-```bash
-git clone https://github.com/your-org/safety-plan.git
-cd safety-plan
-pnpm install
-pnpm dev
-
-Open http://localhost:3000
- with your browser.
- .
+.
 ├─ public/                        # static assets (images, icons, manifest, etc.)
 ├─ src/
 │  ├─ app/                        # Next.js App Router pages & API routes
 │  │  ├─ about/
 │  │  ├─ admin/                   # admin routes
 │  │  ├─ api/                     # serverless API (Stripe, Supabase, etc.)
-│  │  ├─ checkout/
 │  │  ├─ contact/
 │  │  ├─ donate/                  # Stripe donation flow
 │  │  ├─ faq/
@@ -128,7 +74,6 @@ Open http://localhost:3000
 │  │  │     └─ items/             # SKU list / copy-to-clipboard
 │  │  ├─ privacy/
 │  │  ├─ r/                       # redirects → MyShop carts
-│  │  │  └─ [slug]/route.ts
 │  │  ├─ shop/                    # full shop view
 │  │  ├─ terms/
 │  │  ├─ error.tsx                # global error page
@@ -159,9 +104,6 @@ Open http://localhost:3000
 │  │  └─ track-link.tsx
 │  │
 │  └─ lib/                        # domain logic & integrations
-│     ├─ admin/
-│     ├─ db/
-│     ├─ server/
 │     ├─ amway.ts                 # myShopLink(), buildCartLink()
 │     ├─ amway-products.ts        # curated solo Amway catalog
 │     ├─ amway_product_urls.ts    # SKU → PDP URL map
@@ -179,14 +121,15 @@ Open http://localhost:3000
 │     └─ utils.ts                 # misc utils
 │
 ├─ .env.local                     # local environment variables
-├─ next.config.mjs
+├─ next.config.ts
 ├─ package.json
 ├─ pnpm-lock.yaml
 ├─ tailwind.config.js
 └─ tsconfig.json
+Contributing
 
-Contributions welcome! Open an issue or PR.
-
+Contributions are welcome!
+Open an issue or PR to suggest features, improvements, or fixes.
 License
 
 MIT © The Safety Plan
