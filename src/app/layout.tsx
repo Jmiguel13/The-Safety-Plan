@@ -4,23 +4,16 @@ import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Inter } from "next/font/google";
 import { getEnv } from "@/lib/env";
+import HelpStripMobile from "@/components/HelpStripMobile"; // ⬅️ added
 
 const inter = Inter({ subsets: ["latin"] });
 
 function safeBase(u: string) {
-  try {
-    return new URL(u);
-  } catch {
-    return new URL("http://localhost:3000");
-  }
+  try { return new URL(u); } catch { return new URL("http://localhost:3000"); }
 }
 
 const env = (() => {
-  try {
-    return getEnv();
-  } catch {
-    return null;
-  }
+  try { return getEnv(); } catch { return null; }
 })();
 
 export const metadata: Metadata = {
@@ -40,11 +33,12 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "The Safety Plan",
-    description:
-      "Mission-first wellness kits — focus, recovery, hydration, rest.",
+    description: "Mission-first wellness kits — focus, recovery, hydration, rest.",
     images: ["/opengraph-image"],
   },
   icons: { icon: "/favicon.ico" },
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
@@ -72,22 +66,33 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
 
             <nav aria-label="Primary" className="flex items-center gap-3 text-sm">
-              <Link href="/kits" className="btn-ghost">
-                Kits
-              </Link>
-              <Link href="/shop" className="btn-ghost">
-                Shop
-              </Link>
-              <Link href="/gallery" className="btn-ghost">
-                Gallery
-              </Link>
-              <Link href="/faq" className="btn-ghost">
-                FAQ
-              </Link>
-              <Link href="/donate" className="btn">
-                Donate
-              </Link>
+              <Link href="/kits" className="btn-ghost">Kits</Link>
+              <Link href="/shop" className="btn-ghost">Shop</Link>
+              <Link href="/gallery" className="btn-ghost">Gallery</Link>
+              <Link href="/faq" className="btn-ghost">FAQ</Link>
+              <Link href="/donate" className="btn">Donate</Link>
             </nav>
+          </div>
+
+          {/* Crisis ribbon */}
+          <div
+            role="region"
+            aria-label="Crisis support"
+            className="mx-auto mt-2 w-full max-w-6xl px-4 pb-2"
+          >
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+              <span className="inline-flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-red-300" aria-hidden="true" />
+                <strong className="tracking-wide">In crisis?</strong>
+                <span className="opacity-90">
+                  {" "}Call <a href="tel:988" className="underline underline-offset-2 hover:opacity-100">988</a>{" "}
+                  (Veterans press 1) or text{" "}
+                  <a href="sms:838255" className="underline underline-offset-2 hover:opacity-100">
+                    838255
+                  </a>.
+                </span>
+              </span>
+            </div>
           </div>
         </header>
 
@@ -99,22 +104,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Footer */}
         <footer className="mt-16 border-t border-zinc-900/80">
           <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 sm:flex-row">
-            <p className="text-xs text-zinc-500">
-              © {new Date().getFullYear()} The Safety Plan
-            </p>
+            <p className="text-xs text-zinc-500">© {new Date().getFullYear()} The Safety Plan</p>
             <div className="flex items-center gap-4 text-xs">
-              <Link href="/privacy" className="underline-offset-2 hover:underline">
-                Privacy
-              </Link>
-              <Link href="/terms" className="underline-offset-2 hover:underline">
-                Terms
-              </Link>
-              <Link href="/api/version" className="text-zinc-500 underline-offset-2 hover:underline">
-                Version
-              </Link>
+              <Link href="/privacy" className="underline-offset-2 hover:underline">Privacy</Link>
+              <Link href="/terms" className="underline-offset-2 hover:underline">Terms</Link>
+              <Link href="/api/version" className="text-zinc-500 underline-offset-2 hover:underline">Version</Link>
             </div>
           </div>
         </footer>
+
+        {/* Mobile floating help strip */}
+        <HelpStripMobile />
       </body>
     </html>
   );

@@ -190,3 +190,8 @@ Contributions welcome! Open an issue or PR.
 License
 
 MIT © The Safety Plan
+Dedication
+
+This project is dedicated to the ones who fight,
+to the brave whose courage encourages,
+and to the bold who dare to accept the challenge of peace and freedom.

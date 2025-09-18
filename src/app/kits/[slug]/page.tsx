@@ -1,105 +1,106 @@
-// src/app/kits/[slug]/page.tsx
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { kits, type Kit } from "@/lib/kits";
-import { MYSHOP_BASE } from "@/lib/amway";
-import KitHeader from "@/components/KitHeader";
-import KitItemsList from "@/components/KitItemsList";
-import { normalizeItems, fullKitCartUrl } from "@/lib/kits-helpers";
-import { TSP_PRODUCTS } from "@/lib/tsp-products";
+import {
+  heroForKit,
+  titleForKit,
+  subtitleForKit,
+  statsForKit,
+  weightLabel,
+  normalizeItems,
+} from "@/lib/kits-helpers";
+import BuyButtons from "@/components/BuyButtons";
+import ItemRow from "@/components/ItemRow";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 86400;
 
-/** Find a kit by slug */
-function findKit(slug: string): Kit | null {
-  const list = kits as Kit[];
-  return list.find((k) => k.slug === slug) ?? null;
+export function generateStaticParams() {
+  return (kits as Kit[]).map((k) => ({ slug: k.slug }));
 }
 
 export default async function KitPage({
   params,
 }: {
-  /** Next 15 type checker expects Promise for params */
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
 
-  const kit = findKit(slug);
-  if (!kit) notFound();
+  const kit = (kits as Kit[]).find((k) => k.slug === slug);
+  if (!kit) return notFound();
+
+  const title = titleForKit(kit.slug, kit);
+  const subtitle = subtitleForKit(kit.slug, kit);
+  const stats = statsForKit(kit);
+  const hero = heroForKit(kit.slug, kit);
+  const weight = weightLabel(kit);
 
   const items = normalizeItems(kit);
-  const addAllUrl = fullKitCartUrl(kit) ?? undefined;
-
-  // KitHeader requires a string; fall back to MyShop root if we can't build a cart URL
-  const buyUrl = addAllUrl ?? MYSHOP_BASE;
-
-  // Optional Safety Plan gear section
-  const gear = Array.isArray(kit.gear)
-    ? kit.gear
-        .map((id) => TSP_PRODUCTS.find((g) => g.id === id) || null)
-        .filter((g): g is NonNullable<typeof g> => Boolean(g))
-    : [];
+  const cartItems = items.map(({ sku, qty }) => ({ sku, qty }));
 
   return (
-    <section className="space-y-10 max-w-5xl mx-auto">
-      {/* Header */}
-      <KitHeader slug={slug} kit={kit} buyUrl={buyUrl} />
-
-      {/* What's inside */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">What’s inside</h2>
-        {items.length ? (
-          <KitItemsList items={items} />
-        ) : (
-          <div className="panel-elevated p-6">
-            <p className="muted">
-              No items yet. Add SKUs under <code>items[]</code> in <code>src/lib/kits.ts</code>.
-            </p>
+    <section className="space-y-8">
+      <header className="overflow-hidden rounded-2xl border border-[var(--border)] bg-grid preview-surface">
+        <div className="grid md:grid-cols-[320px_1fr]">
+          <div className="relative aspect-[4/3] md:aspect-auto md:h-full">
+            <Image
+              src={hero.src}
+              alt={hero.alt}
+              fill
+              className="object-cover"
+              sizes="(min-width: 768px) 320px, 100vw"
+              priority
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
           </div>
-        )}
-      </div>
 
-      {/* Optional Safety Plan gear */}
-      {gear.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">The Safety Plan gear</h2>
-          <ul className="space-y-3">
-            {gear.map((g) => {
-              const href = `/gear/${g.id.replace(/_/g, "-")}`;
-              return (
-                <li key={g.id} className="glow-row">
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{g.title}</div>
-                    {g.blurb ? <div className="text-sm muted">{g.blurb}</div> : null}
-                  </div>
-                  <Link href={href} className="link-chip" aria-label={`View ${g.title}`}>
-                    View
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          <div className="p-6 md:p-8 flex flex-col gap-3">
+            <div className="tag tag-accent w-max">Kit</div>
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">{title}</h1>
+            {subtitle ? <p className="muted">{subtitle}</p> : null}
+
+            <div className="flex flex-wrap gap-2 pt-1 text-sm">
+              <span className="pill">{stats.itemCount} items</span>
+              <span className="pill">{stats.skuCount} SKUs</span>
+              {weight ? <span className="pill">{weight}</span> : null}
+            </div>
+
+            <div className="flex flex-wrap gap-3 pt-4">
+              <BuyButtons items={cartItems} fallbackSkusTitle={`${title} — SKUs`} />
+              <Link href={`/kits/${kit.slug}/items`} className="btn-ghost">
+                View all items
+              </Link>
+            </div>
+          </div>
         </div>
-      )}
+      </header>
 
-      {/* Bottom CTAs */}
-      <div className="flex flex-wrap gap-3">
-        {items.length > 0 && addAllUrl ? (
-          <a
-            href={addAllUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn"
-            aria-label={`Add full ${kit.title ?? "kit"} to MyShop cart`}
-          >
-            Add full kit to cart
-          </a>
-        ) : null}
-        <Link href={`/kits/${slug}/items`} className="btn-ghost">
-          View items
-        </Link>
-      </div>
+      {items.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-xl font-semibold">What’s inside</h2>
+          <ul className="grid gap-2">
+            {items.slice(0, 5).map((it) => (
+              <ItemRow
+                key={it.sku}
+                title={it.title}
+                sku={it.sku}
+                qty={it.qty}
+                note={it.note}
+                buyUrl={it.buy_url}
+                contextRight={`in ${title}`}
+              />
+            ))}
+          </ul>
+          {items.length > 5 ? (
+            <div>
+              <Link href={`/kits/${kit.slug}/items`} className="btn-ghost">
+                See all {items.length} items
+              </Link>
+            </div>
+          ) : null}
+        </section>
+      )}
     </section>
   );
 }

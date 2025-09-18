@@ -1,32 +1,100 @@
 // src/components/KitCard.tsx
 import Link from "next/link";
+import Image from "next/image";
 
-export default function KitCard(props: {
-  href: string;
+export type KitCardProps = {
+  slug: string;
   title: string;
-  blurb: string;
-  weight?: string;
-}) {
-  return (
-    <article className="group rounded-3xl border border-zinc-800 bg-zinc-950 p-6 transition hover:border-emerald-500/40">
-      <header className="flex items-start justify-between gap-4">
-        <h3 className="text-2xl font-semibold">{props.title}</h3>
-        {props.weight ? (
-          <span className="rounded-full border border-zinc-800 bg-zinc-900 px-2 py-1 text-xs text-zinc-300">
-            {props.weight}
-          </span>
-        ) : null}
-      </header>
-      <p className="mt-2 text-zinc-300">{props.blurb}</p>
+  hero: { src: string; alt: string };
+  subtitle?: string;
+  stats?: { itemCount: number; skuCount: number };
+  /** If true, show both “View kit” and “Items” (used on /kits). Default: false */
+  showItemsLink?: boolean;
+  /** Layout option. Default: 'leftThumb' */
+  layout?: "leftThumb" | "topThumb";
+};
 
-      <div className="mt-5">
-        <Link
-          href={props.href}
-          className="inline-flex items-center gap-2 rounded-full bg-emerald-400 px-4 py-2 text-black transition hover:bg-emerald-300"
-        >
-          View Details <span aria-hidden>→</span>
-        </Link>
+export default function KitCard({
+  slug,
+  title,
+  hero,
+  subtitle,
+  stats,
+  showItemsLink = false,
+  layout = "leftThumb",
+}: KitCardProps) {
+  const meta =
+    subtitle && subtitle.trim().length > 0
+      ? subtitle
+      : stats
+      ? `${stats.itemCount} items • ${stats.skuCount} SKUs`
+      : "";
+
+  const LeftThumb = (
+    <div className="panel overflow-hidden p-0">
+      <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr]">
+        {/* Thumb */}
+        <div className="relative aspect-[16/10] sm:aspect-auto sm:h-full">
+          <Image
+            src={hero.src}
+            alt={hero.alt}
+            fill
+            className="object-cover"
+            sizes="(min-width: 640px) 200px, 100vw"
+          />
+        </div>
+
+        {/* Content */}
+        <div className="p-5 flex flex-col gap-3 min-w-0">
+          <div className="min-w-0 space-y-1">
+            <div className="font-medium truncate">{title}</div>
+            {meta ? <div className="muted text-sm truncate">{meta}</div> : null}
+          </div>
+
+          <div className="mt-1 flex gap-2">
+            <Link href={`/kits/${slug}`} className="btn">
+              View kit
+            </Link>
+            {showItemsLink ? (
+              <Link href={`/kits/${slug}/items`} className="btn-ghost">
+                Items
+              </Link>
+            ) : null}
+          </div>
+        </div>
       </div>
-    </article>
+    </div>
   );
+
+  const TopThumb = (
+    <div className="panel overflow-hidden p-0">
+      <div className="relative aspect-[16/10]">
+        <Image
+          src={hero.src}
+          alt={hero.alt}
+          fill
+          className="object-cover"
+          sizes="100vw"
+        />
+      </div>
+      <div className="p-5 flex flex-col gap-3 min-w-0">
+        <div className="min-w-0 space-y-1">
+          <div className="font-medium truncate">{title}</div>
+          {meta ? <div className="muted text-sm truncate">{meta}</div> : null}
+        </div>
+        <div className="mt-1 flex gap-2">
+          <Link href={`/kits/${slug}`} className="btn">
+            View kit
+          </Link>
+          {showItemsLink ? (
+            <Link href={`/kits/${slug}/items`} className="btn-ghost">
+              Items
+            </Link>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+
+  return layout === "topThumb" ? TopThumb : LeftThumb;
 }
