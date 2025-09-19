@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { kits } from "@/lib/kits";
 import { myShopLink, MYSHOP_BASE } from "@/lib/amway";
 import { TSP_PRODUCTS } from "@/lib/tsp-products";
@@ -12,13 +13,20 @@ type KitLite = {
 type SoloItem = { sku: string; title: string; url: string };
 
 // Rebuild this static page at most once per day
-export const revalidate = 86400;
+export const revalidate = 86_400;
+
+export const metadata: Metadata = {
+  title: "Shop",
+  description:
+    "Browse kits and curated picks. Checkout happens on Amway (MyShop) with proper credit.",
+};
 
 function titleCase(s: string) {
   return s ? s.replace(/^\w/, (c) => c.toUpperCase()) : s;
 }
+
 function countsForKit(k: KitLite) {
-  const arr = Array.isArray(k.items)
+  const skuList = Array.isArray(k.items)
     ? k.items.map((i) => i.sku)
     : Array.isArray(k.skus)
     ? k.skus
@@ -28,9 +36,10 @@ function countsForKit(k: KitLite) {
     : Array.isArray(k.skus)
     ? k.skus.length
     : 0;
-  const skuCount = new Set(arr.map(String)).size;
+  const skuCount = new Set(skuList.map(String)).size;
   return { itemCount, skuCount };
 }
+
 function soloItems(): SoloItem[] {
   const picks = [
     { sku: "127070", title: "XS Energy 12-pack — Variety Case" },
@@ -46,20 +55,22 @@ export default function ShopPage() {
     title: k.title ?? `${titleCase(k.slug)} Kit`,
     stats: countsForKit(k),
   }));
+
   const solos = soloItems();
   const hasTsp = Array.isArray(TSP_PRODUCTS) && TSP_PRODUCTS.length > 0;
 
   return (
-    <section className="space-y-10 max-w-4xl">
+    <section className="max-w-4xl space-y-10">
       {/* Header */}
       <header className="space-y-3">
         <h1 className="text-5xl font-extrabold tracking-tight">Shop</h1>
         <p className="muted">
-          Visit our official Amway storefront. Every order advances the mission.
+          Checkout happens on Amway (MyShop). All links credit our storefront and include UTM tags.
         </p>
         <div className="flex flex-wrap gap-3 pt-1">
+          {/* Use myShopLink to ensure UTM params are present */}
           <a
-            href={MYSHOP_BASE}
+            href={myShopLink("")}
             target="_blank"
             rel="noopener noreferrer"
             className="btn"
@@ -83,34 +94,29 @@ export default function ShopPage() {
       </header>
 
       {/* Mission blurb */}
-      <div className="panel-elevated p-5 space-y-1">
+      <div className="panel-elevated space-y-1 p-5">
         <h3 className="font-semibold">Our mission</h3>
         <p className="muted">
-          The Safety Plan exists to save lives. We provide clean, effective wellness kits that
-          meet real needs: hydration, energy, recovery, and rest. Profits support veteran suicide
+          The Safety Plan exists to save lives. We provide clean, effective wellness kits that meet
+          real needs: hydration, energy, recovery, and rest. Profits support veteran suicide
           prevention and frontline support.
         </p>
       </div>
 
       {/* Kits */}
-      <section id="kits" className="space-y-4 scroll-mt-24">
+      <section id="kits" className="scroll-mt-24 space-y-4">
         <h2 className="text-2xl font-semibold">The Kits</h2>
         <ul className="grid gap-3 sm:grid-cols-2">
           {kitsList.map((k) => (
-            <li key={k.slug} className="panel p-4 flex items-center justify-between">
+            <li key={k.slug} className="panel flex items-center justify-between p-4">
               <div className="min-w-0">
-                <div className="font-medium truncate">{k.title}</div>
+                <div className="truncate font-medium">{k.title}</div>
                 <div className="muted text-sm">
                   {k.stats.itemCount} items • {k.stats.skuCount} SKUs
                 </div>
               </div>
               <div className="flex gap-2">
-                {/* Single clear CTA: send users to the kit detail page */}
-                <Link
-                  href={`/kits/${k.slug}`}
-                  className="btn-ghost"
-                  aria-label={`View ${k.title}`}
-                >
+                <Link href={`/kits/${k.slug}`} className="btn-ghost" aria-label={`View ${k.title}`}>
                   View kit
                 </Link>
               </div>
@@ -120,11 +126,11 @@ export default function ShopPage() {
       </section>
 
       {/* Solo Amway products */}
-      <section id="solo" className="space-y-4 scroll-mt-24">
+      <section id="solo" className="scroll-mt-24 space-y-4">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl font-semibold">Solo Amway Products</h2>
           <a
-            href={MYSHOP_BASE}
+            href={myShopLink("")}
             target="_blank"
             rel="noopener noreferrer"
             className="btn-ghost text-sm"
@@ -142,7 +148,7 @@ export default function ShopPage() {
             {solos.map((p) => (
               <li key={p.sku} className="glow-row">
                 <div className="min-w-0">
-                  <div className="font-medium truncate">{p.title}</div>
+                  <div className="truncate font-medium">{p.title}</div>
                   <div className="muted text-sm">Quick-buy single item · SKU {p.sku}</div>
                 </div>
                 <div>
@@ -163,7 +169,7 @@ export default function ShopPage() {
       </section>
 
       {/* The Safety Plan gear */}
-      <section id="tsp" className="space-y-4 scroll-mt-24">
+      <section id="tsp" className="scroll-mt-24 space-y-4">
         <h2 className="text-2xl font-semibold">The Safety Plan Products</h2>
         {!hasTsp ? (
           <div className="panel p-4">
@@ -180,7 +186,7 @@ export default function ShopPage() {
               return (
                 <li key={p.id} className="glow-row">
                   <div className="min-w-0">
-                    <div className="font-medium truncate">{p.title}</div>
+                    <div className="truncate font-medium">{p.title}</div>
                     {p.blurb ? <div className="muted text-sm">{p.blurb}</div> : null}
                   </div>
 
@@ -201,8 +207,13 @@ export default function ShopPage() {
           </ul>
         )}
       </section>
+
+      <p className="text-xs text-zinc-500">
+        Storefront base:&nbsp;
+        <a href={MYSHOP_BASE} target="_blank" rel="noopener noreferrer" className="underline">
+          {MYSHOP_BASE}
+        </a>
+      </p>
     </section>
   );
 }
-
-

@@ -1,6 +1,8 @@
+// src/app/error.tsx
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 
 export default function Error({
   error,
@@ -10,22 +12,31 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // optionally log to your APM
     console.error(error);
   }, [error]);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16">
-      <h1 className="text-2xl font-semibold">Something went wrong</h1>
-      <p className="mt-2 text-sm text-zinc-400">
-        {error?.message ?? "Unexpected error."}
+    <div
+      role="alert"
+      className="mx-auto max-w-2xl rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-100"
+    >
+      <h2 className="font-semibold tracking-tight">Something went wrong.</h2>
+      <p className="mt-1 text-sm opacity-80">
+        Please try again. If the issue persists, let us know.
       </p>
-      {error?.digest && (
-        <p className="mt-1 text-xs text-zinc-500">Digest: {error.digest}</p>
-      )}
-      <button onClick={() => reset()} className="btn mt-6">
-        Try again
-      </button>
+
+      <div className="mt-3 flex gap-2">
+        <button onClick={() => reset()} className="btn px-3 py-1">
+          Try again
+        </button>
+        <Link href="/" className="btn-ghost px-3 py-1">
+          Home
+        </Link>
+      </div>
+
+      {error?.digest ? (
+        <p className="mt-3 text-xs opacity-60">Error ID: {error.digest}</p>
+      ) : null}
     </div>
   );
 }

@@ -34,7 +34,6 @@
     min-height: 100%;
   }
 
-  /* Selection */
   ::selection {
     background: rgba(16, 185, 129, 0.28);
     color: #fff;
@@ -48,25 +47,9 @@
   /* Tactical grid background */
   .bg-grid {
     background:
-      radial-gradient(
-        1200px 600px at 75% -10%,
-        rgba(0, 0, 0, 0.28),
-        transparent 60%
-      ),
-      repeating-linear-gradient(
-        0deg,
-        rgba(255, 255, 255, var(--grid-alpha)) 0px,
-        rgba(255, 255, 255, var(--grid-alpha)) 1px,
-        transparent 1px,
-        transparent 24px
-      ),
-      repeating-linear-gradient(
-        90deg,
-        rgba(255, 255, 255, var(--grid-alpha)) 0px,
-        rgba(255, 255, 255, var(--grid-alpha)) 1px,
-        transparent 1px,
-        transparent 24px
-      ),
+      radial-gradient(1200px 600px at 75% -10%, rgba(0, 0, 0, 0.28), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, var(--grid-alpha)) 0px, rgba(255, 255, 255, var(--grid-alpha)) 1px, transparent 1px, transparent 24px),
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, var(--grid-alpha)) 0px, rgba(255, 255, 255, var(--grid-alpha)) 1px, transparent 1px, transparent 24px),
       linear-gradient(#0c1214, #0c1214);
     color: var(--fg);
   }
@@ -84,21 +67,13 @@
   }
 
   @supports (text-wrap: balance) {
-    .text-balance {
-      text-wrap: balance;
-    }
+    .text-balance { text-wrap: balance; }
   }
 
-  .muted {
-    color: var(--fg-muted);
-  }
+  .muted { color: var(--fg-muted); }
 
-  a {
-    text-underline-offset: 3px;
-  }
-  a:hover {
-    text-decoration-thickness: 2px;
-  }
+  a { text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
 
   :focus-visible {
     outline: 2px solid var(--ring);
@@ -106,9 +81,8 @@
     border-radius: 8px;
   }
 
-  body {
-    padding-bottom: 64px; /* space for help ribbon */
-  }
+  /* Only reserve space for the help ribbon if it’s enabled */
+  body[data-help-strip="1"] { padding-bottom: 64px; }
 
   @media (prefers-reduced-motion: reduce) {
     * {
@@ -128,39 +102,22 @@
     margin-inline: auto;
     padding-inline: 1rem;
   }
-  @media (min-width: 768px) {
-    .container {
-      padding-inline: 2rem;
-    }
-  }
+  @media (min-width: 768px) { .container { padding-inline: 2rem; } }
 
   .btn,
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 transition;
     border: 1px solid var(--border);
-    -webkit-user-select: none; /* Safari / iOS */
-    user-select: none;          /* Standard */
+    -webkit-user-select: none;
+    user-select: none;
     will-change: transform, background-color, border-color;
   }
-  .btn {
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--fg);
-  }
-  .btn:hover {
-    transform: translateY(-1px);
-    background: rgba(255, 255, 255, 0.1);
-  }
-  .btn:active {
-    transform: translateY(0);
-  }
+  .btn { background: rgba(255, 255, 255, 0.06); color: var(--fg); }
+  .btn:hover { transform: translateY(-1px); background: rgba(255, 255, 255, 0.1); }
+  .btn:active { transform: translateY(0); }
 
-  .btn-ghost {
-    background: transparent;
-    color: var(--fg);
-  }
-  .btn-ghost:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
+  .btn-ghost { background: transparent; color: var(--fg); }
+  .btn-ghost:hover { background: rgba(255, 255, 255, 0.05); }
 
   .btn[disabled],
   .btn-ghost[disabled] {
@@ -199,32 +156,20 @@
     border-radius: var(--radius);
   }
 
-  .divider {
-    height: 1px;
-    background: var(--border);
-    opacity: 0.6;
-    margin: 2rem 0;
-  }
+  .divider { height: 1px; background: var(--border); opacity: 0.6; margin: 2rem 0; }
 
-  .pill {
-    @apply rounded-full px-3 py-1 border transition;
-    border-color: var(--border);
-  }
+  .pill { @apply rounded-full px-3 py-1 border transition; border-color: var(--border); }
   .pill[data-active="true"] {
     background: rgba(54, 211, 153, 0.14);
     box-shadow: inset 0 0 0 1px rgba(54, 211, 153, 0.35);
   }
-  .pill:hover {
-    background: rgba(255, 255, 255, 0.06);
-  }
+  .pill:hover { background: rgba(255, 255, 255, 0.06); }
 
   .glow-row {
     @apply flex items-center justify-between rounded-lg border px-4 py-3 transition;
     border-color: var(--border);
   }
-  .glow-row:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
+  .glow-row:hover { background: rgba(255, 255, 255, 0.05); }
 
   .faq-card {
     @apply rounded-xl border p-4 md:p-6 space-y-3;
@@ -239,56 +184,25 @@
     background: rgba(255, 255, 255, 0.03);
     color: var(--link);
   }
-  .link-chip:hover {
-    background: rgba(255, 255, 255, 0.06);
-  }
-  .link-chip:focus-visible {
-    outline: 2px solid var(--ok);
-    outline-offset: 2px;
-  }
-  .link-chip.tel::before {
-    content: "📞";
-  }
-  .link-chip.sms::before {
-    content: "💬";
-  }
+  .link-chip:hover { background: rgba(255, 255, 255, 0.06); }
+  .link-chip:focus-visible { outline: 2px solid var(--ok); outline-offset: 2px; }
+  .link-chip.tel::before { content: "📞"; }
+  .link-chip.sms::before { content: "💬"; }
 
-  .gallery-figure {
-    @apply relative overflow-hidden rounded-xl border;
-    border-color: var(--border);
-    background: var(--panel);
-  }
-  .gallery-img {
-    @apply object-cover transition-transform duration-300;
-  }
-  .gallery-figure:hover .gallery-img {
-    transform: scale(1.05);
-  }
-  .gallery-caption {
-    @apply absolute inset-0 flex items-end bg-black/0 transition-colors;
-  }
-  .gallery-figure:hover .gallery-caption {
-    background: rgba(0, 0, 0, 0.3);
-  }
-  .gallery-caption > div {
-    @apply w-full p-3 text-[13px];
-    color: var(--fg);
-    opacity: 0.9;
-  }
+  .gallery-figure { @apply relative overflow-hidden rounded-xl border; border-color: var(--border); background: var(--panel); }
+  .gallery-img { @apply object-cover transition-transform duration-300; }
+  .gallery-figure:hover .gallery-img { transform: scale(1.05); }
+  .gallery-caption { @apply absolute inset-0 flex items-end bg-black/0 transition-colors; }
+  .gallery-figure:hover .gallery-caption { background: rgba(0, 0, 0, 0.3); }
+  .gallery-caption > div { @apply w-full p-3 text-[13px]; color: var(--fg); opacity: 0.9; }
   @supports (color: color-mix(in oklab, black 90%)) {
-    .gallery-caption > div {
-      color: color-mix(in oklab, var(--fg) 92%, transparent);
-      opacity: 1;
-    }
+    .gallery-caption > div { color: color-mix(in oklab, var(--fg) 92%, transparent); opacity: 1; }
   }
 }
 
 /* ===================== UTILITIES ===================== */
 @layer utilities {
-  .ring-ok {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-  }
+  .ring-ok { outline: 2px solid var(--ring); outline-offset: 2px; }
   .shadow-subtle {
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset,
       0 8px 24px rgba(0, 0, 0, 0.18);
@@ -296,55 +210,33 @@
 }
 
 /* ===================== PREVIEW EFFECTS ===================== */
-.preview-surface {
-  position: relative;
-}
+.preview-surface { position: relative; }
 .preview-surface::before {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(
-      600px 300px at 50% -20%,
-      rgba(16, 185, 129, 0.1),
-      transparent 60%
-    ),
+    radial-gradient(600px 300px at 50% -20%, rgba(16, 185, 129, 0.1), transparent 60%),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
 }
 
 .pulse-dot {
-  width: 28px;
-  height: 28px;
-  border-radius: 9999px;
+  width: 28px; height: 28px; border-radius: 9999px;
   background: var(--ok);
   position: relative;
   will-change: transform, opacity;
 }
 .pulse-dot::after {
   content: "";
-  position: absolute;
-  inset: -12px;
-  border-radius: 9999px;
+  position: absolute; inset: -12px; border-radius: 9999px;
   border: 2px solid rgba(16, 185, 129, 0.45);
   animation: sp-pulse 2s ease-out infinite;
 }
 @supports (color: color-mix(in oklab, black 90%)) {
-  .pulse-dot::after {
-    border-color: color-mix(in oklab, var(--ok) 65%, transparent);
-  }
+  .pulse-dot::after { border-color: color-mix(in oklab, var(--ok) 65%, transparent); }
 }
 @keyframes sp-pulse {
-  0% {
-    transform: scale(0.6);
-    opacity: 0.8;
-  }
-  70% {
-    transform: scale(1.25);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1.25);
-    opacity: 0;
-  }
+  0% { transform: scale(0.6); opacity: 0.8; }
+  70%,100% { transform: scale(1.25); opacity: 0; }
 }

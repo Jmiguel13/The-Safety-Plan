@@ -4,11 +4,10 @@ import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Inter } from "next/font/google";
 import { getEnv } from "@/lib/env";
-import HelpStrip from "@/components/HelpStrip"; // client component (has "use client" inside)
+import ClientHelpStripIsland from "@/components/ClientHelpStripIsland"; // client-only island
 
 const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
 
-/** Robust base URL resolver (works locally & on Vercel) */
 function toURL(value?: string) {
   try {
     return new URL(value ?? "");
@@ -27,7 +26,7 @@ const env = (() => {
 
 export const metadata: Metadata = {
   metadataBase: toURL(env?.NEXT_PUBLIC_SITE_URL),
-  title: { default: "The Safety Plan", template: `%s \u2014 The Safety Plan` }, // em-dash
+  title: { default: "The Safety Plan", template: `%s \u2014 The Safety Plan` },
   description:
     "Mission-first wellness kits — focus, recovery, hydration, rest. Every purchase supports veteran suicide prevention.",
   openGraph: {
@@ -54,11 +53,14 @@ export const viewport: Viewport = { themeColor: "#000000", colorScheme: "dark" }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const year = new Date().getFullYear();
-  const showHelpStrip = process.env.NEXT_PUBLIC_ENABLE_HELP_STRIP !== "0";
+  const helpStripEnabled = process.env.NEXT_PUBLIC_ENABLE_HELP_STRIP !== "0";
 
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} bg-black text-white`}>
-      <body className={`${inter.className} min-h-dvh bg-[var(--bg)] text-[var(--fg)] antialiased`}>
+      <body
+        className={`${inter.className} min-h-dvh bg-[var(--bg)] text-[var(--fg)] antialiased`}
+        data-help-strip={helpStripEnabled ? "1" : "0"}
+      >
         {/* Skip link */}
         <a
           href="#content"
@@ -97,26 +99,59 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </span>
                 </summary>
 
-                <ul className="mt-2 flex flex-col gap-1 sm:mt-0 sm:flex-row sm:items-center sm:gap-3 text-sm">
-                  <li><Link href="/kits" className="btn-ghost block px-2 py-1">Kits</Link></li>
-                  <li><Link href="/shop" className="btn-ghost block px-2 py-1">Shop</Link></li>
-                  <li><Link href="/gallery" className="btn-ghost block px-2 py-1">Gallery</Link></li>
-                  <li><Link href="/faq" className="btn-ghost block px-2 py-1">FAQ</Link></li>
-                  <li><Link href="/donate" className="btn block px-2 py-1">Donate</Link></li>
+                {/* Restored original order & styles */}
+                <ul className="mt-2 flex flex-col gap-1 text-sm sm:mt-0 sm:flex-row sm:items-center sm:gap-3">
+                  <li>
+                    <Link href="/kits" className="btn-ghost block px-2 py-1">
+                      Kits
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/shop" className="btn-ghost block px-2 py-1">
+                      Shop
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/gallery" className="btn-ghost block px-2 py-1">
+                      Gallery
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/faq" className="btn-ghost block px-2 py-1">
+                      FAQ
+                    </Link>
+                  </li>
+                  <li className="sm:ml-1">
+                    <Link href="/donate" className="btn px-3 py-1">
+                      Donate
+                    </Link>
+                  </li>
                 </ul>
               </details>
             </nav>
           </div>
 
           {/* Crisis ribbon (desktop) */}
-          <div role="region" aria-label="Crisis support" className="mx-auto mt-2 hidden w-full max-w-6xl px-4 pb-2 md:block">
+          <div
+            role="region"
+            aria-label="Crisis support"
+            className="mx-auto mt-2 hidden w-full max-w-6xl px-4 pb-2 md:block"
+          >
             <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
               <span className="inline-flex items-center gap-2">
-                <span className="inline-block h-2 w-2 rounded-full bg-red-300" aria-hidden />
+                <span className="inline-block h-2 w-2 rounded-full bg-red-300" aria-hidden="true" />
                 <strong className="tracking-wide">In crisis?</strong>
                 <span className="opacity-90">
-                  {" "}Call <a href="tel:988" className="underline underline-offset-2 hover:opacity-100">988</a> (Veterans press 1) or text{" "}
-                  <a href="sms:838255" className="underline underline-offset-2 hover:opacity-100">838255</a>.
+                  {" "}
+                  Call{" "}
+                  <a href="tel:988" className="underline underline-offset-2 hover:opacity-100">
+                    988
+                  </a>{" "}
+                  (Veterans press 1) or text{" "}
+                  <a href="sms:838255" className="underline underline-offset-2 hover:opacity-100">
+                    838255
+                  </a>
+                  .
                 </span>
               </span>
             </div>
@@ -133,15 +168,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 sm:flex-row">
             <p className="text-xs text-zinc-500">{"\u00A9"} {year} The Safety Plan</p>
             <div className="flex items-center gap-4 text-xs">
-              <Link href="/privacy" className="underline-offset-2 hover:underline">Privacy</Link>
-              <Link href="/terms" className="underline-offset-2 hover:underline">Terms</Link>
-              <Link href="/api/version" className="text-zinc-500 underline-offset-2 hover:underline">Version</Link>
+              <Link href="/privacy" className="underline-offset-2 hover:underline">
+                Privacy
+              </Link>
+              <Link href="/terms" className="underline-offset-2 hover:underline">
+                Terms
+              </Link>
+              <Link href="/api/version" className="text-zinc-500 underline-offset-2 hover:underline">
+                Version
+              </Link>
             </div>
           </div>
         </footer>
 
         {/* Mobile floating help strip (client island; toggle with env) */}
-        {showHelpStrip ? <HelpStrip /> : null}
+        <ClientHelpStripIsland enabled={helpStripEnabled} />
       </body>
     </html>
   );

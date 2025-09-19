@@ -1,6 +1,4 @@
-// src/app/api/version/route.ts
 import { NextResponse } from "next/server";
-
 export const runtime = "edge";
 
 export async function GET() {
@@ -19,4 +17,3 @@ export async function GET() {
     ts: new Date().toISOString(),
   });
 }
-

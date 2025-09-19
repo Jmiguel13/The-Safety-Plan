@@ -1,9 +1,17 @@
-import { createClient } from "@supabase/supabase-js";
+// src/lib/ssr-supabase.ts
+import "server-only";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { ENV } from "@/lib/env";
 
-export function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  if (!url || !key) throw new Error("Missing Supabase envs for public reads");
-  return createClient(url, key, { auth: { persistSession: false } });
+/**
+ * Lightweight server-side client for read-only queries during build/SSR.
+ * Uses the public anon key (NOT the service role key).
+ */
+export function getSupabase(): SupabaseClient {
+  return createClient(ENV.NEXT_PUBLIC_SUPABASE_URL, ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { "X-Client-Info": "tsp-ssr" } },
+  });
 }
 
+export type SSRSupabase = ReturnType<typeof getSupabase>;
