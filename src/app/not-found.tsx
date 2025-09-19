@@ -1,20 +1,26 @@
+// src/app/not-found.tsx
 import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <main className="min-h-[70vh] grid place-items-center px-6">
-      <div className="text-center space-y-3">
-        <div className="tag tag-accent w-max mx-auto">404</div>
-        <h1 className="text-4xl font-extrabold tracking-tight">Kit not found</h1>
-        <p className="muted max-w-md mx-auto">
-          The kit you are looking for doesn’t exist or isn’t published.
-        </p>
-        <div className="flex items-center justify-center gap-3 pt-1">
-          <Link href="/" className="btn">Go home</Link>
-          <Link href="/kits" className="btn-ghost" aria-label="View all kits">View All Kits</Link>
-        </div>
+    <section className="mx-auto max-w-3xl py-16 space-y-6">
+      <h1 className="text-4xl font-extrabold tracking-tight">Page not found</h1>
+      <p className="muted">
+        We couldn’t find what you were looking for. Try one of these:
+      </p>
+
+      <div className="flex flex-wrap gap-3 pt-2">
+        <Link href="/" className="btn">Home</Link>
+        <Link href="/shop" className="btn-ghost">Shop</Link>
+        <Link href="/kits" className="btn-ghost">Kits</Link>
+        <Link href="/faq" className="btn-ghost">FAQ</Link>
       </div>
-    </main>
+
+      <div className="panel-elevated p-4 text-sm">
+        <strong className="font-semibold">In crisis?</strong>{" "}
+        Call <a className="link-chip tel" href="tel:988">988</a> (Veterans press 1) or text{" "}
+        <a className="link-chip sms" href="sms:838255">838255</a>.
+      </div>
+    </section>
   );
 }
-

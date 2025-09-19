@@ -2,9 +2,15 @@
 import Image from "next/image";
 import fs from "node:fs";
 import path from "node:path";
+import type { Metadata } from "next";
 
 export const runtime = "nodejs";
 export const revalidate = 300;
+
+export const metadata: Metadata = {
+  title: "Gallery",
+  description: "Real kit shots and field notes from The Safety Plan.",
+};
 
 type GalleryItem = { src: string; title: string; caption?: string };
 
@@ -16,11 +22,10 @@ const CAPTIONS: Record<string, string> = {
 const ALLOWED = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif", ".gif"]);
 
 function toTitle(base: string): string {
-  // gallery01 -> Gallery 01, homefront-kit -> Homefront Kit
-  const m = /^gallery(\d+)$/i.exec(base);
-  if (m) return `Gallery ${m[1].padStart(2, "0")}`;
+  // "gallery01" → "Gallery 01", "homefront-kit" → "Homefront Kit"
+  const g = /^gallery(\d+)$/i.exec(base);
+  if (g) return `Gallery ${g[1].padStart(2, "0")}`;
   return base
-    .replace(/\.[a-z0-9]+$/i, "")
     .replace(/[-_]+/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase())
     .trim() || "Untitled";
@@ -31,7 +36,7 @@ function readGallery(): GalleryItem[] {
   const galleryDir = path.join(publicDir, "gallery");
   const files: { file: string; src: string }[] = [];
 
-  // A) Prefer /public/gallery/*
+  // Prefer /public/gallery/*
   if (fs.existsSync(galleryDir)) {
     for (const f of fs.readdirSync(galleryDir)) {
       const ext = path.extname(f).toLowerCase();
@@ -40,18 +45,18 @@ function readGallery(): GalleryItem[] {
     }
   }
 
-  // B) If none found, fall back to /public/gallery*.*
+  // Fallback: /public/gallery*.* (e.g. gallery01.png)
   if (files.length === 0 && fs.existsSync(publicDir)) {
     for (const f of fs.readdirSync(publicDir)) {
       const ext = path.extname(f).toLowerCase();
       const base = path.basename(f, ext);
       if (!ALLOWED.has(ext)) continue;
-      if (!/^gallery/i.test(base)) continue; // only files starting with "gallery"
+      if (!/^gallery/i.test(base)) continue;
       files.push({ file: f, src: `/${f}` });
     }
   }
 
-  // Natural sort (gallery1, gallery2, gallery10...)
+  // Natural sort (gallery1, gallery2, gallery10…)
   files.sort((a, b) =>
     a.file.localeCompare(b.file, undefined, { numeric: true, sensitivity: "base" })
   );
@@ -66,9 +71,11 @@ export default async function GalleryPage() {
   const items = readGallery();
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-4" aria-labelledby="gallery-title">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold">Gallery</h1>
+        <h1 id="gallery-title" className="text-3xl font-bold">
+          Gallery
+        </h1>
         <p className="muted">Real kit shots and field notes.</p>
       </header>
 
@@ -86,7 +93,7 @@ export default async function GalleryPage() {
               <Image
                 className="gallery-img"
                 src={it.src}
-                alt={it.title}
+                alt={it.caption || it.title}
                 width={1600}
                 height={1000}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -105,4 +112,3 @@ export default async function GalleryPage() {
     </section>
   );
 }
-

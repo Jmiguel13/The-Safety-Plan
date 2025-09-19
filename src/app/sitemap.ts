@@ -1,39 +1,48 @@
 // src/app/sitemap.ts
 import type { MetadataRoute } from "next";
 import { kits } from "@/lib/kits";
-import { getEnv } from "@/lib/env";
+
+/** Rebuild at most once per day */
+export const revalidate = 86_400;
+
+function baseUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  return raw.replace(/\/+$/, ""); // strip trailing slash
+}
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = (() => {
-    try {
-      return new URL(getEnv().NEXT_PUBLIC_SITE_URL);
-    } catch {
-      return new URL("http://localhost:3000");
-    }
-  })();
-
-  const u = (path: string) => new URL(path, base).toString();
+  const host = baseUrl();
   const now = new Date();
 
-  // Core site routes
-  const core: MetadataRoute.Sitemap = [
-    { url: u("/"), lastModified: now, changeFrequency: "weekly", priority: 1 },
-    { url: u("/shop"), lastModified: now, changeFrequency: "weekly", priority: 0.9 },
-    { url: u("/kits"), lastModified: now, changeFrequency: "weekly", priority: 0.85 },
-    { url: u("/gallery"), lastModified: now, changeFrequency: "monthly", priority: 0.6 },
-    { url: u("/faq"), lastModified: now, changeFrequency: "monthly", priority: 0.6 },
-    { url: u("/donate"), lastModified: now, changeFrequency: "monthly", priority: 0.7 },
-    { url: u("/privacy"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
-    { url: u("/terms"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+  const staticRoutes: string[] = [
+    "/",
+    "/shop",
+    "/kits",
+    "/gallery",
+    "/faq",
+    "/donate",
+    "/privacy",
+    "/terms",
   ];
 
-  // Kit detail pages
-  const kitPages: MetadataRoute.Sitemap = (Array.isArray(kits) ? kits : []).map((k) => ({
-    url: u(`/kits/${k.slug}`),
+  const staticEntries: MetadataRoute.Sitemap = staticRoutes.map((path) => ({
+    url: `${host}${path}`,
     lastModified: now,
     changeFrequency: "weekly",
-    priority: 0.8,
+    priority: path === "/" ? 1 : 0.7,
   }));
 
-  return [...core, ...kitPages];
+  const kitEntries: MetadataRoute.Sitemap = (Array.isArray(kits) ? kits : [])
+    .filter(
+      (k): k is { slug: string; updatedAt?: string | Date } =>
+        !!k && typeof k.slug === "string"
+    )
+    .map((k) => ({
+      url: `${host}/kits/${k.slug}`,
+      lastModified: k.updatedAt ? new Date(k.updatedAt) : now,
+      changeFrequency: "weekly",
+      priority: 0.6,
+    }));
+
+  return [...staticEntries, ...kitEntries];
 }

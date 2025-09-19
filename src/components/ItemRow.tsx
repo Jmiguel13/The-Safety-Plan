@@ -1,70 +1,58 @@
 // src/components/ItemRow.tsx
-import CopySkus from "@/components/CopySkus";
-import { myShopLink } from "@/lib/amway";
+import CopySkus from "./CopySkus";
 
-export type ItemRowProps = {
-  title?: string;
+type Props = {
+  title?: string;           // <-- make optional
   sku: string;
   qty?: number;
-  buyUrl?: string;
-  /** Optional context displayed on the right (e.g., “in Resilient Kit”) */
-  contextRight?: string;
-  /** Optional note shown under the subtitle (muted) */
   note?: string;
+  /** External buy URL (e.g., Amway product page). If omitted, we only show the Copy chip. */
+  buyUrl?: string;
+  /** Small context hint on the right (e.g., "in Homefront Kit") */
+  contextRight?: string;
 };
 
 export default function ItemRow({
   title,
   sku,
   qty = 1,
+  note,
   buyUrl,
   contextRight,
-  note,
-}: ItemRowProps) {
+}: Props) {
+  const displayTitle = title?.trim() || `SKU ${sku}`;  // <-- safe fallback
+
   return (
     <li className="glow-row">
-      {/* Left: title + meta */}
       <div className="min-w-0">
-        <div className="font-medium truncate">{title ?? "Product"}</div>
-        <div className="text-sm muted flex items-center gap-2">
-          <span>SKU: {sku}</span>
-          {qty > 1 ? <span className="pill !px-2 !py-0.5 text-xs">Qty {qty}</span> : null}
+        <div className="font-medium truncate">{displayTitle}</div>
+        <div className="muted text-sm">
+          <span className="opacity-80">SKU</span>{" "}
+          <code className="rounded bg-black/40 px-1">{sku}</code>
+          {qty > 1 ? <> × {qty}</> : null}
+          {note ? <> • {note}</> : null}
         </div>
-        {note ? <div className="text-sm muted mt-0.5">{note}</div> : null}
       </div>
 
-      {/* Right: actions */}
       <div className="flex items-center gap-2">
-        {contextRight ? (
-          <span className="hidden md:inline text-xs muted">{contextRight}</span>
-        ) : null}
-
         {buyUrl ? (
           <a
             href={buyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="link-chip"
-            aria-label={`Buy ${title ?? sku}`}
+            className="btn-ghost"
+            aria-label={`Buy ${displayTitle}`}
           >
             Buy
           </a>
-        ) : (
-          <a
-            href={myShopLink(sku || "/")}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="link-chip"
-            aria-label={`View ${title ?? sku} on MyShop`}
-          >
-            View on MyShop
-          </a>
-        )}
+        ) : null}
 
-        {/* Always offer copy for quick manual add */}
-        <CopySkus items={[{ sku, qty }]} />
+        <CopySkus items={[{ sku, qty }]} variant="chip" label="Copy" />
+
+        {contextRight ? (
+          <span className="hidden sm:inline text-xs text-zinc-500">{contextRight}</span>
+        ) : null}
       </div>
     </li>
   );
 }
-

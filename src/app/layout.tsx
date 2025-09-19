@@ -71,17 +71,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         {/* Header */}
         <header
-          className="sticky top-0 z-40 border-b border-zinc-900/80 bg-black/70 backdrop-blur supports-[backdrop-filter]:bg-black/50"
           role="banner"
+          className="sticky top-0 z-40 border-b border-zinc-900/80 bg-black/70 backdrop-blur supports-[backdrop-filter]:bg-black/50"
+          // iOS safe-area
+          style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 0px)" }}
         >
           <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
-            <Link href="/" className="font-semibold tracking-tight">
+            <Link
+              href="/"
+              className="font-semibold tracking-tight ring-ok focus-visible:rounded-md -mx-1 px-1"
+              aria-label="The Safety Plan — Home"
+            >
               The Safety Plan
             </Link>
 
-            <nav aria-label="Primary">
+            <nav aria-label="Primary" className="site-nav">
               <details className="group open:pb-2 sm:open:pb-0 sm:static sm:block">
-                <summary className="list-none cursor-pointer sm:hidden">
+                <summary
+                  className="list-none cursor-pointer sm:hidden ring-ok focus-visible:rounded-md"
+                  aria-label="Toggle menu"
+                >
                   <span className="inline-flex items-center gap-2 rounded-md border border-white/10 px-3 py-1 text-sm/6">
                     Menu
                     <svg
@@ -99,30 +108,30 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </span>
                 </summary>
 
-                {/* Restored original order & styles */}
+                {/* Nav: Shop first (primary), Donate strong, others ghosted */}
                 <ul className="mt-2 flex flex-col gap-1 text-sm sm:mt-0 sm:flex-row sm:items-center sm:gap-3">
                   <li>
-                    <Link href="/kits" className="btn-ghost block px-2 py-1">
-                      Kits
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/shop" className="btn-ghost block px-2 py-1">
+                    <Link href="/shop" className="btn px-3 py-1 ring-ok focus-visible:rounded-full">
                       Shop
                     </Link>
                   </li>
                   <li>
-                    <Link href="/gallery" className="btn-ghost block px-2 py-1">
+                    <Link href="/kits" className="btn-ghost block px-2 py-1 ring-ok focus-visible:rounded-md">
+                      Kits
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/gallery" className="btn-ghost block px-2 py-1 ring-ok focus-visible:rounded-md">
                       Gallery
                     </Link>
                   </li>
                   <li>
-                    <Link href="/faq" className="btn-ghost block px-2 py-1">
+                    <Link href="/faq" className="btn-ghost block px-2 py-1 ring-ok focus-visible:rounded-md">
                       FAQ
                     </Link>
                   </li>
                   <li className="sm:ml-1">
-                    <Link href="/donate" className="btn px-3 py-1">
+                    <Link href="/donate" className="btn px-3 py-1 ring-ok focus-visible:rounded-full">
                       Donate
                     </Link>
                   </li>
@@ -144,11 +153,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <span className="opacity-90">
                   {" "}
                   Call{" "}
-                  <a href="tel:988" className="underline underline-offset-2 hover:opacity-100">
+                  <a href="tel:988" className="underline underline-offset-2 hover:opacity-100 ring-ok focus-visible:rounded">
                     988
                   </a>{" "}
                   (Veterans press 1) or text{" "}
-                  <a href="sms:838255" className="underline underline-offset-2 hover:opacity-100">
+                  <a href="sms:838255" className="underline underline-offset-2 hover:opacity-100 ring-ok focus-visible:rounded">
                     838255
                   </a>
                   .
@@ -168,13 +177,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 sm:flex-row">
             <p className="text-xs text-zinc-500">{"\u00A9"} {year} The Safety Plan</p>
             <div className="flex items-center gap-4 text-xs">
-              <Link href="/privacy" className="underline-offset-2 hover:underline">
+              <Link href="/privacy" className="underline-offset-2 hover:underline ring-ok focus-visible:rounded">
                 Privacy
               </Link>
-              <Link href="/terms" className="underline-offset-2 hover:underline">
+              <Link href="/terms" className="underline-offset-2 hover:underline ring-ok focus-visible:rounded">
                 Terms
               </Link>
-              <Link href="/api/version" className="text-zinc-500 underline-offset-2 hover:underline">
+              <Link href="/api/version" className="text-zinc-500 underline-offset-2 hover:underline ring-ok focus-visible:rounded">
                 Version
               </Link>
             </div>

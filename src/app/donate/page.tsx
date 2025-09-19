@@ -5,14 +5,13 @@ import { useSearchParams } from "next/navigation";
 
 const PRESETS = [10, 25, 50, 100] as const;
 const MIN_CENTS = 100;     // $1.00
-const MAX_CENTS = 500000;  // $5,000.00
+const MAX_CENTS = 500_000; // $5,000.00
 
 function dollarsToCents(input: string): number | null {
-  // allow digits and a single dot
   const clean = (input ?? "").replace(/[^\d.]/g, "");
   if (!clean) return null;
 
-  // collapse multiple dots to one (keeps the first)
+  // keep only the first dot
   const parts = clean.split(".");
   const normalized = parts.length > 2 ? `${parts[0]}.${parts.slice(1).join("")}` : clean;
 
@@ -24,19 +23,18 @@ function dollarsToCents(input: string): number | null {
 }
 
 function centsToTidyDollars(cents: number): string {
-  // 2500 -> "25"; 2550 -> "25.5"; 2599 -> "25.99"
   const s = (cents / 100).toFixed(2);
   return s.replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
 }
 
 export default function DonatePage() {
   const search = useSearchParams();
-  const [amountStr, setAmountStr] = useState<string>("");
+  const [amountStr, setAmountStr] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // Prefill from query string ?amount=25 (or ?a=25)
+  // Prefill from ?amount=25 or ?a=25
   useEffect(() => {
     const q = search?.get("amount") ?? search?.get("a");
     if (q) {
@@ -49,22 +47,12 @@ export default function DonatePage() {
 
   async function donate() {
     if (busy) return;
-
     setMsg(null);
 
     const cents = dollarsToCents(amountStr);
-    if (!cents) {
-      setMsg("Please enter an amount (minimum $1).");
-      return;
-    }
-    if (cents < MIN_CENTS) {
-      setMsg("Minimum donation is $1.");
-      return;
-    }
-    if (cents > MAX_CENTS) {
-      setMsg("Maximum donation for this form is $5,000.");
-      return;
-    }
+    if (!cents) return setMsg("Please enter an amount (minimum $1).");
+    if (cents < MIN_CENTS) return setMsg("Minimum donation is $1.");
+    if (cents > MAX_CENTS) return setMsg("Maximum donation for this form is $5,000.");
 
     try {
       setBusy(true);
@@ -75,7 +63,6 @@ export default function DonatePage() {
       });
 
       if (!res.ok) {
-        // Make 404/500 obvious in the UI
         const text = await res.text().catch(() => "");
         try {
           const asJson = JSON.parse(text) as { error?: string };
@@ -87,10 +74,7 @@ export default function DonatePage() {
       }
 
       const data = (await res.json()) as { ok: boolean; url?: string; error?: string };
-      if (!data.ok || !data.url) {
-        setMsg(data.error || "Could not start checkout. Try again.");
-        return;
-      }
+      if (!data.ok || !data.url) return setMsg(data.error || "Could not start checkout. Try again.");
 
       window.location.assign(data.url);
     } catch {
@@ -107,7 +91,6 @@ export default function DonatePage() {
         <p className="muted">Your donation funds resources for veterans in crisis.</p>
       </header>
 
-      {/* Preset buttons */}
       <div className="panel p-4">
         <div className="flex flex-wrap gap-2">
           {PRESETS.map((p) => (
@@ -117,12 +100,9 @@ export default function DonatePage() {
               className="btn-ghost"
               onClick={() => {
                 setAmountStr(String(p));
-                // Keep caret in the input so users can tweak the value immediately
                 requestAnimationFrame(() => {
-                  if (inputRef.current) {
-                    inputRef.current.focus();
-                    inputRef.current.select();
-                  }
+                  inputRef.current?.focus();
+                  inputRef.current?.select();
                 });
               }}
               aria-label={`Set amount to $${p}`}
@@ -132,13 +112,12 @@ export default function DonatePage() {
           ))}
         </div>
 
-        {/* Amount input */}
         <div className="mt-4">
           <label htmlFor="donation" className="block text-sm muted mb-1">
             Donation amount (USD)
           </label>
-          <div className="flex gap-2">
-            <span className="inline-flex items-center rounded-md border px-3">$</span>
+          <div className="flex gap-2 items-center">
+            <span className="inline-flex items-center rounded-md border px-3 select-none">$</span>
             <input
               ref={inputRef}
               id="donation"
@@ -154,21 +133,18 @@ export default function DonatePage() {
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") donate();
-                // (optional) prevent typing 'e'/'E' in some browsers numeric input handling
-                if (e.key.toLowerCase() === "e") e.preventDefault();
+                const k = e.key.toLowerCase();
+                if (k === "e" || k === "+" || k === "-") e.preventDefault();
               }}
               aria-describedby="donation-help"
             />
           </div>
           <p id="donation-help" className="text-xs muted mt-2" aria-live="polite">
-            {amountCents
-              ? `You’re giving $${(amountCents / 100).toFixed(2)}.`
-              : "Enter any amount."}
+            {amountCents ? `You’re giving $${(amountCents / 100).toFixed(2)}.` : "Enter any amount."}
           </p>
         </div>
       </div>
 
-      {/* Donate button — only disabled while redirecting */}
       <div>
         <button
           type="button"
@@ -182,7 +158,6 @@ export default function DonatePage() {
         </button>
       </div>
 
-      {/* Status note */}
       {msg ? (
         <p className="text-sm text-red-400" role="status" aria-live="polite">
           {msg}
@@ -191,4 +166,3 @@ export default function DonatePage() {
     </section>
   );
 }
-

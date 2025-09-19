@@ -1,6 +1,10 @@
 // src/app/api/health/route.ts
 import { NextResponse } from "next/server";
 
+export const runtime = "edge";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type HealthResponse = {
   ok: boolean;
   env: {
@@ -9,22 +13,16 @@ type HealthResponse = {
     supabase_anon_key: string | null;
     service_key: string | null;
     stripe_key_present: boolean;
-    myshop: {
-      url: string | null;
-    };
+    myshop: { url: string | null };
   };
   checks: {
     supabase: { status: "ok" | "warn" | "error"; message?: string };
     stripe: { status: "ok" | "warn" | "error"; message?: string };
     myshop: { status: "ok" | "warn" | "error"; url?: string | null; message?: string };
   };
-  meta: {
-    now: string;
-    commit: string | null;
-  };
+  meta: { now: string; commit: string | null };
 };
 
-/** Local helpers (no external imports) */
 function env(name: string): string | null {
   return process.env[name] ?? null;
 }
@@ -36,7 +34,6 @@ function maskSecret(v: string | null): string | null {
 }
 
 export async function GET() {
-  // Read env once
   const SITE_URL = env("NEXT_PUBLIC_SITE_URL");
   const SUPABASE_URL = env("NEXT_PUBLIC_SUPABASE_URL");
   const SUPABASE_ANON = env("NEXT_PUBLIC_SUPABASE_ANON_KEY");
@@ -44,7 +41,6 @@ export async function GET() {
   const STRIPE_SECRET = env("STRIPE_SECRET_KEY");
   const MYSHOP_URL = env("NEXT_PUBLIC_AMWAY_MYSHOP_URL");
 
-  // --- Basic, synchronous “is configured” checks ---
   const supabase: HealthResponse["checks"]["supabase"] =
     SUPABASE_URL && SUPABASE_ANON
       ? { status: "ok", message: "Supabase URL and anon key present" }
@@ -70,21 +66,17 @@ export async function GET() {
       supabase_anon_key: maskSecret(SUPABASE_ANON),
       service_key: maskSecret(SUPABASE_SERVICE),
       stripe_key_present: Boolean(STRIPE_SECRET),
-      myshop: {
-        url: MYSHOP_URL,
-      },
+      myshop: { url: MYSHOP_URL },
     },
-    checks: {
-      supabase,
-      stripe,
-      myshop,
-    },
+    checks: { supabase, stripe, myshop },
     meta: {
       now: new Date().toISOString(),
       commit: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
     },
   };
 
-  return NextResponse.json(body, { status: overallOk ? 200 : 500 });
+  return NextResponse.json(body, {
+    status: overallOk ? 200 : 500,
+    headers: { "cache-control": "no-store" },
+  });
 }
-

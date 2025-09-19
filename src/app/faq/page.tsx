@@ -1,92 +1,55 @@
 // src/app/faq/page.tsx
-import type { Metadata } from "next";
-import Link from "next/link";
-import { myShopLink } from "@/lib/amway";
+export const revalidate = 86400; // rebuild daily
 
-export const metadata: Metadata = {
-  title: "FAQ — The Safety Plan",
-  description: "Answers about kits, ordering, shipping, and our mission.",
-};
+export default function FAQPage() {
+  const faqs = [
+    {
+      q: "What is The Safety Plan?",
+      a: "A mission-first wellness project. We build clean, effective kits for hydration, energy, recovery, and rest — and direct profits toward veteran suicide prevention.",
+    },
+    {
+      q: "Where do I buy?",
+      a: "Use the Shop link in the header to open our official Amway storefront, or browse kits here and click through to purchase the bundled items.",
+    },
+    {
+      q: "Do you ship internationally?",
+      a: "Right now we focus on the U.S. Some individual products on the Amway storefront may have different availability.",
+    },
+    {
+      q: "How do donations work?",
+      a: "Donations help fund outreach, peer support, and crisis response partners. We’ll publish a transparency report on the Version page as we scale.",
+    },
+    {
+      q: "I’m in crisis — what should I do?",
+      a: 'Call 988 (Veterans press 1) or text 838255. If you or someone else is in immediate danger, call 911.',
+    },
+  ];
 
-export default function FaqPage() {
   return (
-    <section className="mx-auto max-w-3xl space-y-6">
-      {/* Header */}
+    <section className="container py-10 space-y-8">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold">Frequently Asked Questions</h1>
-        <p className="muted">Kits, ordering, and mission details.</p>
-
-        {/* Quick anchors (the “buttons” you wanted back) */}
-        <nav aria-label="FAQ shortcuts" className="mt-3 flex flex-wrap gap-2">
-          <a href="#kits" className="link-chip">What’s in the kits?</a>
-          <a href="#ordering" className="link-chip">How do I order?</a>
-          <a href="#veteran-awareness" className="link-chip">Resources</a>
-          <a href="#support" className="link-chip">How else can I help?</a>
-        </nav>
+        <h1>Frequently Asked Questions</h1>
+        <p className="muted">
+          Quick answers about kits, buying, availability, and our mission impact.
+        </p>
       </header>
 
-      {/* Kits */}
-      <article id="kits" className="faq-card">
-        <h2 className="text-xl font-semibold">What’s in the kits?</h2>
-        <p className="muted">
-          Each kit focuses on clean energy, hydration, recovery, and rest. Exact contents can vary
-          slightly by availability, but the outcome is consistent: mission-ready wellness.
-        </p>
-        <div className="mt-3">
-          <Link href="/kits" className="link-chip">Browse Kits</Link>
-        </div>
-      </article>
-
-      {/* Ordering */}
-      <article id="ordering" className="faq-card">
-        <h2 className="text-xl font-semibold">How do I order?</h2>
-        <p className="muted">
-          Use our storefront to purchase directly. UTM tracking helps us measure mission impact.
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <a
-            href={myShopLink("/")}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="link-chip"
-          >
-            Open Storefront
-          </a>
-          <Link href="/donate" className="link-chip">Donate Instead</Link>
-        </div>
-      </article>
-
-      {/* Resources */}
-      <article id="veteran-awareness" className="faq-card">
-        <h2 className="text-xl font-semibold">Veteran awareness & resources</h2>
-        <p className="muted">
-          If you or someone you know is struggling, you’re not alone. Consider talking to a trusted
-          person and reaching out to support resources in your area.
-        </p>
-        <ul className="mt-3 grid gap-2 text-sm">
-          <li>
-            <a className="link-chip tel" href="tel:988">Call 988 (US)</a>
-            <span className="muted ml-2">— 24/7 Suicide & Crisis Lifeline</span>
+      <ul className="grid gap-4 md:grid-cols-2">
+        {faqs.map(({ q, a }) => (
+          <li key={q} className="faq-card">
+            <h2 className="text-lg font-semibold">{q}</h2>
+            <p className="muted">{a}</p>
           </li>
-          <li>
-            <a className="link-chip sms" href="sms:988">Text 988 (US)</a>
-            <span className="muted ml-2">— Text line for crisis support</span>
-          </li>
-        </ul>
-        <p className="mt-3 text-xs text-zinc-500">
-          In emergencies, call your local emergency number immediately.
-        </p>
-      </article>
+        ))}
+      </ul>
 
-      {/* Support the mission */}
-      <article id="support" className="faq-card">
-        <h2 className="text-xl font-semibold">How else can I help?</h2>
-        <p className="muted">Share the mission, sponsor a kit, or donate to fund more distributions.</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Link href="/donate" className="btn">Donate</Link>
-          <Link href="/kits" className="btn-ghost">Explore Kits</Link>
-        </div>
-      </article>
+      <div className="panel-elevated p-5 space-y-2">
+        <h2 className="font-semibold">Need help now?</h2>
+        <p className="muted">
+          Call <a className="link-chip tel" href="tel:988">988</a> (Veterans press 1) or text{" "}
+          <a className="link-chip sms" href="sms:838255">838255</a>. If there’s immediate danger, call 911.
+        </p>
+      </div>
     </section>
   );
 }

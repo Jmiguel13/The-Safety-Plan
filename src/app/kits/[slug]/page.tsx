@@ -35,7 +35,6 @@ export default async function KitPage({
   const stats = statsForKit(kit);
   const hero = heroForKit(kit.slug, kit);
   const weight = weightLabel(kit);
-
   const items = normalizeItems(kit);
   const cartItems = items.map(({ sku, qty }) => ({ sku, qty }));
 
@@ -68,9 +67,7 @@ export default async function KitPage({
 
             <div className="flex flex-wrap gap-3 pt-4">
               <BuyButtons items={cartItems} fallbackSkusTitle={`${title} — SKUs`} />
-              <Link href={`/kits/${kit.slug}/items`} className="btn-ghost">
-                View all items
-              </Link>
+              <Link href={`/kits/${slug}/items`} className="btn-ghost">View all items</Link>
             </div>
           </div>
         </div>
@@ -94,7 +91,7 @@ export default async function KitPage({
           </ul>
           {items.length > 5 ? (
             <div>
-              <Link href={`/kits/${kit.slug}/items`} className="btn-ghost">
+              <Link href={`/kits/${slug}/items`} className="btn-ghost">
                 See all {items.length} items
               </Link>
             </div>
@@ -104,4 +101,3 @@ export default async function KitPage({
     </section>
   );
 }
-

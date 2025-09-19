@@ -2,12 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { kits, type Kit } from "@/lib/kits";
-import {
-  titleForKit,
-  subtitleForKit,
-  statsForKit,
-  normalizeItems,
-} from "@/lib/kits-helpers";
+import { titleForKit, subtitleForKit, statsForKit, normalizeItems } from "@/lib/kits-helpers";
 import ItemRow from "@/components/ItemRow";
 import BuyButtons from "@/components/BuyButtons";
 import CopySkus from "@/components/CopySkus";
@@ -37,17 +32,12 @@ export default async function KitItemsPage({
   return (
     <section className="space-y-6">
       <header className="space-y-2">
-        <h1 className="text-3xl font-extrabold tracking-tight">{title} � Items</h1>
-        <p className="muted">
-          {subtitle || `${stats.itemCount} items � ${stats.skuCount} SKUs`}
-        </p>
-
+        <h1 className="text-3xl font-extrabold tracking-tight">{title} — Items</h1>
+        <p className="muted">{subtitle || `${stats.itemCount} items — ${stats.skuCount} SKUs`}</p>
         <div className="flex flex-wrap gap-3 pt-2">
-          <BuyButtons items={cartItems} fallbackSkusTitle={`${title} � SKUs`} />
+          <BuyButtons items={cartItems} fallbackSkusTitle={`${title} — SKUs`} />
           <CopySkus items={cartItems} />
-          <Link href={`/kits/${slug}`} className="btn-ghost">
-            Back to kit
-          </Link>
+          <Link href={`/kits/${slug}`} className="btn-ghost">Back to kit</Link>
         </div>
       </header>
 
@@ -73,4 +63,3 @@ export default async function KitItemsPage({
     </section>
   );
 }
-

@@ -25,22 +25,27 @@ export default function CopySkus({
   );
 
   const look = variant ?? (items.length > 1 ? "button" : "chip");
-  const classes = look === "chip" ? `link-chip ${className ?? ""}` : `btn-ghost ${className ?? ""}`;
+  const classes =
+    look === "chip"
+      ? `link-chip ${className ?? ""}` // small pill
+      : `btn-ghost ${className ?? ""}`; // full ghost button
 
   async function onCopy() {
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1200);
     } catch {
+      // Fallback for older browsers
       const el = document.createElement("textarea");
       el.value = text;
       el.style.position = "fixed";
       el.style.left = "-9999px";
       document.body.appendChild(el);
       el.select();
-      try { document.execCommand("copy"); } catch {}
+      try {
+        document.execCommand("copy");
+      } catch {}
       document.body.removeChild(el);
+    } finally {
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
     }
@@ -52,4 +57,3 @@ export default function CopySkus({
     </button>
   );
 }
-
