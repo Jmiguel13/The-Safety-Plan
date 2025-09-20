@@ -98,4 +98,3 @@ export default function KitCard({
 
   return layout === "topThumb" ? TopThumb : LeftThumb;
 }
-

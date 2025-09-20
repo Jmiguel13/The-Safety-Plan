@@ -76,9 +76,7 @@
   a:hover { text-decoration-thickness: 2px; }
 
   /* ---- ACCESSIBLE FOCUS WITHOUT GREEN BOXES ---- */
-  /* Remove UA outline on generic elements */
   :focus { outline: none; }
-  /* Show focus only on interactive elements */
   :where(
     a,
     button,
@@ -94,7 +92,6 @@
     box-shadow: none;
   }
 
-  /* Only reserve space for the help ribbon if it’s enabled */
   body[data-help-strip="1"] { padding-bottom: 64px; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -198,7 +195,6 @@
     color: var(--link);
   }
   .link-chip:hover { background: rgba(255, 255, 255, 0.06); }
-  /* neutral focus (no green) */
   .link-chip:focus-visible { outline: 2px solid var(--border-strong); outline-offset: 2px; }
 
   .link-chip.tel::before { content: "📞"; }
@@ -217,7 +213,7 @@
 
 /* ===================== UTILITIES ===================== */
 @layer utilities {
-  .ring-ok { outline: 2px solid var(--ring); outline-offset: 2px; } /* keep for explicit use only */
+  .ring-ok { outline: 2px solid var(--ring); outline-offset: 2px; }
   .shadow-subtle {
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset,
       0 8px 24px rgba(0, 0, 0, 0.18);

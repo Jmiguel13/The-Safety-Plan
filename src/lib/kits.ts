@@ -62,8 +62,9 @@ export const kits: Kit[] = [
     gear: ["morale_patch", "sticker_pack"],
     // Optional upsells on the kit page
     addons: ["110631", "126883"], // Blue Citrus electrolyte, Classic energy
-    image: "/kits/resilient-placeholder.svg",
-    imageAlt: "Resilient Kit preview",
+    // NEW: real hero assets placed under /public/images/kits/
+    image: "/images/kits/resilient-hero.webp",
+    imageAlt: "Resilient Kit hero",
   },
 
   {
@@ -92,15 +93,11 @@ export const kits: Kit[] = [
     ],
     gear: [],
     addons: ["125894", "110403"], // G&H Hand Soap, Prewash Spray
-    image: "/kits/placeholder.svg",
-    imageAlt: "Homefront Kit preview",
+    image: "/images/kits/homefront-hero.webp",
+    imageAlt: "Homefront Kit hero",
   },
 ];
 
 /** Small conveniences for consumers (optional) */
-export const kitsBySlug: Record<string, Kit> = Object.fromEntries(
-  kits.map((k) => [k.slug, k])
-);
-
+export const kitsBySlug: Record<string, Kit> = Object.fromEntries(kits.map((k) => [k.slug, k]));
 export const getKit = (slug: string) => kitsBySlug[slug];
-

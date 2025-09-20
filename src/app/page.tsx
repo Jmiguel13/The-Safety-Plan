@@ -1,8 +1,11 @@
 // src/app/page.tsx
+export const runtime = "nodejs";
+
 import Image from "next/image";
 import Link from "next/link";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { getSiteConfig } from "@/lib/site";
 
 /** Inline icons */
 function IconTarget(props: React.SVGProps<SVGSVGElement>) {
@@ -53,9 +56,7 @@ function firstExistingPublicPath(candidates: string[]): string | null {
     for (const rel of candidates) {
       if (existsSync(join(pub, rel))) return `/${rel.replace(/^\/+/, "")}`;
     }
-  } catch {
-    /* no-op */
-  }
+  } catch {}
   return null;
 }
 
@@ -63,12 +64,13 @@ const HERO_SRC = firstExistingPublicPath([
   "images/hero-safety-plan.webp",
   "images/hero-safety-plan.jpg",
   "images/hero-safety-plan.png",
-  "images/hero-safety-plan.svg", // added SVG support
-  // graceful fallback if you still keep this around:
+  "images/hero-safety-plan.svg",
   "hero-tactical.jpg",
 ]);
 
 export default function Home() {
+  const { IMPACT_STAT } = getSiteConfig();
+
   const features = [
     { title: "Focus", desc: "Clarity without the crash.", Icon: IconTarget },
     { title: "Hydration", desc: "Electrolytes for long days.", Icon: IconDrop },
@@ -88,8 +90,7 @@ export default function Home() {
       name: "Resilient Kit",
       href: "/kits/resilient",
       badge: "Mission-ready",
-      gradient:
-        "bg-gradient-to-br from-sky-500/20 via-sky-400/10 to-sky-500/5",
+      gradient: "bg-gradient-to-br from-sky-500/20 via-sky-400/10 to-sky-500/5",
     },
   ];
 
@@ -127,9 +128,13 @@ export default function Home() {
               <Link href="/donate" className="btn-ghost">
                 Donate
               </Link>
+              <Link href="/faq" className="btn-ghost">
+                FAQ
+              </Link>
             </div>
 
-            <p className="mt-6 text-xs text-zinc-500">
+            {/* Bigger & clearer support line */}
+            <p className="mt-8 text-sm md:text-base text-zinc-300">
               Your support helps fund real-world prevention, outreach, and
               response.
             </p>
@@ -226,17 +231,16 @@ export default function Home() {
         </ul>
       </section>
 
-      {/* IMPACT STRIP */}
+      {/* IMPACT STRIP (no counts) */}
       <section
         aria-label="Impact"
         className="mx-auto max-w-6xl rounded-xl border border-white/10 bg-gradient-to-r from-emerald-500/10 via-sky-500/10 to-emerald-500/10 p-5"
       >
         <p className="text-sm text-zinc-200">
           <strong className="font-semibold text-white">
-            Every purchase matters.
+            {IMPACT_STAT ?? "Thank you for backing the mission."}
           </strong>{" "}
-          Proceeds support veteran suicide prevention programs and crisis
-          response.
+          Your support helps fund prevention, outreach, and crisis response.
         </p>
       </section>
     </div>

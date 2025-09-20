@@ -46,7 +46,6 @@ async function probeSupabaseAuth(baseUrl: string) {
   const t = setTimeout(() => ctrl.abort(), 3000);
   try {
     const r = await fetch(url, { cache: "no-store", signal: ctrl.signal });
-    // Most projects return 200 and {"status":"ok"}; don't rely on shape.
     return { ok: r.ok, status: r.status } as const;
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -63,8 +62,6 @@ export async function GET() {
   const SUPABASE_SERVICE = env("SUPABASE_SERVICE_ROLE_KEY");
   const STRIPE_SECRET = env("STRIPE_SECRET_KEY");
   const MYSHOP_URL = env("NEXT_PUBLIC_AMWAY_MYSHOP_URL");
-
-  // --- Checks ---------------------------------------------------------------
 
   // Supabase: presence + optional live Auth health (doesn't require secrets)
   const supabaseAuth = SUPABASE_URL ? await probeSupabaseAuth(SUPABASE_URL) : null;
@@ -91,37 +88,24 @@ export async function GET() {
     return {
       status: "ok",
       message: "Supabase URL and anon key present",
-      auth_health: supabaseAuth
-        ? { ok: true, status: supabaseAuth.status }
-        : undefined,
+      auth_health: supabaseAuth ? { ok: true, status: supabaseAuth.status } : undefined,
     };
   })();
 
-  // Stripe: only check presence of secret (safe on edge)
   const stripe: HealthResponse["checks"]["stripe"] = STRIPE_SECRET
     ? { status: "ok", message: "Stripe secret key present" }
     : { status: "error", message: "Missing STRIPE_SECRET_KEY" };
 
-  // MyShop URL: validate format
   const myshop: HealthResponse["checks"]["myshop"] = (() => {
     if (!MYSHOP_URL) {
-      return {
-        status: "error",
-        url: null,
-        message: "NEXT_PUBLIC_AMWAY_MYSHOP_URL is missing",
-      };
+      return { status: "error", url: null, message: "NEXT_PUBLIC_AMWAY_MYSHOP_URL is missing" };
     }
     try {
-      // Throws on invalid; also accepts http/https only
       const u = new URL(MYSHOP_URL);
       if (!/^https?:$/i.test(u.protocol)) throw new Error("must be http/https");
       return { status: "ok", url: MYSHOP_URL };
     } catch {
-      return {
-        status: "error",
-        url: MYSHOP_URL,
-        message: "NEXT_PUBLIC_AMWAY_MYSHOP_URL is invalid",
-      };
+      return { status: "error", url: MYSHOP_URL, message: "NEXT_PUBLIC_AMWAY_MYSHOP_URL is invalid" };
     }
   })();
 

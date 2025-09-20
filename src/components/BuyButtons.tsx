@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { type CartItem, MYSHOP_BASE } from "@/lib/amway";
+import { type CartItem, MYSHOP_BASE, buildCartLink } from "@/lib/amway";
 import CopySkus from "./CopySkus";
 
 export default function BuyButtons({
@@ -14,20 +14,29 @@ export default function BuyButtons({
   fallbackSkusTitle?: string;
 }) {
   const [showFallback, setShowFallback] = useState(false);
+  const [href, setHref] = useState(MYSHOP_BASE);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
 
+  useEffect(() => {
+    try {
+      setHref(buildCartLink(items));
+    } catch {
+      setHref(MYSHOP_BASE);
+    }
+  }, [items]);
+
   function openBuy() {
-    // Open MyShop in a new tab. If blocked, navigate this tab.
-    const w = window.open(MYSHOP_BASE, "_blank", "noopener,noreferrer");
-    if (!w) window.location.href = MYSHOP_BASE;
-    setShowFallback(true);
+    // Try opening the multi-add cart link in a new tab.
+    const w = window.open(href, "_blank", "noopener,noreferrer");
+    if (!w) window.location.href = href; // pop-up blocked → same-tab nav
+    setShowFallback(true); // show helper regardless, it's useful
   }
 
   async function copyOne(sku: string, qty = 1) {
     try {
       await navigator.clipboard.writeText(`${sku} x${qty}`);
     } catch {
-      // Best-effort; no toast to keep it quiet in prod
+      // ignore
     }
   }
 

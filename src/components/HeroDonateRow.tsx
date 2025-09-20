@@ -1,3 +1,4 @@
+// src/components/HeroDonateRow.tsx
 import Link from "next/link";
 
 const amounts = [10, 25, 50] as const;

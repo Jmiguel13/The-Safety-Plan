@@ -1,34 +1,34 @@
+// src/lib/supabaseAdmin.ts
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { ENV } from "./env";
+import { ENV } from "@/lib/env.server";
 
 /**
- * Admin (service-role) Supabase client.
- * IMPORTANT: Server-only. Never import into client code.
+ * Admin Supabase client (service role).
+ * Only use this on the server for trusted admin APIs.
  */
-if (!ENV.NEXT_PUBLIC_SUPABASE_URL) {
-  throw new Error("Missing env: NEXT_PUBLIC_SUPABASE_URL");
-}
-if (!ENV.SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error("Missing env: SUPABASE_SERVICE_ROLE_KEY");
-}
+let _admin: SupabaseClient | null = null;
 
-const adminClient: SupabaseClient = createClient(
-  ENV.NEXT_PUBLIC_SUPABASE_URL,
-  ENV.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { "X-Client-Info": "tsp-admin" } },
+export function getSupabaseAdmin(): SupabaseClient {
+  if (_admin) return _admin;
+
+  const url = ENV.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = ENV.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceKey) {
+    throw new Error(
+      "Supabase admin client is not configured. Check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY."
+    );
   }
-);
 
-/** Named export used by most code */
-export const supabaseAdmin = adminClient;
+  _admin = createClient(url, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: { headers: { "X-Client-Info": "safety-plan/admin" } },
+  });
 
-/** Factory export (compat for existing imports) */
-export function createSupabaseAdmin(): SupabaseClient {
-  return adminClient;
+  return _admin;
 }
 
-/** Default export allows: import supabaseAdmin from "@/lib/supabaseAdmin" */
-export default supabaseAdmin;
+/** Back-compat exports (old imports expect these names) */
+export const createSupabaseAdmin = getSupabaseAdmin;
+export const supabaseAdmin = getSupabaseAdmin();

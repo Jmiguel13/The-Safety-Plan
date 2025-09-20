@@ -1,23 +1,18 @@
 // src/app/kits/[slug]/not-found.tsx
 import Link from "next/link";
 
-export default function NotFound() {
+export default function KitNotFound() {
   return (
-    <section className="min-h-[70vh] grid place-items-center px-6">
-      <div className="text-center space-y-4 max-w-md">
-        <div className="tag tag-accent w-max mx-auto">404</div>
-        <h1 className="text-4xl font-extrabold tracking-tight">Kit not found</h1>
-        <p className="muted">
-          The kit you’re looking for doesn’t exist or isn’t published yet.
-        </p>
-        <div className="flex items-center justify-center gap-3 pt-1">
-          <Link href="/" className="btn">Go home</Link>
-          <Link href="/kits" className="btn-ghost" aria-label="View all kits">
-            View all kits
-          </Link>
-        </div>
+    <main className="mx-auto max-w-2xl px-4 py-16">
+      <h1 className="text-2xl font-semibold">Kit not found</h1>
+      <p className="mt-2 text-zinc-400">
+        We couldn’t find that kit. Try browsing all kits instead.
+      </p>
+      <div className="mt-6">
+        <Link href="/kits" className="btn">
+          Browse kits
+        </Link>
       </div>
-    </section>
+    </main>
   );
 }
-

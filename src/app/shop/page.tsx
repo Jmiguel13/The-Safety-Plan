@@ -1,7 +1,8 @@
+// src/app/shop/page.tsx
 import Link from "next/link";
 import type { Metadata } from "next";
 import { kits } from "@/lib/kits";
-import { myShopLink, MYSHOP_BASE } from "@/lib/amway";
+import { storefrontLink, myShopLink, MYSHOP_BASE } from "@/lib/amway";
 import { TSP_PRODUCTS } from "@/lib/tsp-products";
 
 type KitLite = {
@@ -58,6 +59,7 @@ export default function ShopPage() {
 
   const solos = soloItems();
   const hasTsp = Array.isArray(TSP_PRODUCTS) && TSP_PRODUCTS.length > 0;
+  const storeHref = storefrontLink();
 
   return (
     <section className="max-w-4xl space-y-10">
@@ -68,9 +70,8 @@ export default function ShopPage() {
           Checkout happens on Amway (MyShop). All links credit our storefront and include UTM tags.
         </p>
         <div className="flex flex-wrap gap-3 pt-1">
-          {/* Use myShopLink to ensure UTM params are present */}
           <a
-            href={myShopLink("")}
+            href={storeHref}
             target="_blank"
             rel="noopener noreferrer"
             className="btn"
@@ -130,7 +131,7 @@ export default function ShopPage() {
         <div className="flex items-end justify-between">
           <h2 className="text-2xl font-semibold">Solo Amway Products</h2>
           <a
-            href={myShopLink("")}
+            href={storeHref}
             target="_blank"
             rel="noopener noreferrer"
             className="btn-ghost text-sm"

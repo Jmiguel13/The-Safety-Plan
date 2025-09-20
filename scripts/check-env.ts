@@ -1,10 +1,4 @@
 // scripts/check-env.ts
-// Loads env vars from a selected file (default: .env.production) and validates required keys.
-// Usage:
-//   pnpm run env:check
-//   pnpm run env:check -- --file .env.local
-//   pnpm run env:check -- --file .env.production
-
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -45,8 +39,6 @@ const requiredPublic = [
   "NEXT_PUBLIC_SITE_URL",
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-  "NEXT_PUBLIC_AMWAY_MYSHOP_URL",
-  "NEXT_PUBLIC_AMWAY_CART_STRATEGY",
   "NEXT_PUBLIC_UTM_SOURCE",
   "NEXT_PUBLIC_UTM_MEDIUM",
   "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
@@ -55,7 +47,6 @@ const requiredPublic = [
 const requiredServer = [
   "SUPABASE_SERVICE_ROLE_KEY",
   "STRIPE_SECRET_KEY",
-  // choose whichever your code actually uses; we check all 4
   "ADMIN_USER",
   "ADMIN_PASS",
   "ADMIN_BASIC_USER",
@@ -74,6 +65,20 @@ for (const key of requiredPublic) {
     ok = false;
   }
 }
+
+// MyShop presence: at least one supported input
+const hasMyShop =
+  has("NEXT_PUBLIC_AMWAY_MYSHOP_URL") ||
+  has("NEXT_PUBLIC_MYSHOP_BASE") ||
+  has("NEXT_PUBLIC_AMWAY_SHOP_ID");
+
+if (!hasMyShop) {
+  console.error(
+    "❌ Missing MyShop config: set one of NEXT_PUBLIC_AMWAY_MYSHOP_URL, NEXT_PUBLIC_MYSHOP_BASE, or NEXT_PUBLIC_AMWAY_SHOP_ID"
+  );
+  ok = false;
+}
+
 for (const key of requiredServer) {
   if (!has(key)) {
     console.error(`❌ Missing server var: ${key}`);
@@ -86,7 +91,9 @@ for (const [k, v] of Object.entries(process.env)) {
   if (!k.startsWith("NEXT_PUBLIC_")) continue;
   const val = String(v ?? "");
   if (/sk_live_|sk_test_|whsec_|service_role|-----BEGIN/i.test(val)) {
-    console.error(`🚫 SECURITY: ${k} appears to contain a secret. Move it to a server-only var.`);
+    console.error(
+      `🚫 SECURITY: ${k} appears to contain a secret. Move it to a server-only var.`
+    );
     ok = false;
   }
 }
@@ -95,6 +102,9 @@ if (ok) {
   console.log("✅ Env looks good.");
   if (!String(process.env.NEXT_PUBLIC_SITE_URL || "").startsWith("https://")) {
     console.warn("⚠️ NEXT_PUBLIC_SITE_URL should be an https:// production URL.");
+  }
+  if (!has("NEXT_PUBLIC_IMPACT_STAT")) {
+    console.warn("ℹ️ Consider setting NEXT_PUBLIC_IMPACT_STAT for the homepage impact strip.");
   }
   process.exit(0);
 } else {

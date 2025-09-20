@@ -7,17 +7,16 @@ const PRESETS = [10, 25, 50, 100] as const;
 const MIN_CENTS = 100;     // $1.00
 const MAX_CENTS = 500_000; // $5,000.00
 
+const PK = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
+const TEST_MODE = PK.startsWith("pk_test_");
+
 function dollarsToCents(input: string): number | null {
   const clean = (input ?? "").replace(/[^\d.]/g, "");
   if (!clean) return null;
-
-  // keep only the first dot
   const parts = clean.split(".");
   const normalized = parts.length > 2 ? `${parts[0]}.${parts.slice(1).join("")}` : clean;
-
   const n = Number(normalized);
   if (!Number.isFinite(n)) return null;
-
   const cents = Math.round(n * 100);
   return cents > 0 ? cents : null;
 }
@@ -63,13 +62,9 @@ export default function DonatePage() {
       });
 
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        try {
-          const asJson = JSON.parse(text) as { error?: string };
-          setMsg(asJson?.error || `Checkout error (${res.status})`);
-        } catch {
-          setMsg(text || `Checkout error (${res.status})`);
-        }
+        // API returns a friendly, sanitized error string
+        const { error } = (await res.json().catch(() => ({}))) as { error?: string };
+        setMsg(error || `Checkout error (${res.status})`);
         return;
       }
 
@@ -89,6 +84,11 @@ export default function DonatePage() {
       <header className="space-y-2">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Donate</h1>
         <p className="muted">Your donation funds resources for veterans in crisis.</p>
+        {TEST_MODE && (
+          <p className="text-xs rounded-md border border-yellow-500/30 bg-yellow-500/10 px-2 py-1 text-yellow-200 inline-block">
+            Test mode (no real charges).
+          </p>
+        )}
       </header>
 
       <div className="panel p-4">

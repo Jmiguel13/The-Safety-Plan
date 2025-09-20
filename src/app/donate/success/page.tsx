@@ -1,34 +1,49 @@
 // src/app/donate/success/page.tsx
+import type { Metadata } from "next";
 import Link from "next/link";
 import { stripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 export const revalidate = 0;
 
+export const metadata: Metadata = {
+  title: "Thank you",
+  description:
+    "Your donation helps prevent veteran suicide. A receipt has been emailed by Stripe.",
+  alternates: { canonical: "/donate/success" },
+};
+
 export default async function DonateSuccess({
   searchParams,
 }: {
-  // 👈 Next 15 expects a Promise here
-  searchParams: Promise<{ session_id?: string }>;
+  // Next 15 passes a Promise for server components
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { session_id } = await searchParams;
+  const sp = await searchParams;
+  const raw = sp.session_id;
+  const sessionId = Array.isArray(raw) ? raw[0] : raw;
 
-  let line = "Your donation was received. We appreciate your support.";
+  let line =
+    "Your donation was received. We appreciate your support.";
 
-  // Try to show the exact amount when we have a session id and Stripe is configured
-  if (session_id && process.env.STRIPE_SECRET_KEY) {
+  if (sessionId && process.env.STRIPE_SECRET_KEY) {
     try {
-      const s = await stripe.checkout.sessions.retrieve(session_id);
-      const amount = typeof s.amount_total === "number" ? s.amount_total : null;
+      // Get the Checkout Session to confirm amount & currency
+      const s = await stripe.checkout.sessions.retrieve(sessionId);
+
+      const amount =
+        typeof s.amount_total === "number" ? s.amount_total : null;
       const currency = (s.currency || "usd").toUpperCase();
+
       if (amount !== null) {
-        line = `We received ${new Intl.NumberFormat("en-US", {
+        const nice = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency,
-        }).format(amount / 100)}. Thank you for supporting the mission.`;
+        }).format(amount / 100);
+        line = `We received ${nice}. Thank you for supporting the mission.`;
       }
     } catch {
-      // keep the generic message on any lookup error
+      // Keep the generic line on lookup issues (expired/invalid session, etc.)
     }
   }
 
@@ -38,8 +53,12 @@ export default async function DonateSuccess({
       <p className="muted">{line}</p>
 
       <div className="flex gap-3 pt-2">
-        <Link href="/kits" className="btn">Explore kits</Link>
-        <Link href="/" className="btn-ghost">Back home</Link>
+        <Link href="/kits" className="btn">
+          Explore kits
+        </Link>
+        <Link href="/" className="btn-ghost">
+          Back home
+        </Link>
       </div>
     </section>
   );

@@ -3,8 +3,9 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Inter } from "next/font/google";
-import { getEnv } from "@/lib/env";
-import ClientHelpStripIsland from "@/components/ClientHelpStripIsland"; // ⬅️ static import (client component)
+import { getEnv } from "@/lib/env.server"; // ⬅️ server-only import
+import { getSiteConfig } from "@/lib/site";
+import ClientHelpStripIsland from "@/components/ClientHelpStripIsland"; // client component
 import StructuredData, { type JsonLdObject } from "@/components/StructuredData";
 
 const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
@@ -26,6 +27,7 @@ const env = (() => {
 })();
 
 const siteURL = (env?.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000").replace(/\/+$/, "");
+const { CRISIS_TEL, CRISIS_SMS } = getSiteConfig();
 
 export const metadata: Metadata = {
   metadataBase: toURL(env?.NEXT_PUBLIC_SITE_URL),
@@ -78,7 +80,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     name: "The Safety Plan",
     url: siteURL,
     logo: `${siteURL}/favicon.ico`,
-    sameAs: [],
+    sameAs: [
+      "https://www.facebook.com/profile.php?id=61580229291031",
+    ],
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        email: "contactsafetyplan@yahoo.com",
+        contactType: "customer support",
+        areaServed: "US",
+        availableLanguage: ["en"],
+      },
+    ],
   };
 
   const jsonLd: JsonLdObject[] = [websiteLd, orgLd];
@@ -185,12 +198,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <span className="opacity-90">
                   {" "}
                   Call{" "}
-                  <a href="tel:988" className="underline underline-offset-2 hover:opacity-100">
-                    988
+                  <a href={`tel:${CRISIS_TEL}`} className="underline underline-offset-2 hover:opacity-100">
+                    {CRISIS_TEL}
                   </a>{" "}
                   (Veterans press 1) or text{" "}
-                  <a href="sms:838255" className="underline underline-offset-2 hover:underline">
-                    838255
+                  <a href={`sms:${CRISIS_SMS}`} className="underline underline-offset-2 hover:underline">
+                    {CRISIS_SMS}
                   </a>
                   .
                 </span>

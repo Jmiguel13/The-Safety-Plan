@@ -1,7 +1,10 @@
 // src/app/not-found.tsx
 import Link from "next/link";
+import { getSiteConfig } from "@/lib/site";
 
 export default function NotFound() {
+  const { CRISIS_TEL, CRISIS_SMS } = getSiteConfig();
+
   return (
     <section className="mx-auto max-w-3xl py-16 space-y-6">
       <h1 className="text-4xl font-extrabold tracking-tight">Page not found</h1>
@@ -16,10 +19,10 @@ export default function NotFound() {
         <Link href="/faq" className="btn-ghost">FAQ</Link>
       </div>
 
-      <div className="panel-elevated p-4 text-sm">
+      <div role="region" aria-label="Crisis support" className="panel-elevated p-4 text-sm">
         <strong className="font-semibold">In crisis?</strong>{" "}
-        Call <a className="link-chip tel" href="tel:988">988</a> (Veterans press 1) or text{" "}
-        <a className="link-chip sms" href="sms:838255">838255</a>.
+        Call <a className="link-chip tel" href={`tel:${CRISIS_TEL}`}>{CRISIS_TEL}</a> (Veterans press 1) or text{" "}
+        <a className="link-chip sms" href={`sms:${CRISIS_SMS}`}>{CRISIS_SMS}</a>.
       </div>
     </section>
   );

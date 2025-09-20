@@ -1,17 +1,35 @@
 // src/lib/ssr-supabase.ts
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { ENV } from "@/lib/env";
+import { ENV } from "@/lib/env.server";
 
 /**
- * Lightweight server-side client for read-only queries during build/SSR.
- * Uses the public anon key (NOT the service role key).
+ * Lightweight server-side client for read-only operations.
+ * Uses the anon key; safe for server components and API routes.
  */
-export function getSupabase(): SupabaseClient {
-  return createClient(ENV.NEXT_PUBLIC_SUPABASE_URL, ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { "X-Client-Info": "tsp-ssr" } },
-  });
-}
+let _server: SupabaseClient | null = null;
 
-export type SSRSupabase = ReturnType<typeof getSupabase>;
+export function getServerSupabase(): SupabaseClient {
+  if (_server) return _server;
+
+  const url = ENV.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !anon) {
+    throw new Error(
+      "Supabase SSR client is not configured. Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
+    );
+  }
+
+  _server = createClient(url, anon, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    global: {
+      headers: { "X-Client-Info": "safety-plan/ssr" },
+    },
+  });
+
+  return _server;
+}

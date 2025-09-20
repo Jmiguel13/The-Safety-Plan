@@ -2,10 +2,10 @@
 import * as React from "react";
 
 /** JSON-serializable types (no `any`) */
-type JsonPrimitive = string | number | boolean | null;
-type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 export interface JsonObject { [key: string]: JsonValue }
-type JsonArray = JsonValue[];
+export type JsonArray = JsonValue[];
 
 /** A JSON-LD object is just a JSON object */
 export type JsonLdObject = JsonObject;

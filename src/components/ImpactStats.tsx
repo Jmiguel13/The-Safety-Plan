@@ -20,7 +20,11 @@ const ENV_DEFAULTS = {
 };
 
 const fmtInt = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
-const fmtUsd = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const fmtUsd = new Intl.NumberFormat(undefined, {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
 
 export default function ImpactStats({
   kitsPlaced = ENV_DEFAULTS.kitsPlaced ?? 0,
@@ -32,25 +36,18 @@ export default function ImpactStats({
     <section aria-label="Impact" className={className}>
       <ul className="grid gap-3 sm:grid-cols-3">
         <li className="panel-inset p-4">
-          <div className="stat">
-            <div className="label">Kits in hands</div>
-            <div className="value text-2xl tabular-nums">{fmtInt.format(kitsPlaced)}</div>
-          </div>
+          <div className="text-xs uppercase tracking-wide text-zinc-400">Kits in hands</div>
+          <div className="text-2xl tabular-nums">{fmtInt.format(kitsPlaced)}</div>
         </li>
         <li className="panel-inset p-4">
-          <div className="stat">
-            <div className="label">Volunteer hours</div>
-            <div className="value text-2xl tabular-nums">{fmtInt.format(volunteerHours)}</div>
-          </div>
+          <div className="text-xs uppercase tracking-wide text-zinc-400">Volunteer hours</div>
+          <div className="text-2xl tabular-nums">{fmtInt.format(volunteerHours)}</div>
         </li>
         <li className="panel-inset p-4">
-          <div className="stat">
-            <div className="label">Funds to prevention</div>
-            <div className="value text-2xl tabular-nums">{fmtUsd.format(fundsDirectedUsd)}</div>
-          </div>
+          <div className="text-xs uppercase tracking-wide text-zinc-400">Funds to prevention</div>
+          <div className="text-2xl tabular-nums">{fmtUsd.format(fundsDirectedUsd)}</div>
         </li>
       </ul>
     </section>
   );
 }
-

@@ -1,145 +1,110 @@
 // src/lib/amway.ts
 /**
- * Amway / MyShop helpers
- * - Always deep-link through *your* MyShop so sales credit you.
- * - Multi-add cart links differ between MyShop variants.
- *   Choose via NEXT_PUBLIC_AMWAY_CART_STRATEGY: "pairs" | "indexed" | "items" (default: "pairs")
+ * Amway MyShop utilities: PDP links and multi-add cart link.
+ * Adds UTM tags automatically from public env.
+ * (Client-safe: imports ENV_PUBLIC from env.ts)
  */
 
-export type CartItem = { sku: string; qty?: number };
-export type Strategy = "pairs" | "indexed" | "items";
+import { ENV_PUBLIC } from "@/lib/env";
 
-/** Base MyShop URL (no trailing slash). */
-const RAW_BASE =
-  process.env.NEXT_PUBLIC_MYSHOP_BASE ||
-  process.env.NEXT_PUBLIC_AMWAY_MYSHOP_URL ||
-  "https://www.amway.com/myshop/TheSafetyPlan";
+export type CartItem = {
+  sku: string;
+  qty?: number;
+};
 
-export const MYSHOP_BASE = RAW_BASE.replace(/\/+$/, "");
+export const MYSHOP_BASE =
+  (ENV_PUBLIC.NEXT_PUBLIC_AMWAY_MYSHOP_URL || "").replace(/\/+$/, "") ||
+  "https://www.amway.com";
 
-/** Active cart strategy (validates env & falls back to "pairs"). */
-function readStrategy(): Strategy {
-  const v = (process.env.NEXT_PUBLIC_AMWAY_CART_STRATEGY || "pairs").toLowerCase();
-  return (["pairs", "indexed", "items"] as const).includes(v as Strategy)
-    ? (v as Strategy)
-    : "pairs";
-}
-export const STRATEGY: Strategy = readStrategy();
+const CART_STRATEGY =
+  (ENV_PUBLIC.NEXT_PUBLIC_AMWAY_CART_STRATEGY || "pairs").toLowerCase() as
+    | "pairs"
+    | "items"
+    | "indexed";
 
-/** Append default UTM params if not already present. */
-function withUtm(input: string | URL): string {
-  const url = toURL(input);
-  const src = process.env.NEXT_PUBLIC_UTM_SOURCE || "safety-plan";
-  const med = process.env.NEXT_PUBLIC_UTM_MEDIUM || "web";
-  const camp = process.env.NEXT_PUBLIC_UTM_CAMPAIGN;
-  const cont = process.env.NEXT_PUBLIC_UTM_CONTENT;
-  const term = process.env.NEXT_PUBLIC_UTM_TERM;
-
-  if (!url.searchParams.has("utm_source")) url.searchParams.set("utm_source", src);
-  if (!url.searchParams.has("utm_medium")) url.searchParams.set("utm_medium", med);
-  if (camp && !url.searchParams.has("utm_campaign")) url.searchParams.set("utm_campaign", camp);
-  if (cont && !url.searchParams.has("utm_content")) url.searchParams.set("utm_content", cont);
-  if (term && !url.searchParams.has("utm_term")) url.searchParams.set("utm_term", term);
-
-  return url.toString();
+/** Append UTM parameters to any URL */
+function withUtm(url: string, extra?: Record<string, string | number | undefined>) {
+  const u = new URL(url);
+  const tags = {
+    utm_source: ENV_PUBLIC.NEXT_PUBLIC_UTM_SOURCE,
+    utm_medium: ENV_PUBLIC.NEXT_PUBLIC_UTM_MEDIUM,
+    ...extra,
+  };
+  for (const [k, v] of Object.entries(tags)) {
+    if (v) u.searchParams.set(k, String(v));
+  }
+  return u.toString();
 }
 
-/** PDP/search deep link for a single SKU (or passthrough for paths/URLs) that credits your shop. */
-export function myShopLink(skuOrPath?: string): string {
-  if (!skuOrPath || skuOrPath === "/") return withUtm(MYSHOP_BASE);
+/** PDP / search link for a specific SKU (falls back to storefront if empty). */
+export function myShopLink(sku?: string, utm?: Record<string, string | number>) {
+  const key = String(sku ?? "").trim();
+  const u = new URL(MYSHOP_BASE);
+  if (key.length === 0) {
+    // storefront
+    return withUtm(u.toString(), utm);
+  }
+  // Locale-safe search page
+  u.pathname = `${u.pathname.replace(/\/+$/, "")}/search`;
+  u.searchParams.set("text", key);
+  return withUtm(u.toString(), utm);
+}
 
-  // Absolute URL? keep host, just add UTM if missing
-  if (/^https?:\/\//i.test(skuOrPath)) return withUtm(skuOrPath);
+/** A clean way to link the storefront with UTM tags. */
+export function storefrontLink(utm?: Record<string, string | number>) {
+  return withUtm(MYSHOP_BASE, utm);
+}
 
-  // Explicit MyShop subpath like "/p/some-product"
-  if (skuOrPath.startsWith("/")) return withUtm(join(MYSHOP_BASE, skuOrPath));
-
-  // Otherwise treat as SKU -> ?itemNumber=
-  const sku = normalizeSku(skuOrPath);
-  const url = toURL(MYSHOP_BASE);
-  url.searchParams.set("itemNumber", sku);
-  return withUtm(url);
+/** Normalize incoming items (defensive: trims SKU, coerces qty >= 1). */
+export function normalizeCartItems(items: Array<Partial<CartItem>> = []) {
+  return items
+    .map(({ sku, qty }) => ({
+      sku: String(sku ?? "").trim(),
+      qty: Number(qty ?? 1) || 1,
+    }))
+    .filter((it) => it.sku.length > 0);
 }
 
 /**
- * Multi-item cart link.
- * Note: some MyShop regions don’t accept programmatic cart adds consistently.
- * If you still see “0 items”, consider linking storefront instead of cart.
+ * Build a cart link for multiple items.
+ * Strategies:
+ *  - "pairs"   -> /cart?sku=A&qty=1&sku=B&qty=2
+ *  - "items"   -> /cart?sku=A&sku=B&qty=1&qty=2
+ *  - "indexed" -> /cart?sku[0]=A&qty[0]=1&sku[1]=B&qty[1]=2
+ * Fallback: ?add=A:1,B:2 on the base URL in case cart route changes.
  */
-export function buildCartLink(items: CartItem[], strategyOverride?: Strategy): string {
-  const strategy = strategyOverride ?? STRATEGY;
-  const norm = normalizeItems(items);
-  if (norm.length === 0) return withUtm(MYSHOP_BASE);
+export function buildCartLink(
+  items: Array<CartItem | Partial<CartItem>>,
+  utm?: Record<string, string | number>
+) {
+  const safe = normalizeCartItems(items);
 
-  const url = toURL(join(MYSHOP_BASE, "/cart"));
+  // If no items, send to storefront
+  if (safe.length === 0) return storefrontLink(utm);
 
-  switch (strategy) {
-    case "indexed": {
-      // /cart?itemNumber1=SKU&quantity1=Q&itemNumber2=SKU2&quantity2=Q2
-      norm.forEach((it, i) => {
-        const n = String(i + 1);
-        url.searchParams.set(`itemNumber${n}`, it.sku);
-        url.searchParams.set(`quantity${n}`, String(it.qty));
-      });
-      return withUtm(url);
+  const cart = new URL(MYSHOP_BASE);
+  cart.pathname = `${cart.pathname.replace(/\/+$/, "")}/cart`;
+
+  if (CART_STRATEGY === "items") {
+    for (const it of safe) {
+      cart.searchParams.append("sku", it.sku);
+      cart.searchParams.append("qty", String(it.qty));
     }
-
-    case "items": {
-      // /cart?items=SKU:Q,SKU2:Q2
-      const payload = norm.map((it) => `${it.sku}:${it.qty}`).join(",");
-      url.searchParams.set("items", payload);
-      return withUtm(url);
-    }
-
-    case "pairs":
-    default: {
-      // /cart?itemNumber=SKU&quantity=Q&itemNumber=SKU2&quantity=Q2
-      norm.forEach((it) => {
-        url.searchParams.append("itemNumber", it.sku);
-        url.searchParams.append("quantity", String(it.qty));
-      });
-      return withUtm(url);
-    }
+    return withUtm(cart.toString(), utm);
   }
-}
 
-/** Canonical Amway URL passthrough for reference/debug (ensures a full https URL). */
-export function canonicalAmwayUrl(path: string): string {
-  if (/^https?:\/\//i.test(path)) return path;
-  return `https://www.amway.com${path.startsWith("/") ? "" : "/"}${path}`;
-}
-
-/* ----------------- internal helpers ----------------- */
-
-function toURL(input: string | URL): URL {
-  try {
-    return input instanceof URL ? input : new URL(input);
-  } catch {
-    // If input is relative, join to base
-    return new URL(join(MYSHOP_BASE, typeof input === "string" ? input : "/"));
+  if (CART_STRATEGY === "indexed") {
+    safe.forEach((it, i) => {
+      cart.searchParams.append(`sku[${i}]`, it.sku);
+      cart.searchParams.append(`qty[${i}]`, String(it.qty));
+    });
+    return withUtm(cart.toString(), utm);
   }
-}
 
-function join(base: string, path: string): string {
-  const left = base.replace(/\/+$/, "");
-  const right = path.replace(/^\/+/, "");
-  return `${left}/${right}`;
-}
-
-function normalizeSku(s: string): string {
-  return String(s || "").trim();
-}
-
-function normalizeItems(items: CartItem[]) {
-  // Deduplicate by SKU and sum quantities (keeps first-seen order)
-  const map = new Map<string, number>();
-  const order: string[] = [];
-  (Array.isArray(items) ? items : []).forEach(({ sku, qty }) => {
-    const id = normalizeSku(sku);
-    if (!id) return;
-    const q = qty && qty > 0 ? Math.floor(qty) : 1;
-    if (!map.has(id)) order.push(id);
-    map.set(id, (map.get(id) || 0) + q);
-  });
-  return order.map((id) => ({ sku: id, qty: map.get(id)! }));
+  // default: pairs
+  for (const it of safe) {
+    cart.searchParams.append("sku", it.sku);
+    cart.searchParams.append("qty", String(it.qty));
+  }
+  return withUtm(cart.toString(), utm);
 }

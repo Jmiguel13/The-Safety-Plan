@@ -8,15 +8,19 @@ export default function HomeHero() {
         <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/5 px-3 py-1 text-xs tracking-wide">
           <span className="h-2 w-2 rounded-full bg-emerald-400" /> Mission-ready wellness
         </span>
+
+        {/* Headline bump at md: */}
         <h1 className="mt-4 text-5xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
           Mission-Ready <br /> Wellness Kits
         </h1>
+
+        {/* Support line already enlarged & spaced */}
         <p className="mt-4 max-w-xl text-zinc-300">
           Every purchase fuels veteran support and suicide prevention. Built to be carried. Designed to make a difference.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          {/* Internal route → Link */}
+          {/* Internal routes → Link */}
           <Link
             href="/kits"
             className="rounded-full bg-emerald-400 px-4 py-2 text-black hover:bg-emerald-300"
@@ -30,6 +34,22 @@ export default function HomeHero() {
           >
             Visit Shop
           </Link>
+
+          {/* NEW: FAQ */}
+          <Link
+            href="/faq"
+            className="rounded-full border border-zinc-700 px-4 py-2 hover:bg-zinc-900"
+          >
+            FAQ
+          </Link>
+
+          {/* Optional: quick Donate access */}
+          <Link
+            href="/donate"
+            className="rounded-full border border-emerald-500/40 px-4 py-2 hover:bg-emerald-500/10"
+          >
+            Donate
+          </Link>
         </div>
 
         <div className="mt-6 flex flex-wrap gap-2 text-[10px] uppercase tracking-[.15em]">
@@ -39,6 +59,7 @@ export default function HomeHero() {
         </div>
       </div>
 
+      {/* Right rail preview card */}
       <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-4">
         <div className="aspect-video rounded-2xl border border-zinc-800 bg-zinc-900/40" />
         <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-zinc-400">
@@ -63,4 +84,3 @@ export default function HomeHero() {
     </section>
   );
 }
-

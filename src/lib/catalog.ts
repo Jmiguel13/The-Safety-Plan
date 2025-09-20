@@ -1,3 +1,4 @@
+// src/lib/catalog.ts
 /**
  * Canonical Amway catalog entries that we care about.
  * - Provides titles and (optional) canonical Amway PDP URLs.
@@ -305,4 +306,3 @@ export const catalogUrl = (sku: string | number) =>
 
 export const isKnownSku = (sku: string | number) =>
   Object.prototype.hasOwnProperty.call(CATALOG, normSku(sku));
-

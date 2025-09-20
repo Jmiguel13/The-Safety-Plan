@@ -12,6 +12,9 @@ export default function KitHeader({ slug, kit, buyUrl }: { slug: string; kit: Ki
   const title = titleForKit(slug, kit);
   const subtitle = subtitleForKit(slug, kit);
 
+  const skuLabel = stats.skuCount > 0 ? `${stats.skuCount} SKUs` : "—";
+  const itemLabel = stats.itemCount > 0 ? `${stats.itemCount} items` : "—";
+
   return (
     <header className="grid items-center gap-8 md:grid-cols-[1.1fr_.9fr]">
       <div className="space-y-3">
@@ -20,8 +23,8 @@ export default function KitHeader({ slug, kit, buyUrl }: { slug: string; kit: Ki
 
         <div className="flex flex-wrap gap-2 text-sm text-zinc-300">
           {weight && <span className="tag">{weight}</span>}
-          <span className="tag">{stats.itemCount} items</span>
-          <span className="tag">{stats.skuCount} SKUs</span>
+          <span className="tag">{itemLabel}</span>
+          <span className="tag">{skuLabel}</span>
         </div>
 
         <div className="pt-2 flex gap-3">
@@ -30,11 +33,22 @@ export default function KitHeader({ slug, kit, buyUrl }: { slug: string; kit: Ki
         </div>
       </div>
 
-      <div className="rounded-2xl overflow-hidden border border-zinc-800">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={hero.src} alt={hero.alt} className="w-full h-auto object-cover" />
+      <div className="rounded-2xl overflow-hidden border border-zinc-800 min-h-[12rem]">
+        {hero?.src ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={hero.src} alt={hero.alt} className="w-full h-auto object-cover" />
+        ) : (
+          <div
+            aria-hidden
+            className="w-full h-full"
+            style={{
+              background:
+                "radial-gradient(120% 120% at 0% 0%, rgba(0,200,255,.18), transparent), radial-gradient(120% 120% at 100% 100%, rgba(255,170,0,.18), transparent), radial-gradient(120% 120% at 30% 70%, rgba(0,255,150,.14), transparent)",
+              minHeight: "12rem",
+            }}
+          />
+        )}
       </div>
     </header>
   );
 }
-
