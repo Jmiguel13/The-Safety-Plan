@@ -1,7 +1,5 @@
-// src/app/error.tsx
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
 
 export default function Error({
@@ -11,32 +9,25 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    console.error(error);
-  }, [error]);
-
+  console.error(error);
   return (
-    <div
-      role="alert"
-      className="mx-auto max-w-2xl rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-100"
-    >
-      <h2 className="font-semibold tracking-tight">Something went wrong.</h2>
-      <p className="mt-1 text-sm opacity-80">
-        Please try again. If the issue persists, let us know.
+    <div className="mx-auto max-w-3xl px-4 py-12">
+      <h1 className="text-2xl font-semibold">Something went wrong</h1>
+      {error?.digest && (
+        <p className="mt-2 text-xs text-zinc-500">Error ID: {error.digest}</p>
+      )}
+      <p className="mt-2 text-sm text-zinc-400">
+        {error?.message ?? "An unexpected error occurred."}
       </p>
 
-      <div className="mt-3 flex gap-2">
-        <button onClick={() => reset()} className="btn px-3 py-1">
+      <div className="mt-6 flex gap-3">
+        <button onClick={() => reset()} className="btn px-4 py-2" type="button">
           Try again
         </button>
-        <Link href="/" className="btn-ghost px-3 py-1">
-          Home
+        <Link href="/" className="btn-ghost px-4 py-2">
+          Go home
         </Link>
       </div>
-
-      {error?.digest ? (
-        <p className="mt-3 text-xs opacity-60">Error ID: {error.digest}</p>
-      ) : null}
     </div>
   );
 }

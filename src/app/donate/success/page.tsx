@@ -5,31 +5,30 @@ import { stripe } from "@/lib/stripe";
 export const runtime = "nodejs";
 export const revalidate = 0;
 
-type SearchParams = { [key: string]: string | string[] | undefined };
-
 export default async function DonateSuccess({
   searchParams,
 }: {
-  searchParams?: SearchParams;
+  // 👈 Next 15 expects a Promise here
+  searchParams: Promise<{ session_id?: string }>;
 }) {
-  const raw = searchParams?.session_id;
-  const sessionId = Array.isArray(raw) ? raw[0] : raw;
+  const { session_id } = await searchParams;
 
   let line = "Your donation was received. We appreciate your support.";
 
-  if (sessionId) {
+  // Try to show the exact amount when we have a session id and Stripe is configured
+  if (session_id && process.env.STRIPE_SECRET_KEY) {
     try {
-      const s = await stripe.checkout.sessions.retrieve(sessionId);
-      const amount = s.amount_total;
+      const s = await stripe.checkout.sessions.retrieve(session_id);
+      const amount = typeof s.amount_total === "number" ? s.amount_total : null;
       const currency = (s.currency || "usd").toUpperCase();
-      if (typeof amount === "number") {
+      if (amount !== null) {
         line = `We received ${new Intl.NumberFormat("en-US", {
           style: "currency",
           currency,
         }).format(amount / 100)}. Thank you for supporting the mission.`;
       }
     } catch {
-      // Keep the generic line if retrieval fails (e.g., expired/invalid id)
+      // keep the generic message on any lookup error
     }
   }
 

@@ -1,20 +1,22 @@
-// src/components/ClientHelpStripIsland.tsx
 "use client";
 
-import dynamic from "next/dynamic";
+import * as React from "react";
 
-type Props = {
-  enabled?: boolean;
-  className?: string;
-};
+type Props = { enabled?: boolean };
 
-// Load the actual strip only on the client
-const HelpStrip = dynamic(
-  () => import("./HelpStrip").then((m) => m.default ?? m),
-  { ssr: false }
-);
+export default function ClientHelpStripIsland({ enabled = false }: Props) {
+  if (!enabled) return null; // render nothing when disabled
 
-export default function ClientHelpStripIsland({ enabled = true, className }: Props) {
-  if (!enabled) return null;
-  return <HelpStrip className={className} />;
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-50 bg-white/10 backdrop-blur-md md:hidden">
+      <div className="mx-auto max-w-6xl px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sm text-white/90">Need help choosing a kit?</span>
+          <a href="/faq" className="btn px-3 py-1 text-sm">
+            Get help
+          </a>
+        </div>
+      </div>
+    </div>
+  );
 }
