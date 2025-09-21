@@ -6,11 +6,13 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 type Bundle = "daily" | "10day" | "30day";
+type Slug = "resilient" | "homefront";
+
 type CreateCheckoutBody = {
-  slug: "resilient" | "homefront";
+  slug: Slug;
   bundle: Bundle;
   quantity?: number;
-  selections?: { sku: string; qty: number }[];
+  selections?: { sku: string; qty: number }[]; // retained for analytics/debug
 };
 
 function siteBase() {
@@ -18,55 +20,85 @@ function siteBase() {
   return raw.replace(/\/+$/, "");
 }
 
-function priceIdFor(slug: "resilient" | "homefront", bundle: Bundle): string | null {
-  const map: Record<string, string | undefined> = {
-    "resilient|daily":  process.env.STRIPE_PRICE_RESILIENT_DAILY,
-    "resilient|10day":  process.env.STRIPE_PRICE_RESILIENT_10DAY,
-    "resilient|30day":  process.env.STRIPE_PRICE_RESILIENT_30DAY,
-    "homefront|daily":  process.env.STRIPE_PRICE_HOMEFRONT_DAILY,
-    "homefront|10day":  process.env.STRIPE_PRICE_HOMEFRONT_10DAY,
-    "homefront|30day":  process.env.STRIPE_PRICE_HOMEFRONT_30DAY,
-  };
-  return map[`${slug}|${bundle}`] ?? null;
-}
+// Live amounts (USD cents)
+const PRICE_TABLE: Record<Slug, Record<Bundle, number>> = {
+  resilient: { daily: 1500, "10day": 10900, "30day": 29900 },
+  homefront: { daily: 1500, "10day": 10900, "30day": 29900 },
+};
+
+const NAME_TABLE: Record<Slug, Record<Bundle, string>> = {
+  resilient: {
+    daily: "Resilient Kit — Daily",
+    "10day": "Resilient Kit — 10-Day",
+    "30day": "Resilient Kit — Full (30-Day)",
+  },
+  homefront: {
+    daily: "Homefront Kit — Daily",
+    "10day": "Homefront Kit — 10-Day",
+    "30day": "Homefront Kit — Full (30-Day)",
+  },
+};
 
 export async function POST(req: Request) {
-  let payload: CreateCheckoutBody;
   try {
-    payload = (await req.json()) as CreateCheckoutBody;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    const body = (await req.json()) as CreateCheckoutBody;
+    const { slug, bundle } = body || ({} as CreateCheckoutBody);
+    const qty = Math.max(1, Number(body?.quantity ?? 1));
+
+    if (!slug || !bundle) {
+      return NextResponse.json({ error: "Missing slug or bundle" }, { status: 400 });
+    }
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json({ error: "Stripe not configured" }, { status: 500 });
+    }
+
+    const amount = PRICE_TABLE[slug]?.[bundle];
+    if (!amount) {
+      return NextResponse.json({ error: "Unknown kit/bundle" }, { status: 400 });
+    }
+
+    const name = NAME_TABLE[slug][bundle];
+    const site = siteBase();
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      allow_promotion_codes: true,
+      success_url: `${site}/donate/success?kit=${encodeURIComponent(
+        slug
+      )}&bundle=${bundle}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${site}/kits/${encodeURIComponent(slug)}`,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            unit_amount: amount,
+            product_data: {
+              name,
+              description:
+                slug === "resilient"
+                  ? "Built for daily carry. Energy, hydration, recovery, morale."
+                  : "Best for recovery. Rehydrate, restore, and reset.",
+            },
+          },
+          quantity: qty,
+        },
+      ],
+      client_reference_id: `kit:${slug}:${bundle}`,
+      metadata: {
+        tsp_kit_slug: slug,
+        tsp_bundle: bundle,
+        tsp_kit_qty: String(qty),
+        tsp_kit_items: body?.selections ? JSON.stringify(body.selections) : "",
+        tsp_includes: "morale_card,sticker_pack_option,morale_patch_option",
+      },
+    });
+
+    return NextResponse.json({ url: session.url }, { status: 200 });
+  } catch (err) {
+    console.error("Stripe kit checkout error:", err);
+    return NextResponse.json(
+      { error: "Payments are temporarily offline. Please try again shortly." },
+      { status: 502 }
+    );
   }
-
-  const { slug, bundle, quantity = 1, selections } = payload || ({} as CreateCheckoutBody);
-  if (!slug || !bundle) return NextResponse.json({ error: "Missing slug or bundle" }, { status: 400 });
-
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return NextResponse.json({ error: "Stripe not configured" }, { status: 500 });
-  }
-
-  const priceId = priceIdFor(slug, bundle);
-  if (!priceId) {
-    return NextResponse.json({ error: `Missing Stripe price for ${slug}/${bundle}` }, { status: 500 });
-  }
-
-  const site = siteBase();
-
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    allow_promotion_codes: true,
-    success_url: `${site}/donate/success?kit=${encodeURIComponent(slug)}&bundle=${bundle}&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${site}/kits/${encodeURIComponent(slug)}`,
-    line_items: [{ price: priceId, quantity: Math.max(1, Number(quantity || 1)) }],
-    client_reference_id: `kit:${slug}:${bundle}`,
-    metadata: {
-      tsp_kit_slug: slug,
-      tsp_bundle: bundle,
-      tsp_kit_qty: String(quantity || 1),
-      tsp_kit_items: selections ? JSON.stringify(selections) : "",
-      tsp_includes: "morale_card,sticker_pack_option,morale_patch_option",
-    },
-  });
-
-  return NextResponse.json({ url: session.url }, { status: 200 });
 }

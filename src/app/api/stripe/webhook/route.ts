@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Missing stripe-signature" }, { status: 400 });
   }
 
-  // Stripe requires the *raw* body
+  // Stripe requires the raw body
   const buf = Buffer.from(await req.arrayBuffer());
 
   let event: Stripe.Event;
@@ -46,15 +46,13 @@ export async function POST(req: NextRequest) {
 
         console.log("✅ checkout.session.completed", {
           eventId: event.id,
-          live: event.livemode,
           sessionId: session.id,
           amount_total: session.amount_total,
           currency: session.currency,
           email: session.customer_details?.email ?? null,
         });
 
-        // Fire-and-forget: persist a server-side purchase record
-        // Only best-effort; ignore network errors.
+        // Best-effort tracking (ignore network errors)
         const payload = {
           type: "kit_purchase_server" as const,
           session_id: session.id,
@@ -76,17 +74,10 @@ export async function POST(req: NextRequest) {
           body: JSON.stringify(payload),
           keepalive: true,
         }).catch(() => {});
-
         break;
       }
 
-      // Add more handlers as you need:
-      // case "payment_intent.succeeded":
-      // case "charge.refunded":
-      //   break;
-
       default: {
-        // Keep noise low but traceable
         console.log(`ℹ️ Unhandled Stripe event`, { type: event.type, id: event.id });
       }
     }
@@ -100,8 +91,7 @@ export async function POST(req: NextRequest) {
       error: err instanceof Error ? err.message : String(err),
     });
 
-    // If your side effects are idempotent (recommended), you can still return 200
-    // so Stripe doesn’t retry endlessly. If not, return 500 to get a retry.
+    // If your side effects are idempotent, you can still return 200
     return NextResponse.json({ received: true }, { status: 200 });
   }
 }

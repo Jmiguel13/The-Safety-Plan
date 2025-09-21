@@ -1,11 +1,11 @@
+import { NextRequest, NextResponse } from "next/server";
+import { stripe } from "@/lib/stripe";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
-
-const MIN_CENTS = 100;     // $1.00
+const MIN_CENTS = 100; // $1.00
 const MAX_CENTS = 500_000; // $5,000.00
 
 function originFrom(req: NextRequest) {
@@ -56,10 +56,13 @@ export async function POST(req: NextRequest) {
       metadata: { kind: "donation" },
     });
 
-    return NextResponse.json({ ok: true, url: session.url });
-  } catch (err: unknown) {
+    return NextResponse.json({ ok: true, url: session.url }, { status: 200 });
+  } catch (err) {
     console.error("Stripe donate error:", err);
-    const msg = "Payments are temporarily offline. Please try again shortly.";
-    return NextResponse.json({ ok: false, error: msg }, { status: 502 });
+    return NextResponse.json(
+      { ok: false, error: "Payments are temporarily offline. Please try again shortly." },
+      { status: 502 }
+    );
   }
 }
+

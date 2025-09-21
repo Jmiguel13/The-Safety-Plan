@@ -1,4 +1,3 @@
-// src/components/BuyPriceButton.tsx
 "use client";
 
 import * as React from "react";
@@ -40,7 +39,6 @@ export default function BuyPriceButton({
   async function start() {
     const qty = Math.max(1, Number.isFinite(quantity as number) ? Number(quantity) : 1);
     const validId = typeof priceId === "string" && /^price_[a-zA-Z0-9]+$/.test(priceId);
-
     if (!validId) {
       const msg = "Invalid or missing Stripe price id.";
       onError?.(msg);
