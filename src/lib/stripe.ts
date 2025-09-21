@@ -3,29 +3,45 @@ import "server-only";
 import Stripe from "stripe";
 
 /**
- * Server-only Stripe client.
- * - Throws if used on the client.
- * - Pins apiVersion to Stripe's literal type to satisfy TS.
+ * Server-only Stripe client (singleton in dev).
+ * - Throws if imported on the client.
+ * - Accepts STRIPE_API_VERSION from env and passes it through with Stripe's own type.
+ * - Helpers: isLiveKey / isTestKey
  */
 if (typeof window !== "undefined") {
   throw new Error("Stripe SDK must not be imported on the client.");
 }
 
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-if (!STRIPE_SECRET_KEY) {
+// Validate env and coerce to string for TS
+const maybeSecret = process.env.STRIPE_SECRET_KEY;
+if (!maybeSecret) {
+  // Fail fast so we don't get confusing 401s later
   throw new Error("Missing STRIPE_SECRET_KEY in environment");
 }
+const SECRET: string = maybeSecret;
 
-type SupportedApiVersion = "2025-08-27.basil";
-const API_VERSION: SupportedApiVersion =
-  (process.env.STRIPE_API_VERSION as SupportedApiVersion) ?? "2025-08-27.basil";
+/** Optional API version override (must match Stripe's allowed literal union). */
+const API_VERSION = process.env.STRIPE_API_VERSION as Stripe.LatestApiVersion | undefined;
 
-export const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: API_VERSION });
+declare global {
+  var __stripe__: Stripe | undefined;
+}
 
-// Helpers
+/** Singleton (important in Next dev / Fast Refresh). */
+export const stripe: Stripe =
+  globalThis.__stripe__ ??
+  new Stripe(SECRET, {
+    apiVersion: API_VERSION,
+  });
+
+if (!globalThis.__stripe__) {
+  globalThis.__stripe__ = stripe;
+}
+
+/** Helpers */
 export function isLiveKey(): boolean {
-  return STRIPE_SECRET_KEY?.startsWith("sk_live_") ?? false;
+  return SECRET.startsWith("sk_live_");
 }
 export function isTestKey(): boolean {
-  return STRIPE_SECRET_KEY?.startsWith("sk_test_") ?? false;
+  return SECRET.startsWith("sk_test_");
 }

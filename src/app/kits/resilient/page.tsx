@@ -1,9 +1,8 @@
-// src/app/kits/resilient/page.tsx
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import SpecGrid from "@/components/SpecGrid";
 import CopySkus from "@/components/CopySkus";
-import BuyLink from "@/components/BuyLink";
+import KitCheckoutForm from "@/components/KitCheckoutForm";
 import { kits } from "@/lib/kits";
 
 export const viewport: Viewport = { themeColor: "#0b0f10" };
@@ -13,23 +12,27 @@ export const metadata: Metadata = {
 };
 export const dynamic = "error";
 
+// ---------- Types ----------
+type KitItem = { sku?: string; title?: string; qty?: number };
 type Kit = {
   slug: string;
   title?: string;
   weight?: string | number;
   specs?: { weight?: string | number };
-  contents?: unknown[];
-  items?: unknown[];
-  skus?: unknown[];
-  sku_list?: unknown[];
+  contents?: KitItem[];
+  items?: KitItem[];
+  skus?: Array<string | number>;
+  sku_list?: Array<string | number>;
+  imageUrl?: string;
 };
 
+// ---------- Helpers ----------
 function isRecord(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === "object";
 }
 function getKitBySlug(slug: string): Kit | null {
   const list = Array.isArray(kits) ? (kits as unknown[]) : [];
-  const match = list.find((k) => isRecord(k) && k.slug === slug);
+  const match = list.find((k) => isRecord(k) && (k as Kit).slug === slug);
   return (match as Kit) ?? null;
 }
 function asNonEmptyString(v: unknown, fallback: string): string {
@@ -38,7 +41,7 @@ function asNonEmptyString(v: unknown, fallback: string): string {
 function toStringOrDash(v: unknown): string {
   if (typeof v === "string" && v.trim()) return v;
   if (typeof v === "number") return String(v);
-  return "-";
+  return "—";
 }
 function toStringArray(v: unknown): string[] {
   if (!Array.isArray(v)) return [];
@@ -47,71 +50,97 @@ function toStringArray(v: unknown): string[] {
 function skusToItems(skus: string[]): { sku: string; quantity: number }[] {
   return skus.map((sku) => ({ sku, quantity: 1 }));
 }
+function grdForResilient() {
+  return "radial-gradient(1200px 500px at -10% -10%, rgba(16,185,129,0.18), transparent 65%), radial-gradient(900px 420px at 110% 20%, rgba(59,130,246,0.16), transparent 60%)";
+}
 
 export default function ResilientPage() {
   const kit = getKitBySlug("resilient");
-
   const title = asNonEmptyString(kit?.title, "Resilient Kit");
-  const weight = toStringOrDash(
-    kit?.weight ?? kit?.specs?.weight
-  );
+  const weight = toStringOrDash(kit?.weight ?? kit?.specs?.weight);
 
-  const contents = (Array.isArray(kit?.contents) ? kit?.contents : kit?.items) ?? [];
+  // Prefer structured items; fall back to raw SKU list only if no items present.
+  const items: KitItem[] = (Array.isArray(kit?.contents) ? kit?.contents : kit?.items) ?? [];
   const skus = toStringArray(kit?.skus ?? kit?.sku_list);
   const copyItems = skusToItems(skus);
 
-  const itemsCount = (Array.isArray(contents) ? contents.length : 0) || copyItems.length;
+  const itemsCount = items.length || copyItems.length;
 
   const specs = [
     { label: "Weight", value: weight },
     { label: "Items", value: String(itemsCount) },
-    { label: "SKUs", value: String(copyItems.length) },
+    { label: "SKUs", value: String(skus.length) },
   ];
 
   return (
-    <main id="content" className="container max-w-5xl space-y-8 py-10">
-      <header className="grid items-start gap-6 md:grid-cols-[1.2fr_.8fr]">
-        <div className="space-y-4">
-          <h1>{title}</h1>
-          <p className="muted">
-            Built for daily carry. Energy, hydration, recovery, morale.
-          </p>
+    <main id="content" className="container max-w-6xl space-y-10 py-10">
+      {/* Hero */}
+      <section
+        className="relative overflow-hidden rounded-3xl border border-white/10"
+        style={{ backgroundImage: grdForResilient(), backgroundColor: "rgb(9 9 11 / 0.65)" }}
+      >
+        <div className="grid gap-8 md:grid-cols-[1.1fr,480px]">
+          {/* Copy + actions */}
+          <div className="p-6 md:p-8">
+            <div className="space-y-4">
+              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{title}</h1>
+              <p className="muted">Built for daily carry. Energy, hydration, recovery, morale.</p>
 
-          <div className="flex flex-wrap gap-3">
-            <BuyLink href="/r/resilient" className="btn" payload={{ slug: "resilient" }}>
-              Buy now
-            </BuyLink>
-            <Link href="/kits/resilient/items" className="btn-ghost">
-              View SKUs
-            </Link>
-            {copyItems.length > 0 ? <CopySkus items={copyItems} /> : null}
+              {/* Single buy control (Stripe bundle picker) */}
+              <KitCheckoutForm kit={{ slug: "resilient", title }} className="pt-1" />
+
+              {/* Specs */}
+              <div className="pt-2">
+                <SpecGrid specs={specs} />
+              </div>
+
+              <div className="flex flex-wrap gap-3 pt-1">
+                <Link href="/kits/resilient/items" className="btn-ghost">
+                  View SKUs
+                </Link>
+                {copyItems.length > 0 ? <CopySkus items={copyItems} /> : null}
+              </div>
+            </div>
           </div>
 
-          <div className="pt-2">
-            <SpecGrid specs={specs} />
-          </div>
+          {/* Visual slot (hook up an image later by setting kit.imageUrl) */}
+          <div
+            className="min-h-[260px] md:min-h-[100%] bg-zinc-900/40"
+            style={{
+              backgroundImage: kit?.imageUrl ? `url("${kit.imageUrl}")` : undefined,
+              backgroundSize: kit?.imageUrl ? "cover" : undefined,
+              backgroundPosition: kit?.imageUrl ? "center" : undefined,
+            }}
+            aria-hidden="true"
+          />
         </div>
+      </section>
 
-        <div className="panel-inset grid aspect-[4/3] place-items-center rounded-xl">
-          <div className="preview-dot" />
-          <div className="sr-only">Product preview placeholder</div>
-        </div>
-      </header>
+      {/* What's inside */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-semibold">What&rsquo;s inside</h2>
 
-      <section className="space-y-3">
-        <h2>What&apos;s inside</h2>
-
-        {copyItems.length === 0 ? (
-          <p className="muted text-sm">Item list coming soon.</p>
-        ) : (
-          <div className="panel rounded-xl border border-[var(--border)] p-4">
+        {items.length > 0 ? (
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((i, idx) => (
+              <li key={`${i.sku ?? idx}`}>
+                <div className="rounded-2xl border border-white/10 bg-zinc-950/60 p-3">
+                  <div className="font-medium truncate">{i.title ?? i.sku ?? "Item"}</div>
+                  {i.sku ? (
+                    <div className="text-xs text-zinc-500 mt-0.5">SKU {i.sku}</div>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : copyItems.length > 0 ? (
+          <div className="rounded-2xl border border-[var(--border)] bg-zinc-950/60 p-4">
             <div className="mb-2 flex items-center justify-between">
               <div className="muted text-xs">
                 Paste any SKU in your Amway search bar to add to cart.
               </div>
               <CopySkus items={copyItems} />
             </div>
-
             <ul className="grid gap-1 font-mono text-sm">
               {copyItems.map((row) => (
                 <li
@@ -124,20 +153,10 @@ export default function ResilientPage() {
               ))}
             </ul>
           </div>
+        ) : (
+          <p className="muted text-sm">Item list coming soon.</p>
         )}
       </section>
-
-      <div className="divider" />
-
-      <div className="flex flex-wrap gap-3">
-        <BuyLink href="/r/resilient" className="btn" payload={{ slug: "resilient" }}>
-          Buy now
-        </BuyLink>
-        <Link href="/kits/resilient/items" className="btn-ghost">
-          View SKUs
-        </Link>
-        {copyItems.length > 0 ? <CopySkus items={copyItems} /> : null}
-      </div>
     </main>
   );
 }

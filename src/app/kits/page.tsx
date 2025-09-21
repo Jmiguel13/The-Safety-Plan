@@ -1,85 +1,90 @@
-// src/app/kits/page.tsx
-import Image from "next/image";
-import Link from "next/link";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { kits } from "@/lib/kits";
 
-export const dynamic = "force-static";
 export const revalidate = 86_400;
 
 export const metadata: Metadata = {
-  title: "Kits",
-  description:
-    "Mission-ready wellness kits — focus, hydration, recovery, rest. Buy direct via Stripe.",
+  title: "Kits — The Safety Plan",
+  description: "Built for real needs: hydration, energy, recovery, and rest.",
 };
 
-export default function KitsIndex() {
+type KitBrief = {
+  slug: string;
+  title?: string;
+  tagline?: string;
+  imageUrl?: string; // <-- add this to your kits data when you have images
+};
+
+function titleOf(slug: string, title?: string) {
+  if (title && title.trim()) return title;
+  return `${slug.slice(0, 1).toUpperCase()}${slug.slice(1)} Kit`;
+}
+
+function cardGrad(slug: string) {
+  if (slug === "resilient") {
+    return "radial-gradient(600px 260px at 0% 0%, rgba(16,185,129,0.18), transparent 65%), radial-gradient(520px 220px at 100% 0%, rgba(59,130,246,0.16), transparent 60%)";
+  }
+  if (slug === "homefront") {
+    return "radial-gradient(600px 260px at 0% 0%, rgba(56,189,248,0.18), transparent 65%), radial-gradient(520px 220px at 100% 0%, rgba(34,197,94,0.16), transparent 60%)";
+  }
+  return "radial-gradient(560px 240px at 0% 0%, rgba(148,163,184,0.16), transparent 60%)";
+}
+
+export default function KitsIndexPage() {
+  const list = (kits as KitBrief[]).filter((k) => k && k.slug);
+
   return (
-    <section className="space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-5xl font-extrabold tracking-tight">Kits</h1>
-        <p className="text-zinc-300">
-          Built to be carried. Designed to make a difference. Choose a kit and check out securely
-          with Stripe.
-        </p>
-      </header>
+    <main className="mx-auto max-w-6xl px-4 py-10">
+      <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Kits</h1>
+      <p className="muted mt-2">Built for real needs: hydration, energy, recovery, and rest.</p>
 
-      <ul className="grid gap-5 sm:grid-cols-2">
-        {kits.map((k) => (
-          <li key={k.slug} className="overflow-hidden rounded-3xl border border-zinc-800">
-            <div className="p-4">
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-2">
-                {k.image ? (
-                  <Image
-                    src={k.image}
-                    alt={k.imageAlt ?? k.title ?? ""}
-                    width={1200}
-                    height={800}
-                    className="aspect-video w-full rounded-xl object-cover"
-                  />
-                ) : (
-                  <div className="aspect-video rounded-xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-800" />
-                )}
-              </div>
+      <ul className="mt-8 grid gap-6 sm:grid-cols-2">
+        {list.map((k) => {
+          const name = titleOf(k.slug, k.title);
+          const line =
+            k.tagline ||
+            (k.slug === "resilient"
+              ? "Built for daily carry. Energy, hydration, recovery, morale."
+              : k.slug === "homefront"
+              ? "Support for home base. Hydration, vitamins, recovery, rest."
+              : "Mission-ready wellness essentials.");
 
-              <div className="mt-4 flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="truncate text-xl font-semibold">{k.title ?? "Kit"}</h2>
-                  {k.subtitle && (
-                    <p className="mt-1 line-clamp-2 text-sm text-zinc-400">{k.subtitle}</p>
-                  )}
-                </div>
+          // If you add /public/images/kits/{slug}.jpg, you can set imageUrl accordingly.
+          const bg = k.imageUrl
+            ? `linear-gradient(0deg, rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url("${k.imageUrl}")`
+            : cardGrad(k.slug);
 
-                <div className="flex shrink-0 gap-2">
-                  <Link href={`/kits/${k.slug}`} className="btn-ghost">
-                    View
-                  </Link>
-                  <Link href={`/checkout/kit/${k.slug}`} className="btn">
-                    Buy
-                  </Link>
-                </div>
-              </div>
+          return (
+            <li key={k.slug}>
+              <Link
+                href={`/kits/${k.slug}`}
+                className="block rounded-2xl border border-white/10 overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+                aria-label={`View ${name}`}
+                style={{ backgroundColor: "rgb(9 9 11 / 0.65)" }}
+              >
+                <div
+                  className="aspect-[5/3] bg-zinc-900/30"
+                  style={{
+                    backgroundImage: bg,
+                    backgroundSize: k.imageUrl ? "cover" : undefined,
+                    backgroundPosition: k.imageUrl ? "center" : undefined,
+                  }}
+                />
+                <div className="p-4">
+                  <div className="text-xs text-zinc-400">{name}</div>
+                  <div className="mt-1 text-lg font-semibold">{name}</div>
+                  <p className="muted mt-1 text-sm">{line}</p>
 
-              <div className="mt-3 grid grid-cols-3 gap-3 text-xs">
-                <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-2">
-                  <div className="text-[10px] uppercase tracking-widest text-zinc-500">Weight</div>
-                  <div className="text-white">{k.weight_lb ?? "—"}</div>
-                </div>
-                <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-2">
-                  <div className="text-[10px] uppercase tracking-widest text-zinc-500">Items</div>
-                  <div className="text-white">{k.items?.length ?? 0}</div>
-                </div>
-                <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-2">
-                  <div className="text-[10px] uppercase tracking-widest text-zinc-500">SKUs</div>
-                  <div className="text-white">
-                    {k.items?.map((i) => i.sku).filter(Boolean).length ?? 0}
+                  <div className="mt-3">
+                    <span className="btn px-3 py-1 text-sm">View Kit</span>
                   </div>
                 </div>
-              </div>
-            </div>
-          </li>
-        ))}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
-    </section>
+    </main>
   );
 }

@@ -1,48 +1,47 @@
 // src/components/ClientHelpStripIsland.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import * as React from "react";
+import Link from "next/link";
 
-export default function ClientHelpStripIsland({ enabled = false }: { enabled?: boolean }) {
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    if (!enabled) return;
-    const key = "help-strip-dismissed";
-    if (sessionStorage.getItem(key) === "1") return;
-    setShow(true);
-  }, [enabled]);
-
-  if (!enabled || !show) return null;
+export default function ClientHelpStripIsland(props: { enabled?: boolean }) {
+  if (!props?.enabled) return null;
 
   return (
     <div
-      role="dialog"
-      aria-label="Need help?"
-      className="fixed inset-x-0 bottom-3 z-40 mx-auto w-[min(680px,92vw)] rounded-xl border bg-background/95 p-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      role="region"
+      aria-label="Quick Help"
+      className="fixed bottom-3 left-0 right-0 z-40 mx-auto w-full max-w-[560px] px-3"
     >
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          Questions during checkout or setup? I’m here.
-        </p>
-        <div className="flex items-center gap-2">
-          <a
-            href="/contact"
-            className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-700"
-          >
-            Contact
-          </a>
-          <button
-            onClick={() => {
-              sessionStorage.setItem("help-strip-dismissed", "1");
-              setShow(false);
-            }}
-            className="rounded-md border px-2 py-1 text-sm"
-            aria-label="Dismiss"
-            title="Dismiss"
-          >
-            Close
-          </button>
+      <div className="rounded-xl border border-white/10 bg-black/70 backdrop-blur text-white shadow-lg">
+        <div className="flex items-center justify-between gap-3 p-3">
+          <div className="text-sm leading-tight">
+            <div className="font-medium">Need help or in crisis?</div>
+            <div className="opacity-80">
+              Call <a href="tel:988" className="underline">988</a> or text{" "}
+              <a href="sms:988" className="underline">988</a>. Immediate support.
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <a
+              href="tel:988"
+              className="rounded-lg border border-white/20 px-3 py-2 text-sm hover:bg-white/10"
+            >
+              Call
+            </a>
+            <a
+              href="sms:988"
+              className="rounded-lg bg-white/90 px-3 py-2 text-sm text-black hover:bg-white"
+            >
+              Text
+            </a>
+          </div>
+        </div>
+        <div className="flex items-center justify-between border-t border-white/10 px-3 py-2 text-xs opacity-80">
+          <div>The Safety Plan</div>
+          <Link href="/faq" className="underline">
+            More resources
+          </Link>
         </div>
       </div>
     </div>

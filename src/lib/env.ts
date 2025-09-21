@@ -1,4 +1,3 @@
-// src/lib/env.ts
 /**
  * Client-safe env shim:
  * - No `server-only`
@@ -28,6 +27,10 @@ export const envFlags = {
   },
   strictCspEnabled(): boolean {
     return (ENV_PUBLIC.NEXT_STRICT_CSP ?? "0") === "1";
+  },
+  /** Convenience: test whether PK looks like a Stripe test key on the client */
+  isStripeTestPk(): boolean {
+    return (ENV_PUBLIC.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "").startsWith("pk_test_");
   },
 };
 

@@ -1,4 +1,3 @@
-// src/app/api/checkout/donate/route.ts
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -23,22 +22,13 @@ export async function POST(req: NextRequest) {
     const amount = Number(body?.amount_cents);
 
     if (!Number.isFinite(amount)) {
-      return NextResponse.json(
-        { ok: false, error: "Invalid amount." },
-        { status: 400 },
-      );
+      return NextResponse.json({ ok: false, error: "Invalid amount." }, { status: 400 });
     }
     if (amount < MIN_CENTS) {
-      return NextResponse.json(
-        { ok: false, error: "Minimum donation is $1." },
-        { status: 400 },
-      );
+      return NextResponse.json({ ok: false, error: "Minimum donation is $1." }, { status: 400 });
     }
     if (amount > MAX_CENTS) {
-      return NextResponse.json(
-        { ok: false, error: "Maximum donation for this form is $5,000." },
-        { status: 400 },
-      );
+      return NextResponse.json({ ok: false, error: "Maximum donation for this form is $5,000." }, { status: 400 });
     }
 
     const base = originFrom(req);
@@ -68,7 +58,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, url: session.url });
   } catch (err: unknown) {
-    // Log full error on server, but DO NOT leak raw Stripe strings to the client.
     console.error("Stripe donate error:", err);
     const msg = "Payments are temporarily offline. Please try again shortly.";
     return NextResponse.json({ ok: false, error: msg }, { status: 502 });
