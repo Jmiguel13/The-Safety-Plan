@@ -1,7 +1,7 @@
 // src/app/page.tsx
 export const runtime = "nodejs";
 
-import Image from "next/image";
+import type React from "react";
 import Link from "next/link";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
@@ -49,14 +49,16 @@ function IconHeart(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-/** Prefer a real hero image if present */
+/** Prefer a real hero image if present (server only) */
 function firstExistingPublicPath(candidates: string[]): string | null {
   try {
     const pub = join(process.cwd(), "public");
     for (const rel of candidates) {
       if (existsSync(join(pub, rel))) return `/${rel.replace(/^\/+/, "")}`;
     }
-  } catch {}
+  } catch {
+    // ignore fs issues (non-Node envs)
+  }
   return null;
 }
 
@@ -68,6 +70,12 @@ const HERO_SRC = firstExistingPublicPath([
   "hero-tactical.jpg",
 ]);
 
+/** Simple, robust image (no next/image dependency) */
+function HeroImg({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt={alt} className={className} style={{ width: "100%", height: "100%", objectFit: "cover" }} />;
+}
+
 export default function Home() {
   const { IMPACT_STAT } = getSiteConfig();
 
@@ -76,7 +84,7 @@ export default function Home() {
     { title: "Hydration", desc: "Electrolytes for long days.", Icon: IconDrop },
     { title: "Rest", desc: "Recover and reset.", Icon: IconMoon },
     { title: "Impact", desc: "Every order funds prevention.", Icon: IconHeart },
-  ];
+  ] as const;
 
   const kits = [
     {
@@ -92,7 +100,7 @@ export default function Home() {
       badge: "Mission-ready",
       gradient: "bg-gradient-to-br from-sky-500/20 via-sky-400/10 to-sky-500/5",
     },
-  ];
+  ] as const;
 
   return (
     <div className="space-y-16">
@@ -149,13 +157,10 @@ export default function Home() {
             }}
           >
             {HERO_SRC ? (
-              <Image
+              <HeroImg
                 src={HERO_SRC}
                 alt="The Safety Plan — wellness with a mission"
-                fill
-                priority
-                sizes="(min-width: 768px) 28rem, 100vw"
-                className="object-cover"
+                className="absolute inset-0"
               />
             ) : (
               <div aria-hidden="true" className="absolute inset-0" />

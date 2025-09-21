@@ -7,6 +7,11 @@ export const runtime = "nodejs";
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 
+function siteBase() {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  return raw.replace(/\/+$/, "");
+}
+
 export async function POST(req: NextRequest) {
   if (!WEBHOOK_SECRET) {
     return NextResponse.json(
@@ -49,7 +54,30 @@ export async function POST(req: NextRequest) {
           email: session.customer_details?.email ?? null,
         });
 
-        // TODO: persist to DB, send an email, queue a job, etc.
+        // Fire-and-forget: persist a server-side purchase record
+        // Only best-effort; ignore network errors.
+        const payload = {
+          type: "kit_purchase_server" as const,
+          session_id: session.id,
+          kit:
+            (session.metadata?.tsp_kit_slug as string | undefined) ??
+            (session.client_reference_id?.startsWith("kit:")
+              ? session.client_reference_id.slice(4)
+              : undefined) ??
+            undefined,
+          email: session.customer_details?.email ?? null,
+          amount_total: session.amount_total ?? null,
+          currency: session.currency ?? null,
+        };
+
+        const base = siteBase();
+        fetch(`${base}/api/track/kit`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(payload),
+          keepalive: true,
+        }).catch(() => {});
+
         break;
       }
 

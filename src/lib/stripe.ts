@@ -1,4 +1,5 @@
 // src/lib/stripe.ts
+import "server-only";
 import Stripe from "stripe";
 
 /**
@@ -22,9 +23,9 @@ const API_VERSION: SupportedApiVersion =
 export const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: API_VERSION });
 
 // Helpers
-export function isLiveKey() {
+export function isLiveKey(): boolean {
   return STRIPE_SECRET_KEY?.startsWith("sk_live_") ?? false;
 }
-export function isTestKey() {
+export function isTestKey(): boolean {
   return STRIPE_SECRET_KEY?.startsWith("sk_test_") ?? false;
 }

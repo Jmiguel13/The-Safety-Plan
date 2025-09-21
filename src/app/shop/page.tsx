@@ -2,7 +2,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { kits } from "@/lib/kits";
-import { storefrontLink, myShopLink, MYSHOP_BASE } from "@/lib/amway";
+import { storefrontLink, productLink, MYSHOP_BASE } from "@/lib/amway";
 import { TSP_PRODUCTS } from "@/lib/tsp-products";
 
 type KitLite = {
@@ -47,7 +47,7 @@ function soloItems(): SoloItem[] {
     { sku: "110601", title: "XS Sports Electrolyte — Strawberry Watermelon" },
     { sku: "109747", title: "Nutrilite Vitamin C — 180 tablets" },
   ];
-  return picks.map(({ sku, title }) => ({ sku, title, url: myShopLink(sku) }));
+  return picks.map(({ sku, title }) => ({ sku, title, url: productLink(sku) || "/" }));
 }
 
 export default function ShopPage() {
@@ -59,7 +59,7 @@ export default function ShopPage() {
 
   const solos = soloItems();
   const hasTsp = Array.isArray(TSP_PRODUCTS) && TSP_PRODUCTS.length > 0;
-  const storeHref = storefrontLink();
+  const storeHref = storefrontLink("/");
 
   return (
     <section className="max-w-4xl space-y-10">
@@ -211,8 +211,8 @@ export default function ShopPage() {
 
       <p className="text-xs text-zinc-500">
         Storefront base:&nbsp;
-        <a href={MYSHOP_BASE} target="_blank" rel="noopener noreferrer" className="underline">
-          {MYSHOP_BASE}
+        <a href={MYSHOP_BASE || "/"} target="_blank" rel="noopener noreferrer" className="underline">
+          {MYSHOP_BASE || "Not configured"}
         </a>
       </p>
     </section>

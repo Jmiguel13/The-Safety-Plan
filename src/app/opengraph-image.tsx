@@ -22,7 +22,8 @@ export default async function OpengraphImage() {
           background:
             "linear-gradient(180deg, rgba(0,0,0,.6), rgba(0,0,0,.6)), radial-gradient(800px 420px at 15% 0%, rgba(56,189,248,.22), transparent), radial-gradient(900px 520px at 100% 60%, rgba(16,185,129,.20), transparent), #0b1113",
           color: "#e8f1f2",
-          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'",
+          fontFamily:
+            "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'",
           letterSpacing: "-0.01em",
         }}
       >

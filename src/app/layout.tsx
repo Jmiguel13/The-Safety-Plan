@@ -3,13 +3,14 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Inter } from "next/font/google";
-import { getEnv } from "@/lib/env.server"; // ⬅️ server-only import
+import { getEnv } from "@/lib/env.server"; // server-only import (wrapped below)
 import { getSiteConfig } from "@/lib/site";
-import ClientHelpStripIsland from "@/components/ClientHelpStripIsland"; // client component
 import StructuredData, { type JsonLdObject } from "@/components/StructuredData";
 
+// --- Fonts / base classes ---
 const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
 
+// --- Utilities ---
 function toURL(value?: string) {
   try {
     return new URL(value ?? "");
@@ -18,6 +19,7 @@ function toURL(value?: string) {
   }
 }
 
+// Load env on server (never throws in RSC tree)
 const env = (() => {
   try {
     return getEnv();
@@ -26,9 +28,19 @@ const env = (() => {
   }
 })();
 
+// Site config + URLs
 const siteURL = (env?.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000").replace(/\/+$/, "");
 const { CRISIS_TEL, CRISIS_SMS } = getSiteConfig();
 
+// Social profiles for JSON-LD `sameAs`
+const SAME_AS = [
+  "https://www.facebook.com/profile.php?id=61580229291031",
+  // Add more when ready:
+  // "https://www.instagram.com/yourhandle",
+  // "https://x.com/yourhandle",
+];
+
+// --- Metadata ---
 export const metadata: Metadata = {
   metadataBase: toURL(env?.NEXT_PUBLIC_SITE_URL),
   title: { default: "The Safety Plan", template: `%s — The Safety Plan` },
@@ -56,9 +68,18 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#000000", colorScheme: "dark" };
 
+// --- Safe, optional client island import ---
+// We avoid dynamic({ ssr:false }) because this is a Server Component file.
+// If the module or its default export isn't present, we simply skip rendering it.
+import * as HelpIslandNS from "@/components/ClientHelpStripIsland";
+type HelpIslandProps = { enabled?: boolean };
+const HelpIsland =
+  (HelpIslandNS as unknown as { default?: React.ComponentType<HelpIslandProps> }).default ?? null;
+
+// --- Root layout ---
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const year = new Date().getFullYear();
-  const helpStripEnabled = process.env.NEXT_PUBLIC_ENABLE_HELP_STRIP !== "0";
+  const helpStripEnabled = (process.env.NEXT_PUBLIC_ENABLE_HELP_STRIP ?? "0") !== "0";
 
   // JSON-LD payloads (typed)
   const websiteLd: JsonLdObject = {
@@ -80,18 +101,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     name: "The Safety Plan",
     url: siteURL,
     logo: `${siteURL}/favicon.ico`,
-    sameAs: [
-      "https://www.facebook.com/profile.php?id=61580229291031",
-    ],
-    contactPoint: [
-      {
-        "@type": "ContactPoint",
-        email: "contactsafetyplan@yahoo.com",
-        contactType: "customer support",
-        areaServed: "US",
-        availableLanguage: ["en"],
-      },
-    ],
+    sameAs: SAME_AS,
   };
 
   const jsonLd: JsonLdObject[] = [websiteLd, orgLd];
@@ -237,8 +247,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </footer>
 
-        {/* Mobile floating help strip (client island; toggle with env) */}
-        <ClientHelpStripIsland enabled={helpStripEnabled} />
+        {/* Mobile floating help strip — render only if component exists AND toggle is enabled */}
+        {helpStripEnabled && HelpIsland ? <HelpIsland enabled /> : null}
       </body>
     </html>
   );
