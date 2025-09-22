@@ -13,7 +13,7 @@ export function GET() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",          // <-- valid value (not "stretch")
+          justifyContent: "center",          // valid value (not "stretch")
           alignItems: "center",
           background: "#0b0b0b",
           color: "#fff",
