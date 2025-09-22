@@ -31,7 +31,7 @@ export default function HelpStrip({
   const prefersReducedMotion = usePrefersReducedMotion();
   const regionRef = useRef<HTMLDivElement | null>(null);
 
-  // Decide whether to show once we’re on the client
+  // Decide whether to show once weï¿½re on the client
   useEffect(() => {
     setMounted(true);
     try {
