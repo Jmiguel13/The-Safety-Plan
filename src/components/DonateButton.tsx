@@ -1,53 +1,48 @@
+// src/components/DonateButton.tsx
 "use client";
 
-import * as React from "react";
+import { useState } from "react";
+import { startDonation } from "@/lib/checkout";
 
-type Props = {
-  amountCents?: number; // e.g. 2500 = $25.00
-  className?: string;
-  children?: React.ReactNode;
-};
+export default function DonateButton({ defaultAmount = 100 }: { defaultAmount?: number }) {
+  const [amount, setAmount] = useState<number>(defaultAmount);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-export default function DonateButton({
-  amountCents = 2500,
-  className,
-  children,
-}: Props) {
-  const [loading, setLoading] = React.useState(false);
-
-  async function go() {
+  async function onClick() {
     try {
       setLoading(true);
-      const res = await fetch("/api/donate", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        // IMPORTANT: API expects amount_cents; also sends amount for compatibility
-        body: JSON.stringify({ amount_cents: amountCents, amount: amountCents }),
-      });
-      const json = await res.json();
-      if (json?.url) {
-        window.location.href = json.url as string;
-      } else {
-        alert(json?.error || "Unable to start donation checkout.");
-      }
+      setError(null);
+      await startDonation(amount, 1);
     } catch (e) {
-      console.error(e);
-      alert("Unable to start donation checkout.");
+      setError(e instanceof Error ? e.message : "Payments are temporarily offline.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <button
-      onClick={go}
-      disabled={loading}
-      className={
-        className ??
-        "inline-flex items-center gap-2 rounded-full px-4 py-2 border border-white/20 hover:border-white/40 transition"
-      }
-    >
-      {children ?? (loading ? "Starting…" : "Donate")}
-    </button>
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="rounded-md bg-zinc-800 px-2 py-1">$</span>
+        <input
+          type="number"
+          min={1}
+          value={amount}
+          onChange={(e) => setAmount(Number(e.target.value || 0))}
+          className="w-32 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2"
+        />
+      </div>
+
+      <button
+        onClick={onClick}
+        disabled={loading || amount <= 0}
+        className="rounded-md bg-emerald-600 px-4 py-2 font-semibold disabled:opacity-50"
+      >
+        {loading ? "Redirecting…" : "Donate"}
+      </button>
+
+      {error ? <p className="text-sm text-red-500">{error}</p> : null}
+    </div>
   );
 }

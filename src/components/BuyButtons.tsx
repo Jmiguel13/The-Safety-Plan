@@ -1,150 +1,64 @@
 // src/components/BuyButtons.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { type CartItem, MYSHOP_BASE, buildCartLink } from "@/lib/amway";
-import CopySkus from "./CopySkus";
+import { useState } from "react";
+import { buyNow } from "@/lib/checkout";
 
-export default function BuyButtons({
-  items,
-  fallbackSkusTitle = "Kit Contents (SKUs)",
-}: {
-  items: CartItem[];
-  fallbackSkusTitle?: string;
-}) {
-  const [showFallback, setShowFallback] = useState(false);
-  const [href, setHref] = useState(MYSHOP_BASE);
-  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+export type BuyButtonsProps = {
+  priceId: string;   // Stripe Price ID (LIVE/TEST depending on environment)
+  min?: number;
+  max?: number;
+};
 
-  useEffect(() => {
+export default function BuyButtons({ priceId, min = 1, max = 10 }: BuyButtonsProps) {
+  const [qty, setQty] = useState<number>(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function dec() { setQty((q) => Math.max(min, q - 1)); }
+  function inc() { setQty((q) => Math.min(max, q + 1)); }
+
+  async function onBuy() {
     try {
-      setHref(buildCartLink(items));
-    } catch {
-      setHref(MYSHOP_BASE);
-    }
-  }, [items]);
-
-  function openBuy() {
-    // Try opening the multi-add cart link in a new tab.
-    const w = window.open(href, "_blank", "noopener,noreferrer");
-    if (!w) window.location.href = href; // pop-up blocked → same-tab nav
-    setShowFallback(true); // show helper regardless, it's useful
-  }
-
-  async function copyOne(sku: string, qty = 1) {
-    try {
-      await navigator.clipboard.writeText(`${sku} x${qty}`);
-    } catch {
-      // ignore
+      setLoading(true);
+      setError(null);
+      await buyNow(priceId, qty);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Checkout unavailable.");
+    } finally {
+      setLoading(false);
     }
   }
-
-  // Focus the close button when dialog opens (basic a11y affordance)
-  useEffect(() => {
-    if (showFallback) closeBtnRef.current?.focus();
-  }, [showFallback]);
 
   return (
-    <>
-      <div className="flex flex-wrap gap-3">
-        <button onClick={openBuy} className="btn" aria-haspopup="dialog">
-          Buy Now
-        </button>
-
-        <a
-          href={MYSHOP_BASE}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-ghost"
-          aria-label="Open MyShop storefront"
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={dec}
+          className="h-9 w-9 rounded-md border border-zinc-700"
+          aria-label="Decrease quantity"
         >
-          Open Storefront
-        </a>
-
-        {/* Optional extra CTA back to kits index */}
-        <Link href="/kits" className="btn-ghost">
-          View Kit Details
-        </Link>
+          –
+        </button>
+        <span className="w-8 text-center">{qty}</span>
+        <button
+          onClick={inc}
+          className="h-9 w-9 rounded-md border border-zinc-700"
+          aria-label="Increase quantity"
+        >
+          +
+        </button>
       </div>
 
-      {showFallback && (
-        <div
-          className="fixed inset-0 z-50"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="skus-helper-title"
-          aria-describedby="skus-helper-desc"
-        >
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => setShowFallback(false)}
-          />
-          <div className="absolute inset-0 mx-auto flex max-w-lg items-center justify-center p-4">
-            <div className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
-              <div className="flex items-center justify-between">
-                <h3 id="skus-helper-title" className="text-lg font-semibold">
-                  Add these items to your cart
-                </h3>
-                <button
-                  ref={closeBtnRef}
-                  onClick={() => setShowFallback(false)}
-                  className="btn-ghost px-2 py-1 text-xs"
-                >
-                  Close
-                </button>
-              </div>
+      <button
+        onClick={onBuy}
+        disabled={loading}
+        className="rounded-md bg-emerald-600 px-4 py-2 font-semibold disabled:opacity-50"
+      >
+        {loading ? "Redirecting…" : "Buy now"}
+      </button>
 
-              <p id="skus-helper-desc" className="mt-2 text-sm text-zinc-300">
-                We opened your MyShop in a new tab. Paste each SKU into the Amway search bar and
-                click <span className="font-medium">Add to Cart</span>. Use “Copy” for quick paste.
-              </p>
-
-              <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-900 p-3 text-sm">
-                <div className="mb-2 text-xs uppercase tracking-wide text-zinc-400">
-                  {fallbackSkusTitle}
-                </div>
-                <ul className="grid gap-1">
-                  {items.map((i) => (
-                    <li
-                      key={i.sku}
-                      className="flex items-center justify-between gap-3 text-zinc-200"
-                    >
-                      <span>
-                        <code className="rounded bg-zinc-950 px-1">{i.sku}</code> × {i.qty ?? 1}
-                      </span>
-                      <button
-                        onClick={() => copyOne(i.sku, i.qty ?? 1)}
-                        className="btn-ghost px-2 py-1 text-xs"
-                      >
-                        Copy
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-3">
-                <a
-                  href={MYSHOP_BASE}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn"
-                >
-                  Open Storefront
-                </a>
-
-                <CopySkus items={items} label="Copy All" />
-              </div>
-
-              <p className="mt-3 text-xs text-zinc-500">
-                Tip: Search by SKU, add to cart, repeat. If a SKU is out of stock, pick a close
-                variant.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+      {error ? <p className="text-xs text-red-500">{error}</p> : null}
+    </div>
   );
 }

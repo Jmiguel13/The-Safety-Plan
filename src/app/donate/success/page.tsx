@@ -1,121 +1,94 @@
+// src/app/donate/success/page.tsx
 import Link from "next/link";
-import { stripe } from "@/lib/stripe";
-import TrackPurchaseClient from "@/components/TrackPurchaseClient";
+import type Stripe from "stripe";
+import { getStripe } from "@/lib/stripe";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const runtime = "nodejs";
 
-// Next 15 expects searchParams as a Promise in RSC.
-// Canonical shape: record of string -> string|string[]|undefined
-type SP = Record<string, string | string[] | undefined>;
-
-export default async function DonateSuccessPage({
+// Next.js 15 passes searchParams as a promise — must await it
+export default async function DonateSuccess({
   searchParams,
 }: {
-  searchParams?: Promise<SP>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  // Always await the promise shape (or fall back to an empty object)
-  const sp = (await (searchParams ?? Promise.resolve({}))) as SP;
+  const sp = await searchParams;
+  const sessionIdRaw = sp.session_id;
+  const sessionId = Array.isArray(sessionIdRaw) ? sessionIdRaw[0] : sessionIdRaw;
 
-  const session_id =
-    typeof sp.session_id === "string"
-      ? sp.session_id
-      : Array.isArray(sp.session_id)
-      ? sp.session_id[0] ?? ""
-      : "";
+  let session: Stripe.Checkout.Session | null = null;
 
-  const kit =
-    typeof sp.kit === "string"
-      ? sp.kit
-      : Array.isArray(sp.kit)
-      ? sp.kit[0] ?? ""
-      : "";
-
-  let amount_total: number | null = null;
-  let currency: string | null = null;
-  let email: string | null = null;
-  let isDonation = !kit;
-
-  if (session_id) {
+  if (sessionId) {
     try {
-      const session = await stripe.checkout.sessions.retrieve(session_id, {
-        expand: ["customer", "payment_intent"],
-      });
-      amount_total = session.amount_total ?? null;
-      currency = session.currency ?? null;
-      email = session.customer_details?.email ?? null;
-
-      if (session.metadata?.tsp_kit_slug || session.client_reference_id?.startsWith("kit:")) {
-        isDonation = false;
-      }
+      const stripe = getStripe();
+      session = await stripe.checkout.sessions.retrieve(sessionId);
     } catch {
-      // Non-blocking: still render the success UI
+      // swallow errors — show generic success UI
     }
   }
 
-  const title = isDonation ? "Thank you for your donation" : "Thank you for your purchase";
-  const mission =
-    "On average, 22 veterans die by suicide every 24 hours in the U.S. Your support helps us fight that number.";
+  const amount = session?.amount_total;
+  const currency = (session?.currency ?? "usd").toUpperCase();
+  const email = session?.customer_details?.email || session?.customer_email || "";
+
+  function formatUsd(cents?: number, curr = "USD") {
+    if (!Number.isFinite(cents as number)) return "";
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: curr,
+      maximumFractionDigits: 2,
+    }).format((cents as number) / 100);
+  }
 
   return (
-    <section className="mx-auto max-w-2xl space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-4xl font-extrabold tracking-tight">{title}</h1>
-        <p className="text-zinc-300">
-          Your order was received{kit ? ` for the ${kit} kit` : ""}. A confirmation has been sent
-          {email ? ` to ${email}` : ""}.
-        </p>
-        <p className="text-sm text-zinc-400">{mission}</p>
-      </header>
-
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
-        <dl className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <dt className="text-zinc-400">Order</dt>
-            <dd className="font-medium break-all">{session_id || "—"}</dd>
-          </div>
-          <div>
-            <dt className="text-zinc-400">Amount</dt>
-            <dd className="font-medium">
-              {amount_total != null && currency
-                ? new Intl.NumberFormat("en-US", {
-                    style: "currency",
-                    currency: currency.toUpperCase(),
-                  }).format(amount_total / 100)
-                : "—"}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-zinc-400">Kit</dt>
-            <dd className="font-medium">{kit || (isDonation ? "Donation" : "—")}</dd>
-          </div>
-          <div>
-            <dt className="text-zinc-400">Status</dt>
-            <dd className="font-medium">Completed</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-        <Link href="/kits" className="btn">
-          Browse more kits
-        </Link>
-        <Link href="/donate" className="btn-ghost">
-          Make another donation
-        </Link>
-      </div>
-
-      <p className="text-xs text-zinc-500">
-        If you have questions, reply to your receipt email and we&apos;ll get right back to you.
+    <main className="mx-auto w-full max-w-3xl px-4 py-10">
+      <h1 className="mb-3 text-2xl font-bold">Thank you for your donation</h1>
+      <p className="text-zinc-300">
+        Your support helps fund real resources for veterans and first responders.
       </p>
 
-      {/* Client attribution ping */}
-      <TrackPurchaseClient
-        sessionId={session_id || null}
-        kit={kit || null}
-        amountTotal={amount_total}
-        currency={currency}
-      />
-    </section>
+      <div className="mt-6 space-y-2 rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+        {typeof amount === "number" && (
+          <div className="text-lg">
+            <span className="text-zinc-400">Amount:&nbsp;</span>
+            <span className="font-semibold">{formatUsd(amount, currency)}</span>
+          </div>
+        )}
+
+        {email && (
+          <div>
+            <span className="text-zinc-400">Receipt sent to:&nbsp;</span>
+            <span className="font-medium">{email}</span>
+          </div>
+        )}
+
+        {session?.payment_status && (
+          <div>
+            <span className="text-zinc-400">Status:&nbsp;</span>
+            <span className="font-medium capitalize">
+              {session.payment_status.replace(/_/g, " ")}
+            </span>
+          </div>
+        )}
+
+        {session?.id && (
+          <div className="text-xs text-zinc-500">Session ID: {session.id}</div>
+        )}
+      </div>
+
+      <div className="mt-8 flex gap-3">
+        <Link
+          href="/shop"
+          className="rounded-md bg-emerald-600 px-4 py-2 font-semibold"
+        >
+          Continue to Shop
+        </Link>
+        <Link
+          href="/"
+          className="rounded-md border border-zinc-700 px-4 py-2 font-semibold"
+        >
+          Back to Home
+        </Link>
+      </div>
+    </main>
   );
 }

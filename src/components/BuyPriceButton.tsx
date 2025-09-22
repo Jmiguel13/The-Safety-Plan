@@ -2,114 +2,68 @@
 
 import * as React from "react";
 
-type CheckoutResponse = {
-  url?: string;
-  error?: string;
-  message?: string;
-};
-
 type Props = {
-  priceId: string;
-  quantity?: number;
+  priceId: string;           // Stripe Price ID (e.g. price_123)
+  quantity?: number;         // default 1
   className?: string;
-  label?: string;
-  onStart?: () => void;
-  onSuccess?: (checkoutUrl: string) => void;
-  onError?: (message: string) => void;
+  children?: React.ReactNode;
 };
 
 export default function BuyPriceButton({
   priceId,
   quantity = 1,
   className,
-  label = "Buy",
-  onStart,
-  onSuccess,
-  onError,
+  children = "Buy",
 }: Props) {
-  const [loading, setLoading] = React.useState(false);
-  const abortRef = React.useRef<AbortController | null>(null);
-
-  React.useEffect(() => {
-    return () => {
-      abortRef.current?.abort();
-    };
-  }, []);
+  const [busy, setBusy] = React.useState(false);
+  const [msg, setMsg] = React.useState<string | null>(null);
 
   async function start() {
-    const qty = Math.max(1, Number.isFinite(quantity as number) ? Number(quantity) : 1);
-    const validId = typeof priceId === "string" && /^price_[a-zA-Z0-9]+$/.test(priceId);
-    if (!validId) {
-      const msg = "Invalid or missing Stripe price id.";
-      onError?.(msg);
-      alert(msg);
+    if (busy) return;
+    setMsg(null);
+
+    if (!priceId || !/^price_/.test(priceId)) {
+      setMsg("Missing or invalid Stripe price id. Configure your price in env.");
       return;
     }
 
     try {
-      setLoading(true);
-      onStart?.();
-
-      abortRef.current?.abort();
-      abortRef.current = new AbortController();
-
+      setBusy(true);
       const res = await fetch("/api/checkout/price", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ priceId, quantity: qty }),
-        signal: abortRef.current.signal,
+        body: JSON.stringify({ priceId, quantity }),
       });
 
-      let json: CheckoutResponse | null = null;
-      try {
-        json = (await res.json()) as CheckoutResponse;
-      } catch {
-        json = null;
-      }
+      const data = (await res
+        .json()
+        .catch(() => ({ ok: false, error: "Unexpected response from server." }))) as
+        | { ok: true; url: string }
+        | { ok: false; error: string };
 
-      if (!res.ok) {
-        const msg = (json?.error || json?.message) ?? "Checkout unavailable.";
-        onError?.(msg);
-        alert(msg);
+      if (!res.ok || !("ok" in data) || !data.ok || !("url" in data)) {
+        setMsg(("error" in data && data.error) || `Checkout error (${res.status}).`);
         return;
       }
 
-      const url = json?.url;
-      if (typeof url !== "string" || !/^https?:\/\//.test(url)) {
-        const msg = "Unexpected response from checkout.";
-        onError?.(msg);
-        alert(msg);
-        return;
-      }
-
-      onSuccess?.(url);
-      window.location.assign(url);
-    } catch (e) {
-      console.error(e);
-      const msg = "Unable to start checkout.";
-      onError?.(msg);
-      alert(msg);
+      window.location.assign(data.url);
+    } catch {
+      setMsg("Network error. Please try again.");
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   }
 
-  const disabled = !priceId || loading;
-
   return (
-    <button
-      type="button"
-      onClick={start}
-      disabled={disabled}
-      aria-busy={loading}
-      data-state={loading ? "loading" : "idle"}
-      className={
-        className ??
-        "rounded-md border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-200 hover:bg-emerald-500/20 disabled:opacity-60"
-      }
-      title={priceId ? undefined : "Missing Stripe price id"}
-    >
-      {loading ? "Starting…" : label}
-    </button>
+    <div className={className}>
+      <button type="button" className="btn-ghost" onClick={start} disabled={busy} aria-busy={busy}>
+        {busy ? "Starting…" : children}
+      </button>
+      {msg ? (
+        <p className="mt-2 text-xs text-red-400" role="status" aria-live="polite">
+          {msg}
+        </p>
+      ) : null}
+    </div>
   );
 }

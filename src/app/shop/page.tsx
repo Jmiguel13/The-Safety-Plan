@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { kits } from "@/lib/kits";
 import { storefrontLink, productLink, MYSHOP_BASE } from "@/lib/amway";
 import { TSP_PRODUCTS } from "@/lib/tsp-products";
-import ShopClient from "./ShopClient";
 
 // Rebuild this static page at most once per day
 export const revalidate = 86_400;
@@ -47,6 +47,12 @@ function soloItems() {
   ];
   return picks.map(({ sku, title }) => ({ sku, title, url: productLink(sku) || "/" }));
 }
+
+// ✅ Load the client UI only on the client; prevents “undefined .call” and hydration drift
+const ShopClient = dynamic(() => import("./ShopClient"), {
+  ssr: false,
+  loading: () => <div className="panel p-4">Loading shop…</div>,
+});
 
 export default function ShopPage() {
   const kitsList = (kits as unknown as KitLite[]).map((k) => ({
