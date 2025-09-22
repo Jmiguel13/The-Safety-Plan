@@ -1,8 +1,6 @@
 ﻿import { ImageResponse } from "next/og";
 
-export const runtime = "edge";                // required by ImageResponse
-export const contentType = "image/png";
-export const size = { width: 1200, height: 630 };
+export const runtime = "edge"; // ok on route handlers
 
 export function GET() {
   return new ImageResponse(
@@ -13,7 +11,7 @@ export function GET() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",          // valid value (not "stretch")
+          justifyContent: "center",
           alignItems: "center",
           background: "#0b0b0b",
           color: "#fff",
@@ -37,6 +35,6 @@ export function GET() {
         </div>
       </div>
     ),
-    size
+    { width: 1200, height: 630 } // <- put size here for route handlers
   );
 }
