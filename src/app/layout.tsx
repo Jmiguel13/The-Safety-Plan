@@ -1,4 +1,4 @@
-ï»¿// src/app/layout.tsx
+// src/app/layout.tsx
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
@@ -43,13 +43,13 @@ const SAME_AS = [
 // --- Metadata ---
 export const metadata: Metadata = {
   metadataBase: toURL(env?.NEXT_PUBLIC_SITE_URL),
-  title: { default: "The Safety Plan", template: `%s â€” The Safety Plan` },
+  title: { default: "The Safety Plan", template: `%s — The Safety Plan` },
   description:
-    "Mission-first wellness kits â€” focus, recovery, hydration, rest. Every purchase supports veteran suicide prevention.",
+    "Mission-first wellness kits — focus, recovery, hydration, rest. Every purchase supports veteran suicide prevention.",
   openGraph: {
     title: "The Safety Plan",
     description:
-      "Mission-first wellness kits â€” focus, recovery, hydration, rest. Every purchase supports veteran suicide prevention.",
+      "Mission-first wellness kits — focus, recovery, hydration, rest. Every purchase supports veteran suicide prevention.",
     url: "/",
     siteName: "The Safety Plan",
     images: ["/opengraph-image"],
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "The Safety Plan",
-    description: "Mission-first wellness kits â€” focus, recovery, hydration, rest.",
+    description: "Mission-first wellness kits — focus, recovery, hydration, rest.",
     images: ["/opengraph-image"],
   },
   icons: { icon: "/favicon.ico" },
@@ -138,7 +138,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link
               href="/"
               className="-mx-1 px-1 font-semibold tracking-tight"
-              aria-label="The Safety Plan â€” Home"
+              aria-label="The Safety Plan — Home"
             >
               The Safety Plan
             </Link>
@@ -247,7 +247,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </footer>
 
-        {/* Mobile floating help strip â€” render only if component exists AND toggle is enabled */}
+        {/* Mobile floating help strip — render only if component exists AND toggle is enabled */}
         {helpStripEnabled && HelpIsland ? <HelpIsland enabled /> : null}
       </body>
     </html>

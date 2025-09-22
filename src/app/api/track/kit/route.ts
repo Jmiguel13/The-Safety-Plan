@@ -1,27 +1,31 @@
 // src/app/api/track/kit/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { env } from "@/lib/env";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+/** Payloads accepted from server-side and client-side trackers */
 type ClientPayload = {
   type?: "kit_purchase_client";
   session_id?: string | null;
   kit?: string | null;
-  amount_total?: number | null;
+  amount_total?: number | null; // cents
   currency?: string | null;
-  ts?: number | null;
+  ts?: number | null; // epoch ms
+  extra?: unknown;
 };
 
 type ServerPayload = {
-  type?: "kit_purchase_server";
-  session_id?: string;
-  kit?: string;
+  type: "kit_purchase_server";
+  session_id: string;
+  kit?: string | null;
   email?: string | null;
-  amount_total?: number | null;
+  amount_total?: number | null; // cents
   currency?: string | null;
+  meta?: unknown;
 };
 
 type DBInsertRow = {
@@ -30,87 +34,103 @@ type DBInsertRow = {
   amount_total: number | null;
   currency: string | null;
   email: string | null;
-  raw: object | null;
+  raw: Record<string, unknown> | null;
 };
+
+const TABLE_SERVER = "kit_purchases";
+const TABLE_CLIENT = "kit_purchase_client_events";
+
+/* ----------------------------- type guards ----------------------------- */
 
 function isObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null;
 }
 
+function asFiniteIntOrNull(v: unknown): number | null {
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? Math.round(n) : null;
+}
+
 function isServerPayload(p: unknown): p is ServerPayload {
-  return (
-    isObject(p) &&
-    ("type" in p ? (p as { type?: string }).type === "kit_purchase_server" : false)
-  );
+  if (!isObject(p)) return false;
+  if ((p.type as string) !== "kit_purchase_server") return false;
+  return typeof p.session_id === "string" && p.session_id.length > 0;
 }
 
 function isClientPayload(p: unknown): p is ClientPayload {
-  return (
-    isObject(p) &&
-    // if provided, must match client type; or allow undefined for robustness
-    (!("type" in p) || (p as { type?: string | undefined }).type === "kit_purchase_client")
-  );
+  if (!isObject(p)) return false;
+  // allow undefined type for robustness, or explicitly "kit_purchase_client"
+  if ("type" in p && p.type !== undefined && p.type !== "kit_purchase_client") return false;
+  return true;
 }
 
-export async function POST(req: Request) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+/* -------------------------------- route -------------------------------- */
 
-  const isSupabaseConfigured = !!(supabaseUrl && serviceKey);
-
-  let payloadUnknown: unknown = null;
+export async function POST(req: NextRequest) {
+  // Parse JSON early with a clear 400 if invalid
+  let payload: unknown;
   try {
-    payloadUnknown = await req.json();
+    payload = await req.json();
   } catch {
     return NextResponse.json({ ok: false, error: "invalid json" }, { status: 400 });
   }
 
-  if (!isSupabaseConfigured) {
-    // Minimal console trace when DB isn’t configured
-    console.log("kit tracking (no-db)", payloadUnknown);
-    return NextResponse.json({ ok: true, stored: false });
+  // If Supabase isn’t configured, no-op but succeed to avoid blocking UX
+  const supabaseUrl = env.SUPABASE_URL;
+  const serviceKey = env.SUPABASE_SERVICE;
+  const supabaseConfigured = Boolean(supabaseUrl && serviceKey);
+
+  if (!supabaseConfigured) {
+    console.warn("[track/kit] Supabase not configured — skipping persist", payload);
+    return NextResponse.json({ ok: true, stored: false }, { status: 200 });
   }
 
-  const sb = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { "x-application-name": "safety-plan-site" } },
-  });
+  // Build row + table based on payload shape
+  let table: typeof TABLE_SERVER | typeof TABLE_CLIENT;
+  let row: DBInsertRow;
 
+  if (isServerPayload(payload)) {
+    table = TABLE_SERVER;
+    row = {
+      session_id: payload.session_id ?? null,
+      kit: (payload.kit ?? null) as string | null,
+      amount_total: asFiniteIntOrNull(payload.amount_total),
+      currency: (payload.currency ?? null) as string | null,
+      email: (payload.email ?? null) as string | null,
+      raw: payload as Record<string, unknown>,
+    };
+  } else if (isClientPayload(payload)) {
+    const p = payload as ClientPayload;
+    table = TABLE_CLIENT;
+    row = {
+      session_id: (p.session_id ?? null) as string | null,
+      kit: (p.kit ?? null) as string | null,
+      amount_total: asFiniteIntOrNull(p.amount_total),
+      currency: (p.currency ?? null) as string | null,
+      email: null,
+      raw: (payload as Record<string, unknown>) ?? null,
+    };
+  } else {
+    return NextResponse.json({ ok: false, error: "unsupported payload shape" }, { status: 400 });
+  }
+
+  // Persist
   try {
-    let tableName: "kit_purchases" | "kit_purchase_client_events";
-    let row: DBInsertRow;
+    const supabase = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { headers: { "x-application-name": "safety-plan-site" } },
+    });
 
-    if (isServerPayload(payloadUnknown)) {
-      tableName = "kit_purchases";
-      row = {
-        session_id: payloadUnknown.session_id ?? null,
-        kit: payloadUnknown.kit ?? null,
-        amount_total: payloadUnknown.amount_total ?? null,
-        currency: payloadUnknown.currency ?? null,
-        email: payloadUnknown.email ?? null,
-        raw: payloadUnknown as object,
-      };
-    } else if (isClientPayload(payloadUnknown)) {
-      tableName = "kit_purchase_client_events";
-      row = {
-        session_id: payloadUnknown.session_id ?? null,
-        kit: payloadUnknown.kit ?? null,
-        amount_total: payloadUnknown.amount_total ?? null,
-        currency: payloadUnknown.currency ?? null,
-        email: null,
-        raw: payloadUnknown as object,
-      };
-    } else {
-      return NextResponse.json({ ok: false, error: "unsupported payload shape" }, { status: 400 });
-    }
-
-    const { error } = await sb.from(tableName).insert(row);
+    const { error } = await supabase.from(table).insert(row);
     if (error) {
+      console.warn("[track/kit] insert failed:", error);
       return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
     }
-    return NextResponse.json({ ok: true, stored: true });
+
+    return NextResponse.json({ ok: true, stored: true }, { status: 200 });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    console.warn("[track/kit] error:", msg);
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
 }
