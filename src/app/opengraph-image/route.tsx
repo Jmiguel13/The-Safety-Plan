@@ -1,6 +1,6 @@
-import { ImageResponse } from "next/og";
+﻿import { ImageResponse } from "next/og";
 
-export const runtime = "edge";                  // OG images require edge
+export const runtime = "edge";                 // OG images must be edge
 export const contentType = "image/png";
 export const size = { width: 1200, height: 630 };
 
@@ -13,7 +13,7 @@ export function GET() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",             // NOT "stretch"
+          justifyContent: "center",            // NOT "stretch"
           alignItems: "center",
           background: "#0b0b0b",
           color: "#ffffff",
