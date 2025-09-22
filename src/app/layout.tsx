@@ -42,24 +42,24 @@ const SAME_AS = [
 
 // --- Metadata ---
 export const metadata: Metadata = {
-  metadataBase: toURL(env?.NEXT_PUBLIC_SITE_URL),
-  title: { default: "The Safety Plan", template: `%s � The Safety Plan` },
+  metadataBase: toURL(siteURL),
+  title: { default: "The Safety Plan", template: "%s \u00B7 The Safety Plan" }, // "·"
   description:
-    "Mission-first wellness kits � focus, recovery, hydration, rest. Every purchase supports veteran suicide prevention.",
+    "Mission-first wellness kits \u2014 focus, recovery, hydration, rest. Every purchase supports veteran suicide prevention.",
   openGraph: {
     title: "The Safety Plan",
     description:
-      "Mission-first wellness kits � focus, recovery, hydration, rest. Every purchase supports veteran suicide prevention.",
+      "Mission-first wellness kits \u2014 focus, recovery, hydration, rest. Every purchase supports veteran suicide prevention.",
     url: "/",
     siteName: "The Safety Plan",
-    images: ["/opengraph-image"],
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "The Safety Plan" }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "The Safety Plan",
-    description: "Mission-first wellness kits � focus, recovery, hydration, rest.",
-    images: ["/opengraph-image"],
+    description: "Mission-first wellness kits \u2014 focus, recovery, hydration, rest.",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "The Safety Plan" }],
   },
   icons: { icon: "/favicon.ico" },
   alternates: { canonical: "/" },
@@ -138,7 +138,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link
               href="/"
               className="-mx-1 px-1 font-semibold tracking-tight"
-              aria-label="The Safety Plan � Home"
+              aria-label="The Safety Plan \u2014 Home"
             >
               The Safety Plan
             </Link>
@@ -247,9 +247,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </footer>
 
-        {/* Mobile floating help strip � render only if component exists AND toggle is enabled */}
+        {/* Mobile floating help strip — render only if component exists AND toggle is enabled */}
         {helpStripEnabled && HelpIsland ? <HelpIsland enabled /> : null}
       </body>
     </html>
   );
 }
+// src/app/opengraph-image/route.tsx
+import { ImageResponse } from "next/og";
