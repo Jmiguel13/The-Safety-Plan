@@ -2,175 +2,269 @@
 
 import * as React from "react";
 import Link from "next/link";
-import KitCheckoutForm from "@/components/KitCheckoutForm";
-import BuyPriceButton from "@/components/BuyPriceButton";
 
-type KitEntry = {
+type KitLite = {
   slug: string;
   title: string;
-  stats: { itemCount: number; skuCount: number };
+  stats?: { itemCount: number; skuCount: number };
 };
 
-type SoloItem = { sku: string; title: string; url: string };
+type SoloPick = { sku: string; title?: string; url: string };
 
 type TspProduct = {
   id: string;
   title: string;
-  blurb?: string;
-  url?: string;
-  inStock?: boolean;
+  priceId?: string; // optional Stripe price id for TSP merch
+  href?: string;
 };
 
 type Props = {
-  kitsList: KitEntry[];
-  solos: SoloItem[];
+  kitsList: KitLite[];
+  solos: SoloPick[];
   tspProducts: TspProduct[];
   storeHref: string;
   stickerPrice?: string;
   patchPrice?: string;
 };
 
+type Variant = "daily" | "10day" | "30day";
+
 export default function ShopClient({
   kitsList,
   solos,
   tspProducts,
   storeHref,
-  stickerPrice = "",
-  patchPrice = "",
 }: Props) {
+  // one piece of UI state per-kit: quantity + variant
+  const [quantities, setQuantities] = React.useState<Record<string, number>>(
+    Object.fromEntries(kitsList.map((k) => [k.slug, 1]))
+  );
+  const [variants, setVariants] = React.useState<Record<string, Variant>>(
+    Object.fromEntries(kitsList.map((k) => [k.slug, "daily"]))
+  );
+  const [submitting, setSubmitting] = React.useState<string | null>(null);
+  const [errors, setErrors] = React.useState<Record<string, string | null>>({});
+
+  function setQty(slug: string, v: number) {
+    setQuantities((p) => ({ ...p, [slug]: Math.max(1, Math.min(10, v || 1)) }));
+  }
+
+  function setVar(slug: string, v: Variant) {
+    setVariants((p) => ({ ...p, [slug]: v }));
+  }
+
+  async function buyKit(slug: string) {
+    setSubmitting(slug);
+    setErrors((e) => ({ ...e, [slug]: null }));
+    try {
+      const res = await fetch("/api/checkout/kit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          variant: variants[slug] as Variant,
+          quantity: quantities[slug] ?? 1,
+        }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+      const { url } = (await res.json()) as { url: string };
+      window.location.assign(url);
+    } catch (err) {
+      setErrors((e) => ({
+        ...e,
+        [slug]:
+          err instanceof Error ? err.message : "Checkout failed. Try again.",
+      }));
+    } finally {
+      setSubmitting(null);
+    }
+  }
+
   return (
     <>
-      {/* Kits */}
-      <section id="kits" className="scroll-mt-24 space-y-4">
-        <h2 className="text-2xl font-semibold">The Kits</h2>
-        <ul className="grid gap-3 sm:grid-cols-2">
+      {/* === The Kits === */}
+      <section id="kits" className="space-y-4">
+        <h2 className="text-2xl font-bold">The Kits</h2>
+
+        <div className="grid gap-4 sm:grid-cols-2">
           {kitsList.map((k) => {
-            const supportsStripeBundle = k.slug === "resilient" || k.slug === "homefront";
+            const qty = quantities[k.slug] ?? 1;
+            const variant = variants[k.slug] ?? "daily";
+            const count =
+              k.stats?.itemCount != null && k.stats?.skuCount != null
+                ? `${k.stats.itemCount} items • ${k.stats.skuCount} SKUs`
+                : undefined;
+
             return (
-              <li key={k.slug} className="panel space-y-3 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <div className="truncate font-medium">{k.title}</div>
-                    <div className="muted text-sm">
-                      {k.stats.itemCount} items • {k.stats.skuCount} SKUs
-                    </div>
+              <div
+                key={k.slug}
+                className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold">{k.title}</h3>
+                    {count ? (
+                      <p className="muted text-sm">{count}</p>
+                    ) : (
+                      <p className="muted text-sm">&nbsp;</p>
+                    )}
                   </div>
-                  <div className="flex gap-2">
-                    <Link
-                      href={`/kits/${k.slug}`}
-                      className="btn-ghost"
-                      aria-label={`View ${k.title}`}
+
+                  <Link
+                    href={`/kits/${k.slug}`}
+                    className="btn btn-ghost"
+                    aria-label={`View ${k.title}`}
+                  >
+                    View kit
+                  </Link>
+                </div>
+
+                {/* Variant selector */}
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs text-zinc-400">Kit option</span>
+                    <select
+                      value={variant}
+                      onChange={(e) =>
+                        setVar(
+                          k.slug,
+                          e.target.value as unknown as Variant
+                        )
+                      }
+                      className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2"
                     >
-                      View kit
-                    </Link>
+                      <option value="daily">Daily</option>
+                      <option value="10day">10-Day Supply</option>
+                      <option value="30day">30-Day Supply</option>
+                    </select>
+                  </label>
+
+                  {/* Quantity */}
+                  <div className="flex items-end justify-start gap-2">
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => setQty(k.slug, (qty ?? 1) - 1)}
+                      aria-label="Decrease quantity"
+                    >
+                      −
+                    </button>
+                    <input
+                      aria-label="Quantity"
+                      className="w-16 rounded-xl border border-zinc-700 bg-zinc-900 px-2 py-2 text-center"
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={qty ?? 1}
+                      onChange={(e) =>
+                        setQty(k.slug, Number.parseInt(e.target.value, 10))
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => setQty(k.slug, (qty ?? 1) + 1)}
+                      aria-label="Increase quantity"
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
 
-                {supportsStripeBundle ? (
-                  <KitCheckoutForm
-                    kit={{
-                      slug: k.slug as "resilient" | "homefront",
-                      title: k.title,
-                    }}
-                    className="pt-1"
-                  />
-                ) : null}
-              </li>
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={submitting === k.slug}
+                    onClick={() => buyKit(k.slug)}
+                  >
+                    {submitting === k.slug ? "Redirecting…" : "Buy now"}
+                  </button>
+
+                  {errors[k.slug] ? (
+                    <p className="text-sm text-red-400">{errors[k.slug]}</p>
+                  ) : (
+                    <p className="text-xs text-zinc-500">
+                      Variant: <span className="uppercase">{variant}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
             );
           })}
-        </ul>
+        </div>
       </section>
 
-      {/* Solo Amway products */}
-      <section id="solo" className="scroll-mt-24 space-y-4">
-        <div className="flex items-end justify-between">
-          <h2 className="text-2xl font-semibold">Solo Amway Products</h2>
-          <a
-            href={storeHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-ghost text-sm"
-          >
-            Open MyShop
-          </a>
-        </div>
+      {/* === Solo Amway Products === */}
+      <section id="solo" className="space-y-4">
+        <h2 className="text-2xl font-bold">Solo Amway Products</h2>
 
-        {solos.length === 0 ? (
-          <div className="panel p-4">
-            <p className="muted text-sm">Curated picks coming soon.</p>
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <a
+              href={storeHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn"
+            >
+              Open MyShop
+            </a>
           </div>
-        ) : (
-          <ul className="grid gap-2">
-            {solos.map((p) => (
-              <li key={p.sku} className="glow-row">
-                <div className="min-w-0">
-                  <div className="truncate font-medium">{p.title}</div>
-                  <div className="muted text-sm">Quick-buy single item · SKU {p.sku}</div>
-                </div>
+
+          <ul className="mt-4 space-y-3">
+            {solos.map((s) => (
+              <li
+                key={s.sku}
+                className="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/40 p-3"
+              >
                 <div>
-                  <a
-                    href={p.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-ghost"
-                    aria-label={`Buy ${p.title}`}
-                  >
-                    Buy
-                  </a>
+                  <div className="font-medium">{s.title ?? s.sku}</div>
+                  <div className="text-xs text-zinc-500">SKU {s.sku}</div>
                 </div>
+                <a
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-ghost"
+                >
+                  Buy
+                </a>
               </li>
             ))}
           </ul>
-        )}
+        </div>
       </section>
 
-      {/* The Safety Plan gear */}
-      <section id="tsp" className="scroll-mt-24 space-y-4">
-        <h2 className="text-2xl font-semibold">The Safety Plan Products</h2>
-
-        {(!tspProducts || tspProducts.length === 0) ? (
-          <div className="panel p-4">
-            <p className="muted text-sm">Our custom gear is in progress. Check back soon.</p>
-          </div>
-        ) : (
-          <ul className="grid gap-2">
-            {tspProducts.map((p) => {
-              const slug = p.id.replace(/_/g, "-");
-              const href = p.url ? (p.url.startsWith("/") ? p.url : p.url) : `/gear/${slug}`;
-              const isInternal = p.url?.startsWith("/") || !p.url;
-
-              const priceId =
-                p.id === "sticker_pack"
-                  ? stickerPrice
-                  : p.id === "morale_patch_green"
-                  ? patchPrice
-                  : "";
-
-              return (
-                <li key={p.id} className="glow-row">
-                  <div className="min-w-0">
-                    <div className="truncate font-medium">{p.title}</div>
-                    {p.blurb ? <div className="muted text-sm">{p.blurb}</div> : null}
-                  </div>
-
-                  <div className="flex gap-2">
-                    {priceId ? (
-                      <BuyPriceButton priceId={priceId} className="btn-ghost" />
-                    ) : isInternal ? (
-                      <Link href={href} className="btn-ghost">
-                        {p.inStock ? "View" : "Waitlist"}
-                      </Link>
-                    ) : (
-                      <a href={href} target="_blank" rel="noopener noreferrer" className="btn-ghost">
-                        {p.inStock ? "View" : "Waitlist"}
-                      </a>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+      {/* === The Safety Plan Products (Stripe) === */}
+      <section id="tsp" className="space-y-4">
+        <h2 className="text-2xl font-bold">The Safety Plan Products</h2>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {tspProducts.map((p) => (
+            <div
+              key={p.id}
+              className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
+            >
+              <div className="font-medium">{p.title}</div>
+              <div className="mt-3">
+                {p.href ? (
+                  <a
+                    href={p.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn"
+                  >
+                    View
+                  </a>
+                ) : (
+                  <span className="text-xs text-zinc-500">Coming soon</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
     </>
   );

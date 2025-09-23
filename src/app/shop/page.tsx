@@ -1,10 +1,11 @@
+// src/app/shop/page.tsx
+import { Suspense } from "react";
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 import { kits } from "@/lib/kits";
 import { storefrontLink, productLink, MYSHOP_BASE } from "@/lib/amway";
 import { TSP_PRODUCTS } from "@/lib/tsp-products";
+import ShopClient from "./ShopClient";
 
-// Rebuild this static page at most once per day
 export const revalidate = 86_400;
 
 export const metadata: Metadata = {
@@ -45,14 +46,12 @@ function soloItems() {
     { sku: "110601", title: "XS Sports Electrolyte — Strawberry Watermelon" },
     { sku: "109747", title: "Nutrilite Vitamin C — 180 tablets" },
   ];
-  return picks.map(({ sku, title }) => ({ sku, title, url: productLink(sku) || "/" }));
+  return picks.map(({ sku, title }) => ({
+    sku,
+    title,
+    url: productLink(sku) || "/",
+  }));
 }
-
-// ✅ Load the client UI only on the client; prevents “undefined .call” and hydration drift
-const ShopClient = dynamic(() => import("./ShopClient"), {
-  ssr: false,
-  loading: () => <div className="panel p-4">Loading shop…</div>,
-});
 
 export default function ShopPage() {
   const kitsList = (kits as unknown as KitLite[]).map((k) => ({
@@ -68,7 +67,6 @@ export default function ShopPage() {
 
   return (
     <section className="max-w-4xl space-y-10">
-      {/* Header */}
       <header className="space-y-3">
         <h1 className="text-5xl font-extrabold tracking-tight">Shop</h1>
         <p className="muted">
@@ -100,7 +98,6 @@ export default function ShopPage() {
         </nav>
       </header>
 
-      {/* Mission blurb */}
       <div className="panel-elevated space-y-1 p-5">
         <h3 className="font-semibold">Our mission</h3>
         <p className="muted">
@@ -110,19 +107,25 @@ export default function ShopPage() {
         </p>
       </div>
 
-      {/* Client section renders Stripe + interactive buttons */}
-      <ShopClient
-        kitsList={kitsList}
-        solos={solos}
-        tspProducts={TSP_PRODUCTS}
-        storeHref={storeHref}
-        stickerPrice={stickerPrice}
-        patchPrice={patchPrice}
-      />
+      <Suspense fallback={<div className="panel p-4">Loading shop…</div>}>
+        <ShopClient
+          kitsList={kitsList}
+          solos={solos}
+          tspProducts={TSP_PRODUCTS}
+          storeHref={storeHref}
+          stickerPrice={stickerPrice}
+          patchPrice={patchPrice}
+        />
+      </Suspense>
 
       <p className="text-xs text-zinc-500">
         Storefront base:&nbsp;
-        <a href={MYSHOP_BASE || "/"} target="_blank" rel="noopener noreferrer" className="underline">
+        <a
+          href={MYSHOP_BASE || "/"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
           {MYSHOP_BASE || "Not configured"}
         </a>
       </p>

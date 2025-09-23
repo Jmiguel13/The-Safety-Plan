@@ -1,3 +1,4 @@
+// src/app/kits/[slug]/page.tsx
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { kits } from "@/lib/kits";
@@ -5,10 +6,11 @@ import KitCheckoutForm from "@/components/KitCheckoutForm";
 
 export const revalidate = 86_400;
 
-// ---------- Types ----------
+/* ---------- Types ---------- */
 type KitItem = {
   sku?: string;
   title?: string;
+  qty?: number;
 };
 
 type KitData = {
@@ -19,11 +21,14 @@ type KitData = {
   imageUrl?: string;
   items?: KitItem[];
   skus?: string[];
+  image?: string;
+  imageAlt?: string;
+  weight_lb?: number | string;
 };
 
-type Params = { slug: "resilient" | "homefront" | (string & {}) };
+type Params = { slug: string };
 
-// ---------- Helpers ----------
+/* ---------- Helpers ---------- */
 function toTitle(s: string) {
   return s ? s.replace(/^\w/, (c) => c.toUpperCase()) : s;
 }
@@ -31,7 +36,6 @@ function findKit(slug: string) {
   return (kits as KitData[]).find((k) => String(k.slug) === String(slug));
 }
 function grdFor(slug: string) {
-  // Subtle, branded gradients per kit; works even without an image.
   if (slug === "resilient") {
     return "radial-gradient(1200px 500px at -10% -10%, rgba(16,185,129,0.18), transparent 65%), radial-gradient(900px 420px at 110% 20%, rgba(59,130,246,0.16), transparent 60%)";
   }
@@ -41,14 +45,14 @@ function grdFor(slug: string) {
   return "radial-gradient(1100px 460px at 0% 0%, rgba(148,163,184,0.16), transparent 60%)";
 }
 function imgMask() {
-  // Soft vignette for image slot if/when an image is supplied
   return "radial-gradient(circle at 60% 40%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.35) 100%)";
 }
 
-// ---------- Next metadata/types (Next 15 quirk) ----------
+/* ---------- Next metadata / params typing (your project expects Promise<Params>) ---------- */
 export async function generateStaticParams() {
   return (kits as Array<{ slug: string }>).map((k) => ({ slug: String(k.slug) }));
 }
+
 export async function generateMetadata(
   { params }: { params: Promise<Params> }
 ): Promise<Metadata> {
@@ -58,10 +62,10 @@ export async function generateMetadata(
   return { title: base };
 }
 
-// ---------- Small presentational bits ----------
+/* ---------- UI bits ---------- */
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl p-[1px] bg-gradient-to-br from-white/10 to-white/0">
+    <div className="rounded-2xl bg-gradient-to-br from-white/10 to-white/0 p-[1px]">
       <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-2">
         <div className="text-[11px] uppercase tracking-wide text-zinc-400">{label}</div>
         <div className="text-sm">{value}</div>
@@ -71,18 +75,17 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 }
 function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl p-[1px] bg-gradient-to-br from-white/10 to-white/0 ${className}`}>
+    <div className={`rounded-2xl bg-gradient-to-br from-white/10 to-white/0 p-[1px] ${className}`}>
       <div className="rounded-2xl border border-white/10 bg-zinc-950/60">{children}</div>
     </div>
   );
 }
 
-// ---------- Page ----------
-export default async function Page(
-  { params }: { params: Promise<Params> }
-) {
+/* ---------- Page (make the entry async and use Promise<Params>) ---------- */
+export default async function Page({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
-  const kit = findKit(slug);
+
+  const kit = findKit(slug) as KitData | undefined;
   if (!kit) notFound();
 
   const title = kit.title ?? `${toTitle(slug)} Kit`;
@@ -95,15 +98,25 @@ export default async function Page(
       ? "Best for recovery. Rehydrate, restore, and rest."
       : "Mission-ready wellness essentials.");
 
-  const itemCount = Array.isArray(kit.items) ? kit.items.length : 0;
-  const skuCount = Array.isArray(kit.skus) ? new Set(kit.skus.map(String)).size : 0;
+  const items = Array.isArray(kit.items) ? kit.items : [];
+  const itemCount = items.length;
+  const skuCount =
+    itemCount > 0
+      ? new Set(items.map((i) => String(i.sku ?? ""))).size
+      : Array.isArray(kit.skus)
+      ? new Set(kit.skus.map(String)).size
+      : 0;
+
   const supportsStripe = slug === "resilient" || slug === "homefront";
+  const weight = kit.weight_lb ?? "—";
+  const heroImage = kit.imageUrl ?? kit.image;
+  const heroAlt = kit.imageAlt ?? `${title} hero`;
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
       {/* Hero */}
       <section
-        className="relative rounded-3xl border border-white/10 overflow-hidden"
+        className="relative overflow-hidden rounded-3xl border border-white/10"
         style={{ backgroundImage: grdFor(slug), backgroundColor: "rgb(9 9 11 / 0.65)" }}
       >
         <div className="grid gap-8 md:grid-cols-[1.1fr,480px]">
@@ -113,7 +126,6 @@ export default async function Page(
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{title}</h1>
               <p className="text-zinc-300">{blurb}</p>
 
-              {/* Single buy control (Stripe bundle picker) */}
               {supportsStripe ? (
                 <KitCheckoutForm
                   kit={{ slug: slug as "resilient" | "homefront", title }}
@@ -121,14 +133,13 @@ export default async function Page(
                 />
               ) : null}
 
-              {/* Stats */}
               <div className="flex flex-wrap gap-3 pt-3">
-                <Stat label="Weight" value="—" />
+                <Stat label="Weight" value={weight} />
                 <Stat label="Items" value={itemCount} />
                 <Stat label="SKUs" value={skuCount} />
               </div>
 
-              <p className="text-xs text-zinc-400 pt-1">
+              <p className="pt-1 text-xs text-zinc-400">
                 Every kit includes a <span className="font-medium">Morale Card</span>.
               </p>
             </div>
@@ -136,16 +147,18 @@ export default async function Page(
 
           {/* Visual slot */}
           <div
-            className="min-h-[260px] md:min-h-[100%] bg-zinc-900/40"
-            style={{
-              // If you later add kit.imageUrl, this mask keeps edges soft
-              backgroundImage: kit.imageUrl
-                ? `${imgMask()}, url("${kit.imageUrl}")`
-                : undefined,
-              backgroundSize: kit.imageUrl ? "cover" : undefined,
-              backgroundPosition: kit.imageUrl ? "center" : undefined,
-            }}
-            aria-hidden="true"
+            className="min-h-[260px] bg-zinc-900/40 md:min-h-[100%]"
+            style={
+              heroImage
+                ? {
+                    backgroundImage: `${imgMask()}, url("${heroImage}")`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }
+                : undefined
+            }
+            aria-label={heroImage ? heroAlt : undefined}
+            aria-hidden={heroImage ? undefined : true}
           />
         </div>
       </section>
@@ -158,13 +171,16 @@ export default async function Page(
           <p className="muted">Item list coming soon.</p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {kit.items!.map((i: KitItem, idx: number) => (
+            {items.map((i, idx) => (
               <li key={`${i.sku ?? idx}`}>
                 <Panel>
                   <div className="p-3">
                     <div className="font-medium truncate">{i.title ?? i.sku ?? "Item"}</div>
                     {i.sku ? (
-                      <div className="text-xs text-zinc-500 mt-0.5">SKU {i.sku}</div>
+                      <div className="mt-0.5 text-xs text-zinc-500">
+                        SKU {i.sku}
+                        {typeof i.qty === "number" && i.qty > 1 ? ` ×${i.qty}` : ""}
+                      </div>
                     ) : null}
                   </div>
                 </Panel>

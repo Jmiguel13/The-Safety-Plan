@@ -2,87 +2,88 @@
 
 import * as React from "react";
 
-type Props = {
+type Variant = "daily" | "10day" | "30day";
+
+export default function KitCheckoutForm({
+  kit,
+  className = "",
+  showVariant = true,       // set to false if you want a hidden default
+  defaultVariant = "10day", // default selection
+}: {
   kit: { slug: "resilient" | "homefront"; title?: string };
   className?: string;
-};
+  showVariant?: boolean;
+  defaultVariant?: Variant;
+}) {
+  const [qty, setQty] = React.useState<number>(1);
+  const [variant, setVariant] = React.useState<Variant>(defaultVariant);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-export default function KitCheckoutForm({ kit, className }: Props) {
-  const [qty, setQty] = React.useState(1);
-  const [busy, setBusy] = React.useState(false);
-  const [msg, setMsg] = React.useState<string | null>(null);
-
-  async function buyNow() {
-    if (busy) return;
-    setMsg(null);
+  async function onBuy(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
     try {
-      setBusy(true);
       const res = await fetch("/api/checkout/kit", {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ slug: kit.slug, quantity: qty }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: kit.slug, variant, quantity: qty }),
       });
 
-      const data = (await res
-        .json()
-        .catch(() => ({ ok: false, error: "Unexpected response from server." }))) as
-        | { ok: true; url: string }
-        | { ok: false; error: string };
-
-      if (!res.ok || !("ok" in data) || !data.ok || !("url" in data)) {
-        setMsg(("error" in data && data.error) || `Checkout error (${res.status}).`);
-        return;
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error || `Checkout failed (${res.status})`);
       }
-
       window.location.assign(data.url);
-    } catch {
-      setMsg("Network error. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Checkout failed");
     } finally {
-      setBusy(false);
+      setLoading(false);
     }
   }
 
   return (
-    <div className={className}>
-      <div className="flex items-center gap-3">
-        <div className="inline-flex items-center gap-2">
-          <button
-            type="button"
-            className="btn-ghost"
-            onClick={() => setQty((q) => Math.max(1, q - 1))}
-            aria-label="Decrease quantity"
-            disabled={busy}
+    <form onSubmit={onBuy} className={`panel mt-2 flex flex-col gap-3 p-3 ${className}`}>
+      {showVariant ? (
+        <label className="flex max-w-xs flex-col gap-1">
+          <span className="text-xs text-zinc-400">Kit option</span>
+          <select
+            value={variant}
+            onChange={(e) => setVariant(e.target.value as Variant)}
+            className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2"
           >
-            –
-          </button>
-          <span className="min-w-[2ch] text-center tabular-nums">{qty}</span>
-          <button
-            type="button"
-            className="btn-ghost"
-            onClick={() => setQty((q) => Math.min(99, q + 1))}
-            aria-label="Increase quantity"
-            disabled={busy}
-          >
-            +
-          </button>
-        </div>
+            <option value="daily">Daily</option>
+            <option value="10day">10-Day Supply</option>
+            <option value="30day">30-Day Supply</option>
+          </select>
+        </label>
+      ) : null}
 
+      <div className="flex items-center gap-2">
         <button
           type="button"
-          className="btn"
-          onClick={buyNow}
-          disabled={busy}
-          aria-busy={busy}
+          className="btn btn-ghost"
+          onClick={() => setQty((q) => Math.max(1, q - 1))}
+          aria-label="Decrease quantity"
         >
-          {busy ? "Starting…" : "Buy now"}
+          −
+        </button>
+        <input
+          aria-label="Quantity"
+          className="w-16 rounded-xl border border-zinc-700 bg-zinc-900 px-2 py-2 text-center"
+          type="number"
+          min={1}
+          max={10}
+          value={qty}
+          onChange={(e) => setQty(Math.max(1, Math.min(10, Number(e.target.value || 1))))}
+        />
+        <button type="submit" className="btn" disabled={loading} aria-busy={loading}>
+          {loading ? "Redirecting…" : "Buy now"}
         </button>
       </div>
 
-      {msg ? (
-        <p className="mt-2 text-sm text-red-400" role="status" aria-live="polite">
-          {msg}
-        </p>
-      ) : null}
-    </div>
+      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+    </form>
   );
 }
