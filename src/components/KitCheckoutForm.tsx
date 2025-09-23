@@ -1,5 +1,4 @@
 "use client";
-
 import * as React from "react";
 
 type Variant = "daily" | "10day" | "30day";
@@ -7,8 +6,8 @@ type Variant = "daily" | "10day" | "30day";
 export default function KitCheckoutForm({
   kit,
   className = "",
-  showVariant = true,       // set to false if you want a hidden default
-  defaultVariant = "10day", // default selection
+  showVariant = true,
+  defaultVariant = "10day",
 }: {
   kit: { slug: "resilient" | "homefront"; title?: string };
   className?: string;
@@ -30,11 +29,8 @@ export default function KitCheckoutForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug: kit.slug, variant, quantity: qty }),
       });
-
       const data = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !data?.url) {
-        throw new Error(data?.error || `Checkout failed (${res.status})`);
-      }
+      if (!res.ok || !data?.url) throw new Error(data?.error || `Checkout failed (${res.status})`);
       window.location.assign(data.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Checkout failed");
@@ -61,12 +57,7 @@ export default function KitCheckoutForm({
       ) : null}
 
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          className="btn btn-ghost"
-          onClick={() => setQty((q) => Math.max(1, q - 1))}
-          aria-label="Decrease quantity"
-        >
+        <button type="button" className="btn btn-ghost" onClick={() => setQty((q) => Math.max(1, q - 1))}>
           −
         </button>
         <input

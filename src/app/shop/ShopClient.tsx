@@ -1,3 +1,4 @@
+// src/app/shop/ShopClient.tsx
 "use client";
 
 import * as React from "react";
@@ -29,6 +30,12 @@ type Props = {
 
 type Variant = "daily" | "10day" | "30day";
 
+const VARIANT_LABEL: Record<Variant, string> = {
+  daily: "Daily",
+  "10day": "10-Day Supply",
+  "30day": "30-Day Supply",
+};
+
 export default function ShopClient({
   kitsList,
   solos,
@@ -45,8 +52,12 @@ export default function ShopClient({
   const [submitting, setSubmitting] = React.useState<string | null>(null);
   const [errors, setErrors] = React.useState<Record<string, string | null>>({});
 
+  function clampQty(v: number) {
+    return Math.max(1, Math.min(10, Number.isFinite(v) ? v : 1));
+  }
+
   function setQty(slug: string, v: number) {
-    setQuantities((p) => ({ ...p, [slug]: Math.max(1, Math.min(10, v || 1)) }));
+    setQuantities((p) => ({ ...p, [slug]: clampQty(v) }));
   }
 
   function setVar(slug: string, v: Variant) {
@@ -66,11 +77,24 @@ export default function ShopClient({
           quantity: quantities[slug] ?? 1,
         }),
       });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || `HTTP ${res.status}`);
+
+      const ctype = res.headers.get("content-type") || "";
+      let data: unknown;
+      if (ctype.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const txt = await res.text();
+        try {
+          data = JSON.parse(txt);
+        } catch {
+          data = { error: txt };
+        }
       }
-      const { url } = (await res.json()) as { url: string };
+
+      const { url, error } = (data as { url?: string; error?: string }) ?? {};
+      if (!res.ok || !url) {
+        throw new Error(error || `Checkout failed (${res.status})`);
+      }
       window.location.assign(url);
     } catch (err) {
       setErrors((e) => ({
@@ -128,17 +152,12 @@ export default function ShopClient({
                     <span className="text-xs text-zinc-400">Kit option</span>
                     <select
                       value={variant}
-                      onChange={(e) =>
-                        setVar(
-                          k.slug,
-                          e.target.value as unknown as Variant
-                        )
-                      }
+                      onChange={(e) => setVar(k.slug, e.target.value as Variant)}
                       className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2"
                     >
-                      <option value="daily">Daily</option>
-                      <option value="10day">10-Day Supply</option>
-                      <option value="30day">30-Day Supply</option>
+                      <option value="daily">{VARIANT_LABEL.daily}</option>
+                      <option value="10day">{VARIANT_LABEL["10day"]}</option>
+                      <option value="30day">{VARIANT_LABEL["30day"]}</option>
                     </select>
                   </label>
 
@@ -180,6 +199,7 @@ export default function ShopClient({
                     className="btn"
                     disabled={submitting === k.slug}
                     onClick={() => buyKit(k.slug)}
+                    aria-busy={submitting === k.slug || undefined}
                   >
                     {submitting === k.slug ? "Redirecting…" : "Buy now"}
                   </button>
@@ -188,7 +208,10 @@ export default function ShopClient({
                     <p className="text-sm text-red-400">{errors[k.slug]}</p>
                   ) : (
                     <p className="text-xs text-zinc-500">
-                      Variant: <span className="uppercase">{variant}</span>
+                      Variant:{" "}
+                      <span className="uppercase">
+                        {VARIANT_LABEL[variant] ?? variant}
+                      </span>
                     </p>
                   )}
                 </div>
