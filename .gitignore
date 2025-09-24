@@ -1,0 +1,31 @@
+﻿# Node / Next
+node_modules/
+.next/
+out/
+.vercel/
+dist/
+coverage/
+
+# Env & local
+.env*
+!.env.example
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Misc
+*.zip
+*.tar
+*.tgz
+*.bak
