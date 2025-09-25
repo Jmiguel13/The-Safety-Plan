@@ -1,7 +1,6 @@
 // src/app/api/track/kit/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { env } from "@/lib/env";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,13 +74,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "invalid json" }, { status: 400 });
   }
 
-  // If Supabase isn’t configured, no-op but succeed to avoid blocking UX
-  const supabaseUrl = env.SUPABASE_URL;
-  const serviceKey = env.SUPABASE_SERVICE;
-  const supabaseConfigured = Boolean(supabaseUrl && serviceKey);
+  // Read env directly, avoid strict validators at import time.
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || // preferred for server writes
+    ""; // do not fall back to anon for writes
 
+  // If Supabase isn’t configured, no-op but succeed to avoid blocking UX
+  const supabaseConfigured = Boolean(supabaseUrl && serviceKey);
   if (!supabaseConfigured) {
-    console.warn("[track/kit] Supabase not configured — skipping persist", payload);
+    console.warn("[track/kit] Supabase not configured — skipping persist");
     return NextResponse.json({ ok: true, stored: false }, { status: 200 });
   }
 
@@ -116,7 +118,7 @@ export async function POST(req: NextRequest) {
 
   // Persist
   try {
-    const supabase = createClient(supabaseUrl, serviceKey, {
+    const supabase = createClient(supabaseUrl!, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
       global: { headers: { "x-application-name": "safety-plan-site" } },
     });
@@ -133,4 +135,12 @@ export async function POST(req: NextRequest) {
     console.warn("[track/kit] error:", msg);
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
+}
+
+export async function GET() {
+  // Simple health check that never throws at build
+  const ok =
+    !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  return NextResponse.json({ ok, tracking: ok });
 }
