@@ -91,8 +91,7 @@ export default function Home() {
       name: "Homefront Kit",
       href: "/kits/homefront",
       badge: "Best for recovery",
-      gradient:
-        "bg-gradient-to-br from-emerald-500/20 via-emerald-400/10 to-emerald-500/5",
+      gradient: "bg-gradient-to-br from-emerald-500/20 via-emerald-400/10 to-emerald-500/5",
     },
     {
       name: "Resilient Kit",
@@ -115,36 +114,23 @@ export default function Home() {
       >
         <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
           <div>
-            <h1
-              id="hero-title"
-              className="text-3xl font-semibold tracking-tight md:text-4xl"
-            >
+            <h1 id="hero-title" className="text-3xl font-semibold tracking-tight md:text-4xl">
               Wellness with a mission
             </h1>
             <p className="mt-3 text-zinc-400">
-              Trusted essentials for long days and tough nights — and every
-              purchase helps prevent veteran suicide.
+              Trusted essentials for long days and tough nights — and every purchase helps prevent veteran suicide.
             </p>
 
+            {/* De-duped CTAs */}
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/kits" className="btn">
-                Browse kits
-              </Link>
-              <Link href="/shop" className="btn-ghost">
-                Shop
-              </Link>
-              <Link href="/donate" className="btn-ghost">
-                Donate
-              </Link>
-              <Link href="/faq" className="btn-ghost">
-                FAQ
-              </Link>
+              <Link href="/kits" className="btn">Browse kits</Link>
+              <Link href="/shop" className="btn-ghost">Shop</Link>
+              <Link href="/donate" className="btn-ghost">Donate</Link>
+              <Link href="/faq" className="btn-ghost">FAQ</Link>
             </div>
 
-            {/* Bigger & clearer support line */}
             <p className="mt-8 text-sm md:text-base text-zinc-300">
-              Your support helps fund real-world prevention, outreach, and
-              response.
+              Your support helps fund real-world prevention, outreach, and response.
             </p>
           </div>
 
@@ -157,11 +143,7 @@ export default function Home() {
             }}
           >
             {HERO_SRC ? (
-              <HeroImg
-                src={HERO_SRC}
-                alt="The Safety Plan — wellness with a mission"
-                className="absolute inset-0"
-              />
+              <HeroImg src={HERO_SRC} alt="The Safety Plan — wellness with a mission" className="absolute inset-0" />
             ) : (
               <div aria-hidden="true" className="absolute inset-0" />
             )}
@@ -171,15 +153,10 @@ export default function Home() {
 
       {/* FEATURES */}
       <section aria-labelledby="features-title" className="mx-auto max-w-6xl">
-        <h2 id="features-title" className="sr-only">
-          What’s inside
-        </h2>
+        <h2 id="features-title" className="sr-only">What’s inside</h2>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {features.map(({ title, desc, Icon }) => (
-            <li
-              key={title}
-              className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur"
-            >
+            <li key={title} className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur">
               <div className="flex items-start gap-3">
                 <span className="inline-flex size-9 items-center justify-center rounded-lg bg-white/10">
                   <Icon className="size-5 text-white/90" />
@@ -197,15 +174,8 @@ export default function Home() {
       {/* KITS */}
       <section aria-labelledby="kits-title" className="mx-auto max-w-6xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 id="kits-title" className="text-xl font-semibold tracking-tight">
-            Pick your kit
-          </h2>
-          <Link
-            href="/kits"
-            className="text-sm text-zinc-400 underline-offset-4 hover:underline"
-          >
-            View all
-          </Link>
+          <h2 id="kits-title" className="text-xl font-semibold tracking-tight">Pick your kit</h2>
+          <Link href="/kits" className="text-sm text-zinc-400 underline-offset-4 hover:underline">View all</Link>
         </div>
 
         <ul className="grid gap-4 md:grid-cols-2">
@@ -221,14 +191,9 @@ export default function Home() {
               >
                 <p className="text-xs text-emerald-300/80">{k.badge}</p>
                 <p className="mt-1 text-lg font-medium">{k.name}</p>
-                <p className="mt-1 text-sm text-zinc-400">
-                  Balanced essentials for performance and recovery — with impact
-                  built in.
-                </p>
+                <p className="mt-1 text-sm text-zinc-400">Balanced essentials for performance and recovery — with impact built in.</p>
                 <div className="mt-4 text-sm text-zinc-300">
-                  <span className="rounded-full bg-white/10 px-2 py-0.5">
-                    Learn more →
-                  </span>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5">Learn more →</span>
                 </div>
               </Link>
             </li>
@@ -236,15 +201,13 @@ export default function Home() {
         </ul>
       </section>
 
-      {/* IMPACT STRIP (no counts) */}
+      {/* IMPACT STRIP (no specific counts) */}
       <section
         aria-label="Impact"
         className="mx-auto max-w-6xl rounded-xl border border-white/10 bg-gradient-to-r from-emerald-500/10 via-sky-500/10 to-emerald-500/10 p-5"
       >
         <p className="text-sm text-zinc-200">
-          <strong className="font-semibold text-white">
-            {IMPACT_STAT ?? "Thank you for backing the mission."}
-          </strong>{" "}
+          <strong className="font-semibold text-white">{IMPACT_STAT ?? "Thank you for backing the mission."}</strong>{" "}
           Your support helps fund prevention, outreach, and crisis response.
         </p>
       </section>

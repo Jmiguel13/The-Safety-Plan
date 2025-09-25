@@ -21,7 +21,7 @@ type TspProduct = {
 
 type Props = {
   kitsList: KitLite[];
-  solos: SoloPick[];
+  solos?: SoloPick[]; // <-- make optional to match callers that don't pass it
   tspProducts: TspProduct[];
   storeHref: string;
   stickerPrice?: string;
@@ -38,7 +38,7 @@ const VARIANT_LABEL: Record<Variant, string> = {
 
 export default function ShopClient({
   kitsList,
-  solos,
+  solos = [], // <-- default to empty so render is safe
   tspProducts,
   storeHref,
 }: Props) {

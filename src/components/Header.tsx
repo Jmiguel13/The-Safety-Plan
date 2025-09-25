@@ -1,11 +1,12 @@
+// src/components/Header.tsx
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const links = [
-  { href: "/kits", label: "Kits" },
   { href: "/shop", label: "Shop" },
+  { href: "/kits", label: "Kits" },
   { href: "/gallery", label: "Gallery" },
   { href: "/faq", label: "FAQ" },
 ];
@@ -19,24 +20,19 @@ export default function Header() {
       role="banner"
     >
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="font-semibold tracking-tight">
-          The Safety Plan
-        </Link>
+        <Link href="/" className="font-semibold tracking-tight">The Safety Plan</Link>
 
         <nav aria-label="Primary" className="hidden sm:block">
           <ul className="flex items-center gap-2 text-sm">
             {links.map((l) => {
-              const active =
-                pathname === l.href || pathname?.startsWith(l.href + "/");
+              const active = pathname === l.href || pathname?.startsWith(l.href + "/");
               return (
                 <li key={l.href}>
                   <Link
                     href={l.href}
                     className={[
                       "inline-flex items-center rounded-full border px-3 py-1 transition",
-                      active
-                        ? "border-white/30 bg-white/10"
-                        : "border-white/10 hover:border-white/20 hover:bg-white/5",
+                      active ? "border-white/30 bg-white/10" : "border-white/10 hover:border-white/20 hover:bg-white/5",
                     ].join(" ")}
                   >
                     {l.label}
@@ -55,11 +51,9 @@ export default function Header() {
           </ul>
         </nav>
 
-        {/* simple mobile menu (can upgrade later) */}
+        {/* simple mobile menu */}
         <details className="group sm:hidden">
-          <summary className="list-none cursor-pointer rounded-md border border-white/10 px-3 py-1 text-sm/6">
-            Menu
-          </summary>
+          <summary className="list-none cursor-pointer rounded-md border border-white/10 px-3 py-1 text-sm/6">Menu</summary>
           <ul className="mt-2 grid gap-1">
             {links.map((l) => (
               <li key={l.href}>
@@ -69,20 +63,14 @@ export default function Header() {
               </li>
             ))}
             <li>
-              <Link href="/donate" className="block rounded-md bg-white px-2 py-1 text-black">
-                Donate
-              </Link>
+              <Link href="/donate" className="block rounded-md bg-white px-2 py-1 text-black">Donate</Link>
             </li>
           </ul>
         </details>
       </div>
 
       {/* Crisis ribbon (desktop) */}
-      <div
-        role="region"
-        aria-label="Crisis support"
-        className="mx-auto mt-2 hidden w-full max-w-6xl px-4 pb-2 md:block"
-      >
+      <div role="region" aria-label="Crisis support" className="mx-auto mt-2 hidden w-full max-w-6xl px-4 pb-2 md:block">
         <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
           <span className="inline-flex items-center gap-2">
             <span className="inline-block h-2 w-2 rounded-full bg-red-300" aria-hidden="true" />

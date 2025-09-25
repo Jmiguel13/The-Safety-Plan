@@ -1,17 +1,13 @@
 // src/app/kits/[slug]/page.tsx
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { kits } from "@/lib/kits";
 import KitCheckoutForm from "@/components/KitCheckoutForm";
+import { KITS_BOM, type KitSlug, kitTitle, scaledQty, REPACK_POLICY } from "@/lib/kits-bom";
+import { getKitPrices, formatUsd, type Variant } from "@/lib/kit-pricing";
 
 export const revalidate = 86_400;
-
-/* ---------- Types ---------- */
-type KitItem = {
-  sku?: string;
-  title?: string;
-  qty?: number;
-};
 
 type KitData = {
   slug: string;
@@ -19,7 +15,6 @@ type KitData = {
   blurb?: string;
   tagline?: string;
   imageUrl?: string;
-  items?: KitItem[];
   skus?: string[];
   image?: string;
   imageAlt?: string;
@@ -28,7 +23,6 @@ type KitData = {
 
 type Params = { slug: string };
 
-/* ---------- Helpers ---------- */
 function toTitle(s: string) {
   return s ? s.replace(/^\w/, (c) => c.toUpperCase()) : s;
 }
@@ -47,22 +41,21 @@ function grdFor(slug: string) {
 function imgMask() {
   return "radial-gradient(circle at 60% 40%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.35) 100%)";
 }
+function isKitSlug(s: string): s is KitSlug {
+  return s === "resilient" || s === "homefront";
+}
 
-/* ---------- Next metadata / params typing (your project expects Promise<Params>) ---------- */
 export async function generateStaticParams() {
   return (kits as Array<{ slug: string }>).map((k) => ({ slug: String(k.slug) }));
 }
 
-export async function generateMetadata(
-  { params }: { params: Promise<Params> }
-): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
   const kit = findKit(slug);
   const base = kit?.title ?? `${toTitle(slug)} Kit`;
   return { title: base };
 }
 
-/* ---------- UI bits ---------- */
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-2xl bg-gradient-to-br from-white/10 to-white/0 p-[1px]">
@@ -73,22 +66,15 @@ function Stat({ label, value }: { label: string; value: string | number }) {
     </div>
   );
 }
-function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`rounded-2xl bg-gradient-to-br from-white/10 to-white/0 p-[1px] ${className}`}>
-      <div className="rounded-2xl border border-white/10 bg-zinc-950/60">{children}</div>
-    </div>
-  );
-}
 
-/* ---------- Page (make the entry async and use Promise<Params>) ---------- */
 export default async function Page({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
+  if (!isKitSlug(slug)) notFound();
 
   const kit = findKit(slug) as KitData | undefined;
   if (!kit) notFound();
 
-  const title = kit.title ?? `${toTitle(slug)} Kit`;
+  const title = kit.title ?? kitTitle(slug);
   const blurb =
     kit.tagline ||
     kit.blurb ||
@@ -98,19 +84,19 @@ export default async function Page({ params }: { params: Promise<Params> }) {
       ? "Best for recovery. Rehydrate, restore, and rest."
       : "Mission-ready wellness essentials.");
 
-  const items = Array.isArray(kit.items) ? kit.items : [];
-  const itemCount = items.length;
-  const skuCount =
-    itemCount > 0
-      ? new Set(items.map((i) => String(i.sku ?? ""))).size
-      : Array.isArray(kit.skus)
-      ? new Set(kit.skus.map(String)).size
-      : 0;
-
-  const supportsStripe = slug === "resilient" || slug === "homefront";
   const weight = kit.weight_lb ?? "—";
   const heroImage = kit.imageUrl ?? kit.image;
   const heroAlt = kit.imageAlt ?? `${title} hero`;
+
+  const prices = await getKitPrices();
+  const priceOf = (v: Variant) => {
+    const p = prices?.[slug]?.[v];
+    return p ? formatUsd(p.unitAmount, p.currency) : undefined;
+  };
+
+  const bom = KITS_BOM[slug];
+  const itemCount = bom.length;
+  const skuCount = new Set(bom.map((i) => i.sku)).size;
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
@@ -126,12 +112,13 @@ export default async function Page({ params }: { params: Promise<Params> }) {
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{title}</h1>
               <p className="text-zinc-300">{blurb}</p>
 
-              {supportsStripe ? (
-                <KitCheckoutForm
-                  kit={{ slug: slug as "resilient" | "homefront", title }}
-                  className="pt-1"
-                />
-              ) : null}
+              <div className="flex flex-wrap gap-2 pt-1">
+                <span className="tag">Daily{priceOf("daily") ? ` — ${priceOf("daily")}` : ""}</span>
+                <span className="tag">10-Day{priceOf("10day") ? ` — ${priceOf("10day")}` : ""}</span>
+                <span className="tag">30-Day{priceOf("30day") ? ` — ${priceOf("30day")}` : ""}</span>
+              </div>
+
+              <KitCheckoutForm kit={{ slug, title }} className="pt-1" />
 
               <div className="flex flex-wrap gap-3 pt-3">
                 <Stat label="Weight" value={weight} />
@@ -163,31 +150,44 @@ export default async function Page({ params }: { params: Promise<Params> }) {
         </div>
       </section>
 
-      {/* Contents */}
+      {/* Quantity breakdown (BOM) */}
       <section className="mt-12 space-y-4">
-        <h2 className="text-2xl font-semibold">What&rsquo;s inside</h2>
+        <h2 className="text-2xl font-semibold">What’s inside</h2>
 
-        {itemCount === 0 ? (
-          <p className="muted">Item list coming soon.</p>
-        ) : (
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((i, idx) => (
-              <li key={`${i.sku ?? idx}`}>
-                <Panel>
-                  <div className="p-3">
-                    <div className="font-medium truncate">{i.title ?? i.sku ?? "Item"}</div>
-                    {i.sku ? (
-                      <div className="mt-0.5 text-xs text-zinc-500">
-                        SKU {i.sku}
-                        {typeof i.qty === "number" && i.qty > 1 ? ` ×${i.qty}` : ""}
-                      </div>
-                    ) : null}
-                  </div>
-                </Panel>
-              </li>
-            ))}
-          </ul>
-        )}
+        <div className="overflow-x-auto rounded-2xl border border-zinc-800">
+          <table className="w-full text-sm">
+            <thead className="bg-zinc-950/60">
+              <tr>
+                <th className="px-3 py-2 text-left">Category</th>
+                <th className="px-3 py-2 text-left">Product</th>
+                <th className="px-3 py-2 text-left">SKU</th>
+                <th className="px-3 py-2 text-right">Daily</th>
+                <th className="px-3 py-2 text-right">10-Day</th>
+                <th className="px-3 py-2 text-right">30-Day</th>
+                <th className="px-3 py-2 text-left">Notes</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800">
+              {bom.map((it) => (
+                <tr key={it.sku}>
+                  <td className="px-3 py-2 whitespace-nowrap text-zinc-400">{it.category}</td>
+                  <td className="px-3 py-2">{it.title}</td>
+                  <td className="px-3 py-2 text-zinc-400">{it.sku}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">{scaledQty(it, "daily")}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">{scaledQty(it, "10day")}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">{scaledQty(it, "30day")}</td>
+                  <td className="px-3 py-2 text-zinc-400">{it.repack ? "Repacked. " : ""}{it.note ?? ""}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <p className="muted text-sm">{REPACK_POLICY}</p>
+
+        <div className="pt-2">
+          <Link href="/shop#kits" className="btn">Back to Shop</Link>
+        </div>
       </section>
     </main>
   );
