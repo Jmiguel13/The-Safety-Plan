@@ -1,15 +1,9 @@
-/**
- * Amway / MyShop helpers
- * - Safe to import on client
- * - Always injects UTM params unless already present
- * - Reads UTM defaults from env (falls back to sensible defaults)
- */
-
+// src/lib/amway.ts
 export type CartItem = { sku: string; qty?: number };
 
 const PUBLIC_BASE = (process.env.NEXT_PUBLIC_AMWAY_MYSHOP_URL || "").trim();
 
-// UTM defaults (public so components can show them if needed)
+// UTM defaults
 export const DEFAULT_UTM_SOURCE =
   (process.env.NEXT_PUBLIC_UTM_SOURCE || "").trim() || "safety-plan";
 export const DEFAULT_UTM_MEDIUM =
@@ -21,7 +15,6 @@ function baseUrl(): string {
   try {
     if (!PUBLIC_BASE) return "";
     const u = new URL(PUBLIC_BASE);
-    // Normalize to no trailing slash
     return u.toString().replace(/\/+$/, "");
   } catch {
     return "";
@@ -36,17 +29,15 @@ function toMyShopUrl(pathOrUrl: string): URL | null {
   const root = baseUrl();
   if (!root) return null;
 
-  // Absolute URL already?
   try {
     const abs = new URL(pathOrUrl);
     return abs;
   } catch {
-    /* fall through to join with base */
+    /* join with base */
   }
 
   try {
     const rootURL = new URL(root);
-    // Ensure exactly one slash between base and path
     const cleanBasePath = rootURL.pathname.replace(/\/+$/, "");
     const cleanPath = String(pathOrUrl || "").replace(/^\/+/, "");
     rootURL.pathname = cleanPath ? `${cleanBasePath}/${cleanPath}` : cleanBasePath;
@@ -72,30 +63,20 @@ function addUtm(u: URL, extra?: Record<string, string | number | undefined>) {
   }
 }
 
-/**
- * Generic storefront link builder.
- * Accepts either a relative path (e.g. "/") or absolute URL.
- */
-export function storefrontLink(
-  pathOrUrl: string = "/",
-  utm?: Record<string, string | number>
-): string {
+/** Storefront link (root or relative path). */
+export function storefrontLink(pathOrUrl: string = "/", utm?: Record<string, string | number>): string {
   const u = toMyShopUrl(pathOrUrl);
   if (!u) return "/";
   addUtm(u, utm);
   return u.toString();
 }
 
-/** Convenience alias: always root with UTM */
+/** Convenience alias. */
 export function myShopLink(path: string = "/", utm?: Record<string, string | number>): string {
   return storefrontLink(path, utm);
 }
 
-/**
- * Product PDP link by SKU.
- * Uses a conservative query format that works across many MyShop markets:
- *   /product/detail?itemNumber=SKU
- */
+/** Product PDP by SKU — conservative path that works widely: /product/detail?itemNumber=SKU */
 export function productLink(sku: string, utm?: Record<string, string | number>): string {
   const normalized = String(sku || "").trim();
   const u = toMyShopUrl("/product/detail");
@@ -105,11 +86,7 @@ export function productLink(sku: string, utm?: Record<string, string | number>):
   return u.toString();
 }
 
-/**
- * Attempt to build a cart-add link for a list of items.
- *   /cart?itemNumber=SKU&quantity=QTY  (repeated for each item)
- * Falls back to storefront root if base is missing or list is empty.
- */
+/** Build a cart-add URL for multiple items (if supported market-side). */
 export function buildCartLink(items: CartItem[], utm?: Record<string, string | number>): string {
   const u = toMyShopUrl("/cart");
   if (!u) return myShopLink("/", utm);

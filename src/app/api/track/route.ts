@@ -1,44 +1,65 @@
 // src/app/api/track/route.ts
-import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type EventBody = {
-  type: string;
-  payload?: Record<string, unknown>;
-};
+type EventPayload = Record<string, unknown>;
 
-export async function POST(req: Request) {
-  let body: EventBody | null = null;
+function clientIp(req: NextRequest): string | undefined {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    undefined
+  );
+}
+
+export async function POST(req: NextRequest) {
+  let payload: EventPayload;
   try {
-    body = (await req.json()) as EventBody;
+    payload = (await req.json()) as EventPayload;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid json" }, { status: 400 });
   }
 
-  if (!body?.type) {
-    return NextResponse.json({ ok: false, error: "Missing event type" }, { status: 400 });
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  const table = process.env.SITE_TRACK_TABLE; // e.g. "site_events"
+
+  if (!supabaseUrl || !serviceKey || !table) {
+    return NextResponse.json({ ok: true, stored: false }, { status: 200 });
   }
+
+  const row = {
+    created_at: new Date().toISOString(),
+    ip: clientIp(req) ?? null,
+    ua: req.headers.get("user-agent") ?? null,
+    raw: payload
+  };
 
   try {
-    if (supabaseAdmin) {
-      await supabaseAdmin.from("events").insert({
-        type: body.type,
-        payload: body.payload ?? {},
-        created_at: new Date().toISOString(),
-      });
-    } else {
-      console.log("⚠️ Track (no DB):", body);
+    const supabase = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { headers: { "x-application-name": "safety-plan-site" } }
+    });
+
+    const { error } = await supabase.from(table).insert(row as Record<string, unknown>);
+    if (error) {
+      console.warn("[track] insert failed:", error.message);
+      return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
     }
-    return NextResponse.json({ ok: true });
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+
+    return NextResponse.json({ ok: true, stored: true }, { status: 200 });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn("[track] error:", msg);
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
 }
 
 export async function GET() {
-  return NextResponse.json({ ok: false, error: "Use POST" }, { status: 405, headers: { Allow: "POST" } });
+  const ok = !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  return NextResponse.json({ ok, tracking: ok && !!process.env.SITE_TRACK_TABLE });
 }

@@ -1,35 +1,45 @@
 // src/app/api/waitlist/route.ts
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseServer } from "@/lib/supabase-server";
 
-export async function POST(req: Request) {
-  try {
-    const { email, productId } = await req.json();
-    const cleanEmail = String(email ?? "").trim().toLowerCase();
-    const cleanProduct = String(productId ?? "").trim();
+export const runtime = "nodejs";
 
-    if (!cleanEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cleanEmail)) {
-      return NextResponse.json({ ok: false, error: "Valid email required." }, { status: 400 });
-    }
-    if (!cleanProduct) {
-      return NextResponse.json({ ok: false, error: "Missing product id." }, { status: 400 });
-    }
-
-    const { error } = await supabaseAdmin.from("waitlist").insert({
-      email: cleanEmail,
-      product_id: cleanProduct,
-    });
-
-    if (error) {
-      // Log on server; do not leak details to client
-      console.error("[waitlist] insert error:", error);
-      return NextResponse.json({ ok: false, error: "Unable to save. Try again." }, { status: 500 });
-    }
-
-    return NextResponse.json({ ok: true });
-  } catch (e) {
-    console.error("[waitlist] bad request:", e);
-    return NextResponse.json({ ok: false, error: "Invalid request." }, { status: 400 });
-  }
+function isEmail(s: unknown): s is string {
+  return typeof s === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
 }
 
+export async function POST(req: Request) {
+  let email = "";
+  try {
+    const body = await req.json().catch(() => ({}));
+    email = String(body?.email ?? "").trim().toLowerCase();
+  } catch {
+    // ignore
+  }
+
+  if (!isEmail(email)) {
+    return NextResponse.json({ error: "Invalid email." }, { status: 400 });
+  }
+
+  const supabase = getSupabaseServer();
+  if (!supabase) {
+    // Don’t crash build if env is missing — return 503 at runtime instead.
+    return NextResponse.json(
+      { error: "Supabase not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (or SUPABASE_SERVICE_ROLE)." },
+      { status: 503 }
+    );
+  }
+
+  const { error } = await supabase.from("waitlist").insert({ email });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}
+
+export async function GET() {
+  // simple health endpoint
+  const ok = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY));
+  return NextResponse.json({ ok });
+}
