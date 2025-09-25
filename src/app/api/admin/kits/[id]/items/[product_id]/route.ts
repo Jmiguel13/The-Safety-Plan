@@ -3,10 +3,12 @@ import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-type Params = { params: { id: string; product_id: string } };
-
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(
+  _req: Request,
+  { params }: { params: { id: string; product_id: string } }
+) {
   const supabase = getSupabaseServer();
   if (!supabase) {
     return NextResponse.json(
@@ -20,20 +22,17 @@ export async function GET(_req: Request, { params }: Params) {
     );
   }
 
-  // If you have a table, uncomment:
-  // const { data, error } = await supabase
-  //   .from("kit_items")
-  //   .select("*")
-  //   .eq("kit_id", params.id)
-  //   .eq("product_id", params.product_id)
-  //   .single();
-  // if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  // return NextResponse.json({ item: data, kitId: params.id, productId: params.product_id });
-
-  return NextResponse.json({ item: null, kitId: params.id, productId: params.product_id });
+  return NextResponse.json({
+    item: null,
+    kitId: params.id,
+    productId: params.product_id,
+  });
 }
 
-export async function PUT(req: Request, { params }: Params) {
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string; product_id: string } }
+) {
   const supabase = getSupabaseServer();
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
 
@@ -49,18 +48,18 @@ export async function PUT(req: Request, { params }: Params) {
     );
   }
 
-  // Example update:
-  // const { error } = await supabase
-  //   .from("kit_items")
-  //   .update(body)
-  //   .eq("kit_id", params.id)
-  //   .eq("product_id", params.product_id);
-  // if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json({ ok: true, kitId: params.id, productId: params.product_id, received: body });
+  return NextResponse.json({
+    ok: true,
+    kitId: params.id,
+    productId: params.product_id,
+    received: body,
+  });
 }
 
-export async function DELETE(_req: Request, { params }: Params) {
+export async function DELETE(
+  _req: Request,
+  { params }: { params: { id: string; product_id: string } }
+) {
   const supabase = getSupabaseServer();
 
   if (!supabase) {
@@ -70,15 +69,11 @@ export async function DELETE(_req: Request, { params }: Params) {
     );
   }
 
-  // Example delete:
-  // const { error } = await supabase
-  //   .from("kit_items")
-  //   .delete()
-  //   .eq("kit_id", params.id)
-  //   .eq("product_id", params.product_id);
-  // if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json({ ok: true, kitId: params.id, productId: params.product_id });
+  return NextResponse.json({
+    ok: true,
+    kitId: params.id,
+    productId: params.product_id,
+  });
 }
 
 export function OPTIONS() {

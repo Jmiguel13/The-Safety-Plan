@@ -3,11 +3,12 @@ import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-type Params = { params: { id: string } };
-
-export async function GET(_req: Request, { params }: Params) {
-  // Keep build safe even if env is missing.
+export async function GET(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
   const supabase = getSupabaseServer();
   if (!supabase) {
     return NextResponse.json(
@@ -16,20 +17,14 @@ export async function GET(_req: Request, { params }: Params) {
     );
   }
 
-  // If you have a table, uncomment and adjust:
-  // const { data, error } = await supabase
-  //   .from("kit_items")
-  //   .select("*")
-  //   .eq("kit_id", params.id)
-  //   .order("created_at", { ascending: false });
-  // if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  // return NextResponse.json({ items: data ?? [], kitId: params.id });
-
-  // Minimal OK shape to avoid breaking admin UI during launch.
+  // Placeholder OK shape to keep admin UI stable during launch.
   return NextResponse.json({ items: [], kitId: params.id });
 }
 
-export async function POST(req: Request, { params }: Params) {
+export async function POST(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   const supabase = getSupabaseServer();
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
 
@@ -40,17 +35,16 @@ export async function POST(req: Request, { params }: Params) {
     );
   }
 
-  // If you have a table, uncomment and map fields accordingly:
-  // const { error } = await supabase.from("kit_items").insert({
-  //   kit_id: params.id,
-  //   ...body,
-  // });
-  // if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json({ ok: true, kitId: params.id, received: body }, { status: 201 });
+  return NextResponse.json(
+    { ok: true, kitId: params.id, received: body },
+    { status: 201 }
+  );
 }
 
-export async function PUT(req: Request, { params }: Params) {
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   const supabase = getSupabaseServer();
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
 
@@ -60,13 +54,6 @@ export async function PUT(req: Request, { params }: Params) {
       { status: 503 }
     );
   }
-
-  // Example update if needed later:
-  // const { error } = await supabase
-  //   .from("kit_items")
-  //   .update(body)
-  //   .eq("kit_id", params.id);
-  // if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ ok: true, kitId: params.id, received: body });
 }
