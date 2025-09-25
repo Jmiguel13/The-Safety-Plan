@@ -20,7 +20,7 @@ type Props = {
   kitsList: KitLite[];
   solos: SoloPick[];
   tspProducts: TspProduct[];
-  storeHref: string;
+  storeHref: string; // may be '', '/', or a full URL
   prices?: KitPricesMap;
 };
 
@@ -61,6 +61,16 @@ export default function ShopClient({
   const [submitting, setSubmitting] = React.useState<string | null>(null);
   const [errors, setErrors] = React.useState<Record<string, string | null>>({});
   const [buyingProduct, setBuyingProduct] = React.useState<string | null>(null);
+
+  // --- MyShop link normalization (fixes link-to-homepage issue) ---
+  const myShopHref = React.useMemo(() => {
+    const envUrl = process.env.NEXT_PUBLIC_AMWAY_MYSHOP_URL;
+    const isHttp = (u?: string) => !!u && /^https?:\/\//i.test(u);
+    if (isHttp(storeHref)) return storeHref;
+    if (isHttp(envUrl)) return envUrl as string;
+    // Hard fallback – replace with your distributor URL when known
+    return "https://www.amway.com/myshop";
+  }, [storeHref]);
 
   function setQty(slug: string, v: number) {
     setQuantities((p) => ({ ...p, [slug]: clampQty(v) }));
@@ -243,7 +253,15 @@ export default function ShopClient({
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <a href={storeHref} target="_blank" rel="noopener noreferrer" className="btn">Open MyShop</a>
+            <a
+              href={myShopHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn"
+              aria-label="Open Amway MyShop in a new tab"
+            >
+              Open MyShop
+            </a>
           </div>
 
           <ul className="mt-4 space-y-3">
@@ -254,9 +272,13 @@ export default function ShopClient({
                   <div className="text-xs text-zinc-500">SKU {s.sku}</div>
                 </div>
                 {s.url ? (
-                  <a href={s.url} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">Buy</a>
+                  <a href={s.url} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">
+                    Buy
+                  </a>
                 ) : (
-                  <a href={storeHref} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">View in MyShop</a>
+                  <a href={myShopHref} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">
+                    View in MyShop
+                  </a>
                 )}
               </li>
             ))}
