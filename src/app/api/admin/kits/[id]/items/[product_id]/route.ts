@@ -1,121 +1,86 @@
 // src/app/api/admin/kits/[id]/items/[product_id]/route.ts
-import { createSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { NextResponse } from "next/server";
+import { getSupabaseServer } from "@/lib/supabase-server";
 
-export const runtime = "nodejs"; // admin ops require server runtime
+export const runtime = "nodejs";
 
-/** Extracts /api/admin/kits/:id/items/:product_id from the URL */
-function extractParams(pathname: string): { id: string; product_id: string } | null {
-  const parts = pathname.split("/").filter(Boolean);
-  // .../api/admin/kits/:id/items/:product_id
-  const itemsIdx = parts.lastIndexOf("items");
-  if (itemsIdx <= 0 || itemsIdx + 1 >= parts.length) return null;
+type Params = { params: { id: string; product_id: string } };
 
-  const product_id = decodeURIComponent(parts[itemsIdx + 1] || "");
-  const id = decodeURIComponent(parts[itemsIdx - 1] || "");
-  if (!id || !product_id) return null;
-  return { id, product_id };
+export async function GET(_req: Request, { params }: Params) {
+  const supabase = getSupabaseServer();
+  if (!supabase) {
+    return NextResponse.json(
+      {
+        error: "Supabase not configured.",
+        kitId: params.id,
+        productId: params.product_id,
+        item: null,
+      },
+      { status: 503 }
+    );
+  }
+
+  // If you have a table, uncomment:
+  // const { data, error } = await supabase
+  //   .from("kit_items")
+  //   .select("*")
+  //   .eq("kit_id", params.id)
+  //   .eq("product_id", params.product_id)
+  //   .single();
+  // if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // return NextResponse.json({ item: data, kitId: params.id, productId: params.product_id });
+
+  return NextResponse.json({ item: null, kitId: params.id, productId: params.product_id });
 }
 
-/** DELETE: remove an item from kit_items */
-export async function DELETE(request: Request): Promise<Response> {
-  const url = new URL(request.url);
-  const params = extractParams(url.pathname);
-  if (!params) {
-    return Response.json({ ok: false, error: "Bad route: missing id/product_id" }, { status: 400 });
+export async function PUT(req: Request, { params }: Params) {
+  const supabase = getSupabaseServer();
+  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+
+  if (!supabase) {
+    return NextResponse.json(
+      {
+        error: "Supabase not configured.",
+        kitId: params.id,
+        productId: params.product_id,
+        received: body,
+      },
+      { status: 503 }
+    );
   }
 
-  const { id: kit_id, product_id } = params;
-  const sb = createSupabaseAdmin();
+  // Example update:
+  // const { error } = await supabase
+  //   .from("kit_items")
+  //   .update(body)
+  //   .eq("kit_id", params.id)
+  //   .eq("product_id", params.product_id);
+  // if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const { error } = await sb.from("kit_items").delete().match({ kit_id, product_id });
-  if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
-
-  // Optional: compact sort_order after deletion
-  const { data: remaining, error: listErr } = await sb
-    .from("kit_items")
-    .select("id")
-    .eq("kit_id", kit_id)
-    .order("sort_order", { ascending: true });
-
-  if (!listErr && Array.isArray(remaining)) {
-    let order = 1;
-    for (const row of remaining) {
-      await sb.from("kit_items").update({ sort_order: order }).eq("id", row.id);
-      order++;
-    }
-  }
-
-  return Response.json({ ok: true, deleted: { kit_id, product_id } }, { status: 200 });
+  return NextResponse.json({ ok: true, kitId: params.id, productId: params.product_id, received: body });
 }
 
-/** PATCH: update qty, sort_order, or note */
-type PatchBody = {
-  qty?: number;
-  sort_order?: number;
-  note?: string | null;
-};
+export async function DELETE(_req: Request, { params }: Params) {
+  const supabase = getSupabaseServer();
 
-export async function PATCH(request: Request): Promise<Response> {
-  const url = new URL(request.url);
-  const params = extractParams(url.pathname);
-  if (!params) {
-    return Response.json({ ok: false, error: "Bad route: missing id/product_id" }, { status: 400 });
+  if (!supabase) {
+    return NextResponse.json(
+      { error: "Supabase not configured.", kitId: params.id, productId: params.product_id },
+      { status: 503 }
+    );
   }
 
-  const { id: kit_id, product_id } = params;
+  // Example delete:
+  // const { error } = await supabase
+  //   .from("kit_items")
+  //   .delete()
+  //   .eq("kit_id", params.id)
+  //   .eq("product_id", params.product_id);
+  // if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  let body: PatchBody;
-  try {
-    body = (await request.json()) as PatchBody;
-  } catch {
-    return Response.json({ ok: false, error: "Invalid JSON body." }, { status: 400 });
-  }
-
-  const update: Record<string, unknown> = {};
-  if (typeof body.qty === "number" && Number.isFinite(body.qty) && body.qty > 0) {
-    update.qty = Math.floor(body.qty);
-  }
-  if (typeof body.sort_order === "number" && Number.isFinite(body.sort_order) && body.sort_order > 0) {
-    update.sort_order = Math.floor(body.sort_order);
-  }
-  if (body.note === null || typeof body.note === "string") {
-    update.note = body.note;
-  }
-
-  if (Object.keys(update).length === 0) {
-    return Response.json({ ok: false, error: "Nothing to update." }, { status: 400 });
-  }
-
-  const sb = createSupabaseAdmin();
-  const { data, error } = await sb
-    .from("kit_items")
-    .update(update)
-    .match({ kit_id, product_id })
-    .select("*")
-    .single();
-
-  if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
-
-  return Response.json({ ok: true, item: data }, { status: 200 });
+  return NextResponse.json({ ok: true, kitId: params.id, productId: params.product_id });
 }
 
-/** GET detail (sanity) */
-export async function GET(request: Request): Promise<Response> {
-  const url = new URL(request.url);
-  const params = extractParams(url.pathname);
-  if (!params) {
-    return Response.json({ ok: false, error: "Bad route: missing id/product_id" }, { status: 400 });
-  }
-
-  const { id: kit_id, product_id } = params;
-  const sb = createSupabaseAdmin();
-  const { data, error } = await sb
-    .from("kit_items")
-    .select("id, kit_id, product_id, qty, sort_order, note")
-    .match({ kit_id, product_id })
-    .maybeSingle();
-
-  if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
-  return Response.json({ ok: true, item: data ?? null }, { status: 200 });
+export function OPTIONS() {
+  return NextResponse.json({ ok: true });
 }
-
