@@ -20,7 +20,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "env:check": "tsx scripts/check-env.ts",
     "check": "pnpm env:check && pnpm lint && pnpm typecheck",
-    "format": "prettier -w ."
+    "format": "prettier -w .",
+    "postinstall": "next telemetry disable || true"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
