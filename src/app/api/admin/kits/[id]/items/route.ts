@@ -5,57 +5,57 @@ import { getSupabaseServer } from "@/lib/supabase-server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
+function getKitId(req: Request): string {
+  const url = new URL(req.url);
+  const parts = url.pathname.split("/");
+  // .../api/admin/kits/[id]/items
+  const i = parts.findIndex((p) => p === "kits");
+  return i >= 0 ? decodeURIComponent(parts[i + 1] || "") : "";
+}
+
+export async function GET(req: Request) {
+  const kitId = getKitId(req);
+
   const supabase = getSupabaseServer();
   if (!supabase) {
     return NextResponse.json(
-      { error: "Supabase not configured.", items: [], kitId: params.id },
+      { error: "Supabase not configured.", items: [], kitId },
       { status: 503 }
     );
   }
 
-  // Placeholder OK shape to keep admin UI stable during launch.
-  return NextResponse.json({ items: [], kitId: params.id });
+  // Placeholder OK shape during launch
+  return NextResponse.json({ items: [], kitId });
 }
 
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(req: Request) {
+  const kitId = getKitId(req);
   const supabase = getSupabaseServer();
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
 
   if (!supabase) {
     return NextResponse.json(
-      { error: "Supabase not configured.", received: body, kitId: params.id },
+      { error: "Supabase not configured.", received: body, kitId },
       { status: 503 }
     );
   }
 
-  return NextResponse.json(
-    { ok: true, kitId: params.id, received: body },
-    { status: 201 }
-  );
+  return NextResponse.json({ ok: true, kitId, received: body }, { status: 201 });
 }
 
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: Request) {
+  const kitId = getKitId(req);
   const supabase = getSupabaseServer();
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
 
   if (!supabase) {
     return NextResponse.json(
-      { error: "Supabase not configured.", received: body, kitId: params.id },
+      { error: "Supabase not configured.", received: body, kitId },
       { status: 503 }
     );
   }
 
-  return NextResponse.json({ ok: true, kitId: params.id, received: body });
+  return NextResponse.json({ ok: true, kitId, received: body });
 }
 
 export function OPTIONS() {
