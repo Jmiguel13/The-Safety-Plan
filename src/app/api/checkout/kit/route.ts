@@ -125,7 +125,8 @@ export async function POST(req: Request) {
     const secretKey = env("STRIPE_SECRET_KEY");
     if (!secretKey) return NextResponse.json({ error: "Missing STRIPE_SECRET_KEY" }, { status: 500 });
 
-    const stripe = new Stripe(secretKey, { apiVersion: "2024-06-20" as Stripe.LatestApiVersion });
+    // Don’t pin apiVersion here to avoid TS literal mismatch churn
+    const stripe = new Stripe(secretKey);
 
     const target = resolveTarget(slug, variant);
     const priceId = await getPriceIdFromTarget(stripe, target, slug, variant);

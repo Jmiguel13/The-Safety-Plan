@@ -5,12 +5,15 @@ import CopySkus from "@/components/CopySkus";
 import KitCheckoutForm from "@/components/KitCheckoutForm";
 import { kits } from "@/lib/kits";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic"; // render at request-time, not at build
+export const revalidate = 0;
+
 export const viewport: Viewport = { themeColor: "#0b0f10" };
 export const metadata: Metadata = {
   title: "Homefront Kit — The Safety Plan",
   description: "Best for recovery. Rehydrate, restore, and reset.",
 };
-export const dynamic = "error";
 
 // ---- Types ----
 type KitItem = { sku?: string; title?: string; qty?: number };
@@ -50,18 +53,16 @@ function toStringArray(v: unknown): string[] {
 function skusToItems(skus: string[]): { sku: string; quantity: number }[] {
   return skus.map((sku) => ({ sku, quantity: 1 }));
 }
-function grdForHomefront() {
+function grd() {
   return "radial-gradient(1200px 500px at 0% 0%, rgba(56,189,248,0.18), transparent 65%), radial-gradient(900px 420px at 100% 15%, rgba(34,197,94,0.16), transparent 60%)";
 }
 
 export default function HomefrontPage() {
   const kit = getKitBySlug("homefront");
-
   const title = asNonEmptyString(kit?.title, "Homefront Kit");
   const weight = toStringOrDash(kit?.weight ?? kit?.specs?.weight);
 
-  const contents: KitItem[] =
-    (Array.isArray(kit?.contents) ? kit?.contents : kit?.items) ?? [];
+  const contents: KitItem[] = (Array.isArray(kit?.contents) ? kit?.contents : kit?.items) ?? [];
   const skus = toStringArray(kit?.skus ?? kit?.sku_list);
   const copyItems = skusToItems(skus);
 
@@ -78,7 +79,7 @@ export default function HomefrontPage() {
       {/* Hero */}
       <section
         className="relative overflow-hidden rounded-3xl border border-white/10"
-        style={{ backgroundImage: grdForHomefront(), backgroundColor: "rgb(9 9 11 / 0.65)" }}
+        style={{ backgroundImage: grd(), backgroundColor: "rgb(9 9 11 / 0.65)" }}
       >
         <div className="grid gap-8 md:grid-cols-[1.1fr,480px]">
           {/* Copy + actions */}
@@ -87,7 +88,7 @@ export default function HomefrontPage() {
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{title}</h1>
               <p className="muted">Best for recovery. Rehydrate, restore, and reset.</p>
 
-              {/* Single buy control (Stripe bundle picker) */}
+              {/* Pure client checkout (no Stripe during render) */}
               <KitCheckoutForm kit={{ slug: "homefront", title }} className="pt-1" />
 
               {/* Specs */}
@@ -96,9 +97,7 @@ export default function HomefrontPage() {
               </div>
 
               <div className="flex flex-wrap gap-3 pt-1">
-                <Link href="/kits/homefront/items" className="btn-ghost">
-                  View SKUs
-                </Link>
+                <Link href="/kits/homefront/items" className="btn-ghost">View SKUs</Link>
                 {copyItems.length > 0 ? <CopySkus items={copyItems} /> : null}
               </div>
             </div>
@@ -126,18 +125,13 @@ export default function HomefrontPage() {
         ) : (
           <div className="panel rounded-2xl border border-[var(--border)] p-4">
             <div className="mb-2 flex items-center justify-between">
-              <div className="muted text-xs">
-                Paste any SKU in your Amway search bar to add to cart.
-              </div>
+              <div className="muted text-xs">Paste any SKU in your Amway search bar to add to cart.</div>
               <CopySkus items={copyItems} />
             </div>
 
             <ul className="grid gap-1 font-mono text-sm">
               {copyItems.map((row) => (
-                <li
-                  key={row.sku}
-                  className="flex items-center justify-between border-b border-[var(--border)]/50 pb-1"
-                >
+                <li key={row.sku} className="flex items-center justify-between border-b border-[var(--border)]/50 pb-1">
                   <span>{row.sku}</span>
                   <span className="muted">x{row.quantity}</span>
                 </li>

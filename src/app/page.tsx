@@ -76,6 +76,25 @@ function HeroImg({ src, alt, className }: { src: string; alt: string; className?
   return <img src={src} alt={alt} className={className} style={{ width: "100%", height: "100%", objectFit: "cover" }} />;
 }
 
+/** Build MyShop external URL with default UTM */
+function myShopUrlWithUtm(): string {
+  const base =
+    process.env.NEXT_PUBLIC_AMWAY_MYSHOP_URL ||
+    "https://www.amway.com/myshop/TheSafetyPlan";
+  try {
+    const u = new URL(base);
+    if (!u.searchParams.has("utm_source")) {
+      u.searchParams.set("utm_source", process.env.NEXT_PUBLIC_UTM_SOURCE || "safety-plan");
+    }
+    if (!u.searchParams.has("utm_medium")) {
+      u.searchParams.set("utm_medium", process.env.NEXT_PUBLIC_UTM_MEDIUM || "web");
+    }
+    return u.toString();
+  } catch {
+    return base;
+  }
+}
+
 export default function Home() {
   const { IMPACT_STAT } = getSiteConfig();
 
@@ -101,6 +120,8 @@ export default function Home() {
     },
   ] as const;
 
+  const myShopHref = myShopUrlWithUtm();
+
   return (
     <div className="space-y-16">
       {/* HERO */}
@@ -121,10 +142,13 @@ export default function Home() {
               Trusted essentials for long days and tough nights — and every purchase helps prevent veteran suicide.
             </p>
 
-            {/* De-duped CTAs */}
+            {/* CTAs */}
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/kits" className="btn">Browse kits</Link>
               <Link href="/shop" className="btn-ghost">Shop</Link>
+              <a href={myShopHref} target="_blank" rel="noopener noreferrer" className="btn-ghost">
+                Solo Amway Products
+              </a>
               <Link href="/donate" className="btn-ghost">Donate</Link>
               <Link href="/faq" className="btn-ghost">FAQ</Link>
             </div>
@@ -201,7 +225,7 @@ export default function Home() {
         </ul>
       </section>
 
-      {/* IMPACT STRIP (no specific counts) */}
+      {/* IMPACT STRIP */}
       <section
         aria-label="Impact"
         className="mx-auto max-w-6xl rounded-xl border border-white/10 bg-gradient-to-r from-emerald-500/10 via-sky-500/10 to-emerald-500/10 p-5"

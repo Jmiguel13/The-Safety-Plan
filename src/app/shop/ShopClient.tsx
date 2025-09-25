@@ -3,7 +3,11 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { formatUsd, type KitPricesMap } from "@/lib/kit-pricing";
+import { REPACK_POLICY } from "@/lib/kits-bom";
+import type { TspProduct } from "@/lib/tsp-products";
 
+/* ======================= Types ======================= */
 type KitLite = {
   slug: string;
   title: string;
@@ -12,37 +16,42 @@ type KitLite = {
 
 type SoloPick = { sku: string; title?: string; url: string };
 
-type TspProduct = {
-  id: string;
-  title: string;
-  priceId?: string; // optional Stripe price id for TSP merch
-  href?: string;
-};
-
 type Props = {
   kitsList: KitLite[];
-  solos?: SoloPick[]; // <-- make optional to match callers that don't pass it
+  solos: SoloPick[];
   tspProducts: TspProduct[];
   storeHref: string;
-  stickerPrice?: string;
-  patchPrice?: string;
+  prices?: KitPricesMap;
 };
 
 type Variant = "daily" | "10day" | "30day";
-
 const VARIANT_LABEL: Record<Variant, string> = {
   daily: "Daily",
   "10day": "10-Day Supply",
   "30day": "30-Day Supply",
 };
 
+type CheckoutResponse = { url?: string; error?: string };
+
+/* ======================= Helpers ======================= */
+function clampQty(v: number) {
+  return Math.max(1, Math.min(10, Number.isFinite(v) ? v : 1));
+}
+const kebabFromId = (id: string) => id.replace(/_/g, "-");
+const hrefForTsp = (p: TspProduct) => p.url ?? `/gear/${kebabFromId(p.id)}`;
+const isExternal = (href: string) => /^https?:\/\//i.test(href);
+
+// Only these show a BUY button (others are view/waitlist)
+const DIRECT_GEAR = new Set<string>(["morale_patch", "sticker_pack"]);
+
+/* ======================= Component ======================= */
 export default function ShopClient({
   kitsList,
-  solos = [], // <-- default to empty so render is safe
+  solos,
   tspProducts,
   storeHref,
+  prices,
 }: Props) {
-  // one piece of UI state per-kit: quantity + variant
   const [quantities, setQuantities] = React.useState<Record<string, number>>(
     Object.fromEntries(kitsList.map((k) => [k.slug, 1]))
   );
@@ -51,17 +60,22 @@ export default function ShopClient({
   );
   const [submitting, setSubmitting] = React.useState<string | null>(null);
   const [errors, setErrors] = React.useState<Record<string, string | null>>({});
-
-  function clampQty(v: number) {
-    return Math.max(1, Math.min(10, Number.isFinite(v) ? v : 1));
-  }
+  const [buyingProduct, setBuyingProduct] = React.useState<string | null>(null);
 
   function setQty(slug: string, v: number) {
     setQuantities((p) => ({ ...p, [slug]: clampQty(v) }));
   }
-
   function setVar(slug: string, v: Variant) {
     setVariants((p) => ({ ...p, [slug]: v }));
+  }
+
+  function kitTotalCents(slug: string): { total: number | null; currency: string } {
+    const variant = variants[slug] ?? "daily";
+    const entry = prices?.[slug]?.[variant] ?? null;
+    const unit = entry?.unitAmount ?? null;
+    const currency = entry?.currency ?? "USD";
+    const qty = quantities[slug] ?? 1;
+    return { total: unit != null ? unit * qty : null, currency };
   }
 
   async function buyKit(slug: string) {
@@ -79,31 +93,42 @@ export default function ShopClient({
       });
 
       const ctype = res.headers.get("content-type") || "";
-      let data: unknown;
-      if (ctype.includes("application/json")) {
-        data = await res.json();
-      } else {
-        const txt = await res.text();
-        try {
-          data = JSON.parse(txt);
-        } catch {
-          data = { error: txt };
-        }
-      }
+      const data: CheckoutResponse = ctype.includes("application/json")
+        ? ((await res.json()) as CheckoutResponse)
+        : { error: await res.text() };
 
-      const { url, error } = (data as { url?: string; error?: string }) ?? {};
-      if (!res.ok || !url) {
-        throw new Error(error || `Checkout failed (${res.status})`);
-      }
-      window.location.assign(url);
+      if (!res.ok || !data.url) throw new Error(data.error || `Checkout failed (${res.status})`);
+      window.location.assign(data.url);
     } catch (err) {
       setErrors((e) => ({
         ...e,
-        [slug]:
-          err instanceof Error ? err.message : "Checkout failed. Try again.",
+        [slug]: err instanceof Error ? err.message : "Checkout failed. Try again.",
       }));
     } finally {
       setSubmitting(null);
+    }
+  }
+
+  /** Direct checkout via Stripe Product -> default price */
+  async function buyGearByProduct(stripeProductId: string) {
+    setBuyingProduct(stripeProductId);
+    try {
+      const res = await fetch("/api/checkout/gear", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stripeProductId, quantity: 1 }),
+      });
+      const ctype = res.headers.get("content-type") || "";
+      const data: CheckoutResponse = ctype.includes("application/json")
+        ? ((await res.json()) as CheckoutResponse)
+        : { error: await res.text() };
+
+      if (!res.ok || !data.url) throw new Error(data.error || `Checkout failed (${res.status})`);
+      window.location.assign(data.url);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Checkout failed. Try again.");
+    } finally {
+      setBuyingProduct(null);
     }
   }
 
@@ -116,32 +141,22 @@ export default function ShopClient({
         <div className="grid gap-4 sm:grid-cols-2">
           {kitsList.map((k) => {
             const qty = quantities[k.slug] ?? 1;
-            const variant = variants[k.slug] ?? "daily";
+            const variant = (variants[k.slug] ?? "daily") as Variant;
             const count =
               k.stats?.itemCount != null && k.stats?.skuCount != null
                 ? `${k.stats.itemCount} items • ${k.stats.skuCount} SKUs`
                 : undefined;
+            const { total, currency } = kitTotalCents(k.slug);
 
             return (
-              <div
-                key={k.slug}
-                className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
-              >
+              <div key={k.slug} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-lg font-semibold">{k.title}</h3>
-                    {count ? (
-                      <p className="muted text-sm">{count}</p>
-                    ) : (
-                      <p className="muted text-sm">&nbsp;</p>
-                    )}
+                    {count ? <p className="muted text-sm">{count}</p> : <p className="muted text-sm">&nbsp;</p>}
                   </div>
 
-                  <Link
-                    href={`/kits/${k.slug}`}
-                    className="btn btn-ghost"
-                    aria-label={`View ${k.title}`}
-                  >
+                  <Link href={`/kits/${k.slug}`} className="btn btn-ghost" aria-label={`View ${k.title}`}>
                     View kit
                   </Link>
                 </div>
@@ -163,14 +178,7 @@ export default function ShopClient({
 
                   {/* Quantity */}
                   <div className="flex items-end justify-start gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      onClick={() => setQty(k.slug, (qty ?? 1) - 1)}
-                      aria-label="Decrease quantity"
-                    >
-                      −
-                    </button>
+                    <button type="button" className="btn btn-ghost" onClick={() => setQty(k.slug, (qty ?? 1) - 1)} aria-label="Decrease quantity">−</button>
                     <input
                       aria-label="Quantity"
                       className="w-16 rounded-xl border border-zinc-700 bg-zinc-900 px-2 py-2 text-center"
@@ -178,22 +186,33 @@ export default function ShopClient({
                       min={1}
                       max={10}
                       value={qty ?? 1}
-                      onChange={(e) =>
-                        setQty(k.slug, Number.parseInt(e.target.value, 10))
-                      }
+                      onChange={(e) => setQty(k.slug, Number.parseInt(e.target.value, 10))}
                     />
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      onClick={() => setQty(k.slug, (qty ?? 1) + 1)}
-                      aria-label="Increase quantity"
-                    >
-                      +
-                    </button>
+                    <button type="button" className="btn btn-ghost" onClick={() => setQty(k.slug, (qty ?? 1) + 1)} aria-label="Increase quantity">+</button>
                   </div>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between gap-3">
+                {/* Repack policy */}
+                <details className="mt-3 rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
+                  <summary className="cursor-pointer select-none text-sm font-medium">What changes between Daily, 10-Day, and 30-Day?</summary>
+                  <p className="mt-2 whitespace-pre-line text-xs text-zinc-400">{REPACK_POLICY}</p>
+                </details>
+
+                {/* Price preview */}
+                <div className="mt-3 flex items-center justify-between">
+                  <p className="text-sm text-zinc-300">
+                    {total != null ? (
+                      <>
+                        <span className="mr-1 font-semibold">{formatUsd(total, currency)}</span>
+                        <span className="text-zinc-500">for {qty} × {VARIANT_LABEL[variant]}</span>
+                      </>
+                    ) : (
+                      <span className="text-zinc-500">Price shown at checkout</span>
+                    )}
+                  </p>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-3">
                   <button
                     type="button"
                     className="btn"
@@ -208,10 +227,7 @@ export default function ShopClient({
                     <p className="text-sm text-red-400">{errors[k.slug]}</p>
                   ) : (
                     <p className="text-xs text-zinc-500">
-                      Variant:{" "}
-                      <span className="uppercase">
-                        {VARIANT_LABEL[variant] ?? variant}
-                      </span>
+                      Variant: <span className="uppercase">{VARIANT_LABEL[variant] ?? variant}</span>
                     </p>
                   )}
                 </div>
@@ -227,66 +243,76 @@ export default function ShopClient({
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <a
-              href={storeHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn"
-            >
-              Open MyShop
-            </a>
+            <a href={storeHref} target="_blank" rel="noopener noreferrer" className="btn">Open MyShop</a>
           </div>
 
           <ul className="mt-4 space-y-3">
             {solos.map((s) => (
-              <li
-                key={s.sku}
-                className="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/40 p-3"
-              >
+              <li key={s.sku} className="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
                 <div>
                   <div className="font-medium">{s.title ?? s.sku}</div>
                   <div className="text-xs text-zinc-500">SKU {s.sku}</div>
                 </div>
-                <a
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-ghost"
-                >
-                  Buy
-                </a>
+                {s.url ? (
+                  <a href={s.url} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">Buy</a>
+                ) : (
+                  <a href={storeHref} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">View in MyShop</a>
+                )}
               </li>
             ))}
           </ul>
         </div>
       </section>
 
-      {/* === The Safety Plan Products (Stripe) === */}
+      {/* === The Safety Plan Products (TSP merch) === */}
       <section id="tsp" className="space-y-4">
         <h2 className="text-2xl font-bold">The Safety Plan Products</h2>
+
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {tspProducts.map((p) => (
-            <div
-              key={p.id}
-              className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
-            >
-              <div className="font-medium">{p.title}</div>
-              <div className="mt-3">
-                {p.href ? (
-                  <a
-                    href={p.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn"
+          {tspProducts.map((p) => {
+            const href = hrefForTsp(p);
+            const external = isExternal(href);
+            const canDirect = p.inStock !== false && DIRECT_GEAR.has(p.id) && !!p.stripeProductId;
+
+            return (
+              <article key={p.id} className="flex flex-col justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                <div>
+                  <h3 className="text-lg font-semibold">{p.title}</h3>
+                  <p
+                    className={[
+                      "mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-xs",
+                      p.inStock === false ? "bg-amber-500/10 text-amber-300" : "bg-emerald-500/10 text-emerald-300",
+                    ].join(" ")}
                   >
-                    View
-                  </a>
-                ) : (
-                  <span className="text-xs text-zinc-500">Coming soon</span>
-                )}
-              </div>
-            </div>
-          ))}
+                    {p.inStock === false ? "Waitlist open" : "In stock"}
+                  </p>
+                  {p.blurb ? <p className="mt-2 text-sm text-zinc-400">{p.blurb}</p> : null}
+                </div>
+
+                <div className="mt-4">
+                  {canDirect ? (
+                    <button
+                      type="button"
+                      onClick={() => buyGearByProduct(p.stripeProductId!)}
+                      className="inline-flex items-center rounded-xl bg-white px-3 py-2 text-sm font-medium text-black hover:opacity-90"
+                      disabled={buyingProduct === p.stripeProductId}
+                      aria-busy={buyingProduct === p.stripeProductId || undefined}
+                    >
+                      {buyingProduct === p.stripeProductId ? "Redirecting…" : "Buy"}
+                    </button>
+                  ) : (
+                    <Link
+                      href={href}
+                      {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
+                      className="inline-flex items-center rounded-xl border border-white/15 px-3 py-2 text-sm font-medium text-white hover:border-white/30 hover:bg-white/10"
+                    >
+                      {p.inStock === false ? "View / Join waitlist" : "View"}
+                    </Link>
+                  )}
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
     </>
