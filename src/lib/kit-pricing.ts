@@ -20,9 +20,8 @@ const priceEnv: Record<string, Record<Variant, string | undefined>> = {
 };
 
 const STRIPE_KEY = process.env.STRIPE_SECRET_KEY || "";
-const stripe: Stripe | null = STRIPE_KEY
-  ? new Stripe(STRIPE_KEY, { apiVersion: "2025-08-27.basil" })
-  : null;
+// ⬇️ no apiVersion override (prevents TS conflicts across SDK versions)
+const stripe: Stripe | null = STRIPE_KEY ? new Stripe(STRIPE_KEY) : null;
 
 async function fetchPrice(id?: string | null): Promise<KitPriceEntry | null> {
   if (!id || !stripe) return null;

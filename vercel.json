@@ -1,16 +1,8 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "regions": ["iad1"],
   "installCommand": "npm install",
   "buildCommand": "npm run build",
-  "functions": {
-    "api/**": {
-      "runtime": "nodejs20.x",
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",

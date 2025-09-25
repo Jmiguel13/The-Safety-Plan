@@ -1,7 +1,13 @@
-﻿/** @type {import('next').NextConfig} */
+﻿// next.config.mjs  (replace contents; then DELETE next.config.js to fix “redeclare” errors)
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  // IMPORTANT: no headers(), rewrites(), redirects(), or edge flags here.
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "www.amway.com" },
+      { protocol: "https", hostname: "images.ctfassets.net" }
+    ]
+  }
 };
+
 export default nextConfig;
