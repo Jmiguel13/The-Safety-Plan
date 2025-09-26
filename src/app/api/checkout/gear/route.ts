@@ -1,34 +1,39 @@
 // src/app/api/checkout/gear/route.ts
 import { NextResponse } from "next/server";
-import { getStripe } from "@/lib/stripe";
-import Stripe from "stripe";
+import { getStripe, getSiteUrl } from "@/lib/stripe";
+import type Stripe from "stripe";
 
 /**
  * POST JSON:
- *  - stripeProductId?: string  (preferred) → will use product.default_price
- *  - priceId?: string          (optional direct path)
- *  - quantity?: number         (default 1)
+ *  - stripeProductId?: string  → will use product.default_price
+ *  - priceId?: string          → use this directly if provided
+ *  - quantity?: number         → defaults to 1, clamped to [1,10]
+ *
+ * Returns: { url: string } or { error: string }
  */
 export async function POST(req: Request) {
   try {
-    const { stripeProductId, priceId: directPriceId, quantity = 1 } =
-      (await req.json()) as {
-        stripeProductId?: string;
-        priceId?: string;
-        quantity?: number;
-      };
+    const body = (await req.json()) as {
+      stripeProductId?: string;
+      priceId?: string;
+      quantity?: number;
+    };
 
-    let priceId = directPriceId;
+    const qty = clamp(body.quantity ?? 1);
+    let priceId = body.priceId;
 
+    // Resolve a price from the product if needed
     if (!priceId) {
-      if (!stripeProductId) {
+      const productId = body.stripeProductId;
+      if (!productId) {
         return NextResponse.json(
           { error: "Missing stripeProductId or priceId" },
           { status: 400 }
         );
       }
+
       const stripe = getStripe();
-      const product = await stripe.products.retrieve(stripeProductId, {
+      const product = await stripe.products.retrieve(productId, {
         expand: ["default_price"],
       });
 
@@ -43,31 +48,40 @@ export async function POST(req: Request) {
 
       if (!priceId) {
         return NextResponse.json(
-          { error: `No default price for product ${stripeProductId}` },
+          { error: `No default price for product ${productId}` },
           { status: 400 }
         );
       }
     }
 
-    const resp = await fetch(new URL("/api/checkout/price", req.url).toString(), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ priceId, quantity }),
+    // Build absolute URLs for Stripe callbacks
+    const origin = getSiteUrl(req);
+    const successUrl =
+      process.env.NEXT_PUBLIC_CHECKOUT_SUCCESS_URL ?? `${origin}/thanks`;
+    const cancelUrl =
+      process.env.NEXT_PUBLIC_CHECKOUT_CANCEL_URL ?? `${origin}/shop`;
+
+    // Create Checkout Session directly (no internal HTTP fetch)
+    const stripe = getStripe();
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items: [{ price: priceId, quantity: qty }],
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      automatic_tax: { enabled: false },
     });
 
-    const ctype = resp.headers.get("content-type") || "";
-    const data =
-      ctype.includes("application/json") ? await resp.json() : { error: await resp.text() };
-
-    if (!resp.ok || !data?.url) {
-      return NextResponse.json(
-        { error: data?.error || `Checkout failed (${resp.status})` },
-        { status: 500 }
-      );
-    }
-    return NextResponse.json({ url: data.url as string });
+    return NextResponse.json({ url: session.url });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Unexpected error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("[checkout/gear] error:", e);
+    return NextResponse.json(
+      { error: "Checkout unavailable. Please try again later." },
+      { status: 500 }
+    );
   }
+}
+
+function clamp(n: number) {
+  if (!Number.isFinite(n)) return 1;
+  return Math.max(1, Math.min(10, Math.trunc(n)));
 }
