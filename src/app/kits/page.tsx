@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { kits } from "@/lib/kits";
 
 export const revalidate = 86_400;
@@ -13,7 +14,7 @@ type KitBrief = {
   slug: string;
   title?: string;
   tagline?: string;
-  imageUrl?: string; // <-- add this to your kits data when you have images
+  imageUrl?: string; // optionally set in your kits data
 };
 
 function titleOf(slug: string, title?: string) {
@@ -35,9 +36,11 @@ export default function KitsIndexPage() {
   const list = (kits as KitBrief[]).filter((k) => k && k.slug);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10">
+    <main id="main" className="mx-auto max-w-6xl px-4 py-10">
       <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Kits</h1>
-      <p className="muted mt-2">Built for real needs: hydration, energy, recovery, and rest.</p>
+      <p className="muted mt-2">
+        Built for real needs: hydration, energy, recovery, and rest.
+      </p>
 
       <ul className="mt-8 grid gap-6 sm:grid-cols-2">
         {list.map((k) => {
@@ -50,34 +53,48 @@ export default function KitsIndexPage() {
               ? "Support for home base. Hydration, vitamins, recovery, rest."
               : "Mission-ready wellness essentials.");
 
-          // If you add /public/images/kits/{slug}.jpg, you can set imageUrl accordingly.
-          const bg = k.imageUrl
-            ? `linear-gradient(0deg, rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url("${k.imageUrl}")`
-            : cardGrad(k.slug);
-
           return (
             <li key={k.slug}>
               <Link
                 href={`/kits/${k.slug}`}
-                className="block rounded-2xl border border-white/10 overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+                className="block overflow-hidden rounded-2xl border border-white/10 group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
                 aria-label={`View ${name}`}
                 style={{ backgroundColor: "rgb(9 9 11 / 0.65)" }}
               >
-                <div
-                  className="aspect-[5/3] bg-zinc-900/30"
-                  style={{
-                    backgroundImage: bg,
-                    backgroundSize: k.imageUrl ? "cover" : undefined,
-                    backgroundPosition: k.imageUrl ? "center" : undefined,
-                  }}
-                />
+                {/* Hero */}
+                <div className="relative aspect-[5/3]">
+                  {k.imageUrl ? (
+                    <>
+                      <Image
+                        src={k.imageUrl}
+                        alt={`${name} hero`}
+                        fill
+                        priority={false}
+                        quality={90}
+                        sizes="(min-width: 1024px) 560px, (min-width: 640px) 48vw, 100vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        draggable={false}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/30 to-transparent" />
+                    </>
+                  ) : (
+                    <div
+                      className="absolute inset-0"
+                      style={{ background: cardGrad(k.slug) }}
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
+
+                {/* Content */}
                 <div className="p-4">
-                  <div className="text-xs text-zinc-400">{name}</div>
-                  <div className="mt-1 text-lg font-semibold">{name}</div>
+                  {/* single, non-duplicated title */}
+                  <div className="text-lg font-semibold">{name}</div>
+                  {/* tagline only (no 2nd copy of the title) */}
                   <p className="muted mt-1 text-sm">{line}</p>
 
                   <div className="mt-3">
-                    <span className="btn px-3 py-1 text-sm">View Kit</span>
+                    <span className="btn px-3 py-1 text-sm">View kit</span>
                   </div>
                 </div>
               </Link>

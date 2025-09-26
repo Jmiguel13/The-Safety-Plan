@@ -1,4 +1,3 @@
-// src/components/KitCard.tsx
 import Link from "next/link";
 import Image from "next/image";
 
@@ -39,13 +38,16 @@ export default function KitCard({
             src={hero.src}
             alt={hero.alt}
             fill
-            className="object-cover"
+            quality={90}
             sizes="(min-width: 640px) 200px, 100vw"
+            className="object-cover"
+            draggable={false}
           />
+          <div className="absolute inset-0 bg-black/10" aria-hidden />
         </div>
 
         {/* Content */}
-        <div className="p-5 flex flex-col gap-3 min-w-0">
+        <div className="min-w-0 p-5 flex flex-col gap-3">
           <div className="min-w-0 space-y-1">
             <div className="font-medium truncate">{title}</div>
             {meta ? <div className="muted text-sm truncate">{meta}</div> : null}
@@ -73,9 +75,12 @@ export default function KitCard({
           src={hero.src}
           alt={hero.alt}
           fill
-          className="object-cover"
+          quality={90}
           sizes="100vw"
+          className="object-cover"
+          draggable={false}
         />
+        <div className="absolute inset-0 bg-black/10" aria-hidden />
       </div>
       <div className="p-5 flex flex-col gap-3 min-w-0">
         <div className="min-w-0 space-y-1">
