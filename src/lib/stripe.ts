@@ -54,3 +54,15 @@ export function getSiteUrl(req?: Request | { url: string } | null): string {
   const port = process.env.PORT || "3000";
   return `http://localhost:${port}`;
 }
+
+/**
+ * Build standard success & cancel URLs for Stripe Checkout.
+ * Always uses your deployed site origin.
+ */
+export function getCheckoutRedirects(req?: Request | { url: string }) {
+  const origin = getSiteUrl(req);
+  return {
+    success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin}/checkout/cancel`,
+  };
+}

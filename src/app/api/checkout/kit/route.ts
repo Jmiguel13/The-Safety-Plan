@@ -1,6 +1,7 @@
 // src/app/api/checkout/kit/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { getStripe, getCheckoutRedirects } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 
@@ -14,14 +15,6 @@ type CheckoutBody = {
 
 function env(key: string): string | undefined {
   return process.env[key];
-}
-function getBaseUrl(req: Request): string {
-  const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  try {
-    return new URL(origin).origin;
-  } catch {
-    return "http://localhost:3000";
-  }
 }
 
 /** Resolve either a priceId OR productId from env keys. */
@@ -52,20 +45,26 @@ function resolveTarget(slug: string, variant: Variant): { priceId?: string; prod
   return {};
 }
 
-function lc(s?: string | null) { return (s || "").toLowerCase(); }
+function lc(s?: string | null) {
+  return (s || "").toLowerCase();
+}
 function variantNeedles(v: Variant): string[] {
   if (v === "10day") return ["10day", "10-day", "10 day"];
   if (v === "30day") return ["30day", "30-day", "30 day"];
   return ["daily", "1-day", "1 day"];
 }
-function hasAny(haystack: string, needles: string[]) { return needles.some((n) => haystack.includes(n)); }
+function hasAny(haystack: string, needles: string[]) {
+  return needles.some((n) => haystack.includes(n));
+}
 function textBagForPrice(p: Stripe.Price): string {
   const parts: string[] = [];
   if (p.nickname) parts.push(p.nickname);
   if (p.lookup_key) parts.push(p.lookup_key);
   return lc(parts.join(" "));
 }
-function metaVariant(p: Stripe.Price): string | undefined { return p.metadata?.["variant"]; }
+function metaVariant(p: Stripe.Price): string | undefined {
+  return p.metadata?.["variant"];
+}
 
 async function choosePriceForVariant(stripe: Stripe, productId: string, variant: Variant): Promise<string> {
   const pricesResp = await stripe.prices.list({ product: productId, active: true, limit: 100 });
@@ -80,7 +79,11 @@ async function choosePriceForVariant(stripe: Stripe, productId: string, variant:
   const textMatches = prices.filter((p) => hasAny(textBagForPrice(p), needles));
   if (textMatches.length === 1) return textMatches[0].id;
   if (textMatches.length > 1)
-    return textMatches.sort((a, b) => (lc(a.nickname).length - lc(b.nickname).length) || ((a.created ?? 0) - (b.created ?? 0))).at(-1)!.id;
+    return textMatches.sort(
+      (a, b) =>
+        (lc(a.nickname).length - lc(b.nickname).length) ||
+        ((a.created ?? 0) - (b.created ?? 0))
+    ).at(-1)!.id;
 
   throw new Error(
     `No explicit ${variant} price found on product ${productId}. ` +
@@ -118,25 +121,23 @@ export async function POST(req: Request) {
     const body = (await req.json()) as CheckoutBody;
     const slug = String(body.slug ?? "").trim().toLowerCase();
     const variant: Variant = (body.variant ?? "10day") as Variant;
-    const quantity = Number.isFinite(body.quantity) ? Math.max(1, Math.min(10, Number(body.quantity))) : 1;
+    const quantity = Number.isFinite(body.quantity)
+      ? Math.max(1, Math.min(10, Number(body.quantity)))
+      : 1;
 
     if (!slug) return NextResponse.json({ error: "Missing `slug`" }, { status: 400 });
 
-    const secretKey = env("STRIPE_SECRET_KEY");
-    if (!secretKey) return NextResponse.json({ error: "Missing STRIPE_SECRET_KEY" }, { status: 500 });
-
-    // Don’t pin apiVersion here to avoid TS literal mismatch churn
-    const stripe = new Stripe(secretKey);
+    const stripe = getStripe();
 
     const target = resolveTarget(slug, variant);
     const priceId = await getPriceIdFromTarget(stripe, target, slug, variant);
 
-    const base = getBaseUrl(req);
+    const { success_url, cancel_url } = getCheckoutRedirects(req);
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [{ price: priceId, quantity }],
-      success_url: `${base}/checkout/success?item=${encodeURIComponent(slug)}&v=${variant}&q=${quantity}`,
-      cancel_url: `${base}/checkout/cancelled?item=${encodeURIComponent(slug)}&v=${variant}`,
+      success_url,
+      cancel_url,
       metadata: { kit_slug: slug, kit_variant: variant },
     });
 

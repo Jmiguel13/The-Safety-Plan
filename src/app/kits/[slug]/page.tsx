@@ -45,6 +45,16 @@ function isKitSlug(s: string): s is KitSlug {
   return s === "resilient" || s === "homefront";
 }
 
+/** Remove the word "sticks" and tidy whitespace/punctuation in notes. */
+function cleanNote(note?: string) {
+  if (!note) return "";
+  return note
+    .replace(/\bsticks\b/gi, "") // drop the word "sticks"
+    .replace(/\s{2,}/g, " ")     // collapse extra spaces
+    .replace(/\s([,.;:!?])/g, "$1") // no space before punctuation
+    .trim();
+}
+
 export async function generateStaticParams() {
   return (kits as Array<{ slug: string }>).map((k) => ({ slug: String(k.slug) }));
 }
@@ -168,17 +178,21 @@ export default async function Page({ params }: { params: Promise<Params> }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {bom.map((it) => (
-                <tr key={it.sku}>
-                  <td className="px-3 py-2 whitespace-nowrap text-zinc-400">{it.category}</td>
-                  <td className="px-3 py-2">{it.title}</td>
-                  <td className="px-3 py-2 text-zinc-400">{it.sku}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{scaledQty(it, "daily")}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{scaledQty(it, "10day")}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{scaledQty(it, "30day")}</td>
-                  <td className="px-3 py-2 text-zinc-400">{it.repack ? "Repacked. " : ""}{it.note ?? ""}</td>
-                </tr>
-              ))}
+              {bom.map((it) => {
+                const noteCombined = `${it.repack ? "Repacked. " : ""}${it.note ?? ""}`;
+                const noteClean = cleanNote(noteCombined);
+                return (
+                  <tr key={it.sku}>
+                    <td className="px-3 py-2 whitespace-nowrap text-zinc-400">{it.category}</td>
+                    <td className="px-3 py-2">{it.title}</td>
+                    <td className="px-3 py-2 text-zinc-400">{it.sku}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{scaledQty(it, "daily")}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{scaledQty(it, "10day")}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{scaledQty(it, "30day")}</td>
+                    <td className="px-3 py-2 text-zinc-400">{noteClean}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -186,7 +200,9 @@ export default async function Page({ params }: { params: Promise<Params> }) {
         <p className="muted text-sm">{REPACK_POLICY}</p>
 
         <div className="pt-2">
-          <Link href="/shop#kits" className="btn">Back to Shop</Link>
+          <Link href="/shop#kits" className="btn">
+            Back to Shop
+          </Link>
         </div>
       </section>
     </main>
