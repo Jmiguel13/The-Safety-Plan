@@ -12,6 +12,7 @@ import {
   REPACK_POLICY,
 } from "@/lib/kits-bom";
 import { getKitPrices, formatUsd, type Variant } from "@/lib/kit-pricing";
+import { buildMyShopUrlWithUtm } from "@/lib/site";
 
 export const revalidate = 86_400;
 
@@ -135,6 +136,9 @@ export default async function Page({
   const itemCount = bom.length;
   const skuCount = new Set(bom.map((i) => i.sku)).size;
 
+  // MyShop link (kept on kits page)
+  const myShopHref = buildMyShopUrlWithUtm();
+
   return (
     <main className="container py-10">
       {/* Hero */}
@@ -172,6 +176,21 @@ export default async function Page({
                 prices={kitPricesSafe}
                 className="pt-1"
               />
+
+              {/* Keep Open MyShop here + helper line (matches price hint style) */}
+              <div className="pt-3">
+                <a
+                  href={myShopHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-ghost"
+                >
+                  Open MyShop
+                </a>
+                <div className="mt-1 text-xs text-zinc-500">
+                  For individual product purchases
+                </div>
+              </div>
 
               <div className="flex flex-wrap gap-3 pt-3">
                 <Stat label="Weight" value={weight} />

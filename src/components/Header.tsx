@@ -13,7 +13,7 @@ export default function Header() {
     { href: "/kits", label: "Kits", isActive: (p) => p === "/kits" || p.startsWith("/kits/") },
     { href: "/kits/resilient", label: "Resilient", isActive: (p) => p.startsWith("/kits/resilient") },
     { href: "/kits/homefront", label: "Homefront", isActive: (p) => p.startsWith("/kits/homefront") },
-    { href: "/faq", label: "FAQ", isActive: (p) => p.startsWith("/faq") }, // ✅ FAQ in the header
+    { href: "/faq", label: "FAQ", isActive: (p) => p.startsWith("/faq") }, // FAQ replaces MyShop in header
   ];
 
   return (

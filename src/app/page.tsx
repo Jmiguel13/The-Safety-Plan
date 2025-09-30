@@ -94,31 +94,6 @@ function HeroImg({
   );
 }
 
-/** Build MyShop external URL with default UTM */
-function myShopUrlWithUtm(): string {
-  const base =
-    process.env.NEXT_PUBLIC_AMWAY_MYSHOP_URL ||
-    "https://www.amway.com/myshop/TheSafetyPlan";
-  try {
-    const u = new URL(base);
-    if (!u.searchParams.has("utm_source")) {
-      u.searchParams.set(
-        "utm_source",
-        process.env.NEXT_PUBLIC_UTM_SOURCE || "safety-plan",
-      );
-    }
-    if (!u.searchParams.has("utm_medium")) {
-      u.searchParams.set(
-        "utm_medium",
-        process.env.NEXT_PUBLIC_UTM_MEDIUM || "web",
-      );
-    }
-    return u.toString();
-  } catch {
-    return base;
-  }
-}
-
 export default function Home() {
   const { IMPACT_STAT } = getSiteConfig();
 
@@ -128,8 +103,6 @@ export default function Home() {
     { title: "Rest", desc: "Recover and reset.", Icon: IconMoon },
     { title: "Impact", desc: "Standing with prevention efforts.", Icon: IconHeart },
   ] as const;
-
-  const myShopHref = myShopUrlWithUtm();
 
   return (
     <div className="space-y-16">
@@ -153,7 +126,7 @@ export default function Home() {
             <p className="mt-3 text-zinc-400">
               Trusted essentials for long days and tough nights — you are not
               alone. Every kit is a reminder of resilience, recovery, and the
-              mission we stand together for.
+              mission for which we stand together.
             </p>
 
             {/* CTAs */}
@@ -161,25 +134,9 @@ export default function Home() {
               <Link href="/kits" className="btn">
                 Browse kits
               </Link>
-
-              {/* Grouped Shop + MyShop */}
-              <div className="flex overflow-hidden rounded-full border border-white/10">
-                <Link
-                  href="/shop"
-                  className="px-4 py-2 text-sm font-medium text-white hover:bg-white/5"
-                >
-                  Shop
-                </Link>
-                <a
-                  href={myShopHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="border-l border-white/10 px-4 py-2 text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/5"
-                >
-                  Open MyShop
-                </a>
-              </div>
-
+              <Link href="/shop" className="btn">
+                Shop
+              </Link>
               <Link href="/donate" className="btn-ghost">
                 Donate
               </Link>
@@ -286,7 +243,7 @@ export default function Home() {
         </ul>
       </section>
 
-      {/* IMPACT STRIP */}
+      {/* IMPACT STRIP (kept, but no funding phrasing) */}
       <section
         aria-label="Impact"
         className="container rounded-xl border border-white/10 bg-gradient-to-r from-emerald-500/10 via-sky-500/10 to-emerald-500/10 p-5"

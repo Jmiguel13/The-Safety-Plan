@@ -31,7 +31,7 @@ export default function HomeHero() {
             Visit Shop
           </Link>
 
-          {/* NEW: FAQ */}
+          {/* FAQ */}
           <Link
             href="/faq"
             className="rounded-full border border-zinc-700 px-4 py-2 hover:bg-zinc-900"

@@ -103,7 +103,8 @@ function CrisisRibbon() {
     <div className="w-full bg-red-600/95 text-white">
       <div className="container flex flex-wrap items-center justify-between gap-3 py-2 text-sm">
         <span className="font-semibold tracking-wide">
-          you are not alone, every kit is a reminder of resilience, recovery, and the mission we stand together for.
+          {/* Grammar fix per Linwood */}
+          you are not alone; every kit is a reminder of resilience, recovery, and the mission for which we stand together.
         </span>
         <div className="flex items-center gap-2">
           <a href={`tel:${tel}`} className="ribbon-chip">Call {formatTelHuman(tel)}</a>
