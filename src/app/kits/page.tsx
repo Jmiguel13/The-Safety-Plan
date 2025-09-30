@@ -1,3 +1,4 @@
+// src/app/kits/page.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
@@ -14,7 +15,8 @@ type KitBrief = {
   slug: string;
   title?: string;
   tagline?: string;
-  imageUrl?: string; // optionally set in your kits data
+  imageUrl?: string;   // optional legacy key
+  image?: string;      // supports your current data
 };
 
 function titleOf(slug: string, title?: string) {
@@ -32,15 +34,20 @@ function cardGrad(slug: string) {
   return "radial-gradient(560px 240px at 0% 0%, rgba(148,163,184,0.16), transparent 60%)";
 }
 
+/** Point these to whatever logo assets you actually have */
+const LOGO_MAP: Record<string, string | undefined> = {
+  // If your assets are PNGs, point to .png; if they’re SVGs, point to .svg
+  resilient: "/images/kits/resilient-hero.png",  // or /images/kits/resilient-logo.svg
+  homefront: "/images/kits/homefront-hero.png",  // or /images/kits/homefront-logo.svg
+};
+
 export default function KitsIndexPage() {
   const list = (kits as KitBrief[]).filter((k) => k && k.slug);
 
   return (
-    <main id="main" className="mx-auto max-w-6xl px-4 py-10">
+    <main id="main" className="container py-10">
       <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Kits</h1>
-      <p className="muted mt-2">
-        Built for real needs: hydration, energy, recovery, and rest.
-      </p>
+      <p className="muted mt-2">Built for real needs: hydration, energy, recovery, and rest.</p>
 
       <ul className="mt-8 grid gap-6 sm:grid-cols-2">
         {list.map((k) => {
@@ -53,46 +60,35 @@ export default function KitsIndexPage() {
               ? "Support for home base. Hydration, vitamins, recovery, rest."
               : "Mission-ready wellness essentials.");
 
+          const logoOrHero = LOGO_MAP[k.slug] || k.imageUrl || k.image || null;
+
           return (
             <li key={k.slug}>
               <Link
                 href={`/kits/${k.slug}`}
-                className="block overflow-hidden rounded-2xl border border-white/10 group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+                className="group block overflow-hidden rounded-2xl border border-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
                 aria-label={`View ${name}`}
                 style={{ backgroundColor: "rgb(9 9 11 / 0.65)" }}
               >
-                {/* Hero */}
+                {/* Visual */}
                 <div className="relative aspect-[5/3]">
-                  {k.imageUrl ? (
-                    <>
-                      <Image
-                        src={k.imageUrl}
-                        alt={`${name} hero`}
-                        fill
-                        priority={false}
-                        quality={90}
-                        sizes="(min-width: 1024px) 560px, (min-width: 640px) 48vw, 100vw"
-                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                        draggable={false}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/30 to-transparent" />
-                    </>
-                  ) : (
-                    <div
-                      className="absolute inset-0"
-                      style={{ background: cardGrad(k.slug) }}
-                      aria-hidden="true"
+                  <div className="absolute inset-0" style={{ background: cardGrad(k.slug) }} aria-hidden="true" />
+                  {logoOrHero ? (
+                    <Image
+                      src={logoOrHero}
+                      alt={`${name} logo`}
+                      fill
+                      sizes="(min-width: 1024px) 560px, (min-width: 640px) 48vw, 100vw"
+                      className="object-contain p-10 opacity-90 transition-all duration-300 group-hover:opacity-100"
+                      priority={false}
                     />
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Content */}
                 <div className="p-4">
-                  {/* single, non-duplicated title */}
                   <div className="text-lg font-semibold">{name}</div>
-                  {/* tagline only (no 2nd copy of the title) */}
                   <p className="muted mt-1 text-sm">{line}</p>
-
                   <div className="mt-3">
                     <span className="btn px-3 py-1 text-sm">View kit</span>
                   </div>

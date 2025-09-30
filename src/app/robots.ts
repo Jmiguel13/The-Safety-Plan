@@ -2,8 +2,15 @@
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const host = raw.replace(/\/+$/, "");
+  const raw = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").trim();
+
+  // Normalize to an origin like https://example.com
+  let origin = "http://localhost:3000";
+  try {
+    origin = new URL(raw).origin;
+  } catch {
+    // keep default
+  }
 
   return {
     rules: [
@@ -13,7 +20,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin", "/api/*"],
       },
     ],
-    sitemap: `${host}/sitemap.xml`,
-    host,
+    sitemap: `${origin}/sitemap.xml`,
+    host: origin,
   };
 }

@@ -29,11 +29,38 @@ export default function KitCard({
       ? `${stats.itemCount} items • ${stats.skuCount} SKUs`
       : "";
 
+  // kit logo mapping (icon-only)
+  const logoSrc =
+    slug === "resilient"
+      ? "/kits/resilient.svg"
+      : slug === "homefront"
+      ? "/kits/homefront.svg"
+      : null;
+
+  const LogoBadge = logoSrc ? (
+    <div
+      className="absolute left-3 top-3 md:left-4 md:top-4 z-[1] select-none"
+      aria-hidden
+    >
+      <Image
+        src={logoSrc}
+        alt=""
+        width={72}
+        height={72}
+        priority={false}
+        className="opacity-90 drop-shadow"
+        draggable={false}
+      />
+    </div>
+  ) : null;
+
   const LeftThumb = (
     <div className="panel overflow-hidden p-0">
       <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr]">
         {/* Thumb */}
         <div className="relative aspect-[16/10] sm:aspect-auto sm:h-full">
+          {/* Logo overlay */}
+          {LogoBadge}
           <Image
             src={hero.src}
             alt={hero.alt}
@@ -71,6 +98,8 @@ export default function KitCard({
   const TopThumb = (
     <div className="panel overflow-hidden p-0">
       <div className="relative aspect-[16/10]">
+        {/* Logo overlay */}
+        {LogoBadge}
         <Image
           src={hero.src}
           alt={hero.alt}

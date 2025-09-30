@@ -4,7 +4,13 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { kits } from "@/lib/kits";
 import KitCheckoutForm from "@/components/KitCheckoutForm";
-import { KITS_BOM, type KitSlug, kitTitle, scaledQty, REPACK_POLICY } from "@/lib/kits-bom";
+import {
+  KITS_BOM,
+  type KitSlug,
+  kitTitle,
+  scaledQty,
+  REPACK_POLICY,
+} from "@/lib/kits-bom";
 import { getKitPrices, formatUsd, type Variant } from "@/lib/kit-pricing";
 
 export const revalidate = 86_400;
@@ -49,9 +55,9 @@ function isKitSlug(s: string): s is KitSlug {
 function cleanNote(note?: string) {
   if (!note) return "";
   return note
-    .replace(/\bsticks\b/gi, "") // drop the word "sticks"
-    .replace(/\s{2,}/g, " ")     // collapse extra spaces
-    .replace(/\s([,.;:!?])/g, "$1") // no space before punctuation
+    .replace(/\bsticks\b/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s([,.;:!?])/g, "$1")
     .trim();
 }
 
@@ -59,7 +65,11 @@ export async function generateStaticParams() {
   return (kits as Array<{ slug: string }>).map((k) => ({ slug: String(k.slug) }));
 }
 
-export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<Params>;
+}): Promise<Metadata> {
   const { slug } = await params;
   const kit = findKit(slug);
   const base = kit?.title ?? `${toTitle(slug)} Kit`;
@@ -70,14 +80,20 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-2xl bg-gradient-to-br from-white/10 to-white/0 p-[1px]">
       <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-2">
-        <div className="text-[11px] uppercase tracking-wide text-zinc-400">{label}</div>
+        <div className="text-[11px] uppercase tracking-wide text-zinc-400">
+          {label}
+        </div>
         <div className="text-sm">{value}</div>
       </div>
     </div>
   );
 }
 
-export default async function Page({ params }: { params: Promise<Params> }) {
+export default async function Page({
+  params,
+}: {
+  params: Promise<Params>;
+}) {
   const { slug } = await params;
   if (!isKitSlug(slug)) notFound();
 
@@ -98,10 +114,21 @@ export default async function Page({ params }: { params: Promise<Params> }) {
   const heroImage = kit.imageUrl ?? kit.image;
   const heroAlt = kit.imageAlt ?? `${title} hero`;
 
+  // --- Prices (for badges + live preview in the form) ---
   const prices = await getKitPrices();
   const priceOf = (v: Variant) => {
     const p = prices?.[slug]?.[v];
     return p ? formatUsd(p.unitAmount, p.currency) : undefined;
+  };
+
+  // Coerce null → undefined for the component prop type
+  const kitPrices = prices?.[slug];
+  const kitPricesSafe: Partial<
+    Record<Variant, { unitAmount: number; currency: string }>
+  > = {
+    daily: kitPrices?.daily ?? undefined,
+    "10day": kitPrices?.["10day"] ?? undefined,
+    "30day": kitPrices?.["30day"] ?? undefined,
   };
 
   const bom = KITS_BOM[slug];
@@ -109,26 +136,42 @@ export default async function Page({ params }: { params: Promise<Params> }) {
   const skuCount = new Set(bom.map((i) => i.sku)).size;
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10">
+    <main className="container py-10">
       {/* Hero */}
       <section
         className="relative overflow-hidden rounded-3xl border border-white/10"
-        style={{ backgroundImage: grdFor(slug), backgroundColor: "rgb(9 9 11 / 0.65)" }}
+        style={{
+          backgroundImage: grdFor(slug),
+          backgroundColor: "rgb(9 9 11 / 0.65)",
+        }}
       >
         <div className="grid gap-8 md:grid-cols-[1.1fr,480px]">
           {/* Copy + actions */}
           <div className="p-6 md:p-8">
             <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{title}</h1>
+              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+                {title}
+              </h1>
               <p className="text-zinc-300">{blurb}</p>
 
               <div className="flex flex-wrap gap-2 pt-1">
-                <span className="tag">Daily{priceOf("daily") ? ` — ${priceOf("daily")}` : ""}</span>
-                <span className="tag">10-Day{priceOf("10day") ? ` — ${priceOf("10day")}` : ""}</span>
-                <span className="tag">30-Day{priceOf("30day") ? ` — ${priceOf("30day")}` : ""}</span>
+                <span className="tag">
+                  Daily{priceOf("daily") ? ` — ${priceOf("daily")}` : ""}
+                </span>
+                <span className="tag">
+                  10-Day{priceOf("10day") ? ` — ${priceOf("10day")}` : ""}
+                </span>
+                <span className="tag">
+                  30-Day{priceOf("30day") ? ` — ${priceOf("30day")}` : ""}
+                </span>
               </div>
 
-              <KitCheckoutForm kit={{ slug, title }} className="pt-1" />
+              {/* Pass prices for live total preview in the form */}
+              <KitCheckoutForm
+                kit={{ slug, title }}
+                prices={kitPricesSafe}
+                className="pt-1"
+              />
 
               <div className="flex flex-wrap gap-3 pt-3">
                 <Stat label="Weight" value={weight} />
@@ -178,17 +221,25 @@ export default async function Page({ params }: { params: Promise<Params> }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {bom.map((it) => {
+              {KITS_BOM[slug].map((it) => {
                 const noteCombined = `${it.repack ? "Repacked. " : ""}${it.note ?? ""}`;
                 const noteClean = cleanNote(noteCombined);
                 return (
                   <tr key={it.sku}>
-                    <td className="px-3 py-2 whitespace-nowrap text-zinc-400">{it.category}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-zinc-400">
+                      {it.category}
+                    </td>
                     <td className="px-3 py-2">{it.title}</td>
                     <td className="px-3 py-2 text-zinc-400">{it.sku}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{scaledQty(it, "daily")}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{scaledQty(it, "10day")}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{scaledQty(it, "30day")}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {scaledQty(it, "daily")}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {scaledQty(it, "10day")}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {scaledQty(it, "30day")}
+                    </td>
                     <td className="px-3 py-2 text-zinc-400">{noteClean}</td>
                   </tr>
                 );

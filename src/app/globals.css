@@ -75,7 +75,7 @@
   a { text-underline-offset: 3px; }
   a:hover { text-decoration-thickness: 2px; }
 
-  /* ---- ACCESSIBLE FOCUS WITHOUT GREEN BOXES ---- */
+  /* ---- Accessible focus without default outlines ---- */
   :focus { outline: none; }
   :where(
     a,
@@ -92,6 +92,7 @@
     box-shadow: none;
   }
 
+  /* Reserve space for Help Strip when enabled */
   body[data-help-strip="1"] { padding-bottom: 64px; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -108,7 +109,7 @@
 @layer components {
   .container {
     width: 100%;
-    max-width: 72rem;
+    max-width: 72rem; /* 1152px */
     margin-inline: auto;
     padding-inline: 1rem;
   }
@@ -251,3 +252,33 @@
   0% { transform: scale(0.6); opacity: 0.8; }
   70%,100% { transform: scale(1.25); opacity: 0; }
 }
+/* ===================== HEADER BRAND SIZE ===================== */
+.site-title {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  /* a little bigger, but responsive */
+  font-size: clamp(1.125rem, 2.1vw, 1.5rem);
+}
+
+/* ===================== RIBBON CHIP CLEANUP ===================== */
+.ribbon .link-chip {
+  border-color: transparent;          /* remove dark hairline */
+  background: rgba(255, 255, 255, .14);
+  color: #fff;
+}
+.ribbon .link-chip:hover {
+  background: rgba(255, 255, 255, .22);
+}
+.ribbon .link-chip:focus-visible {
+  outline: 2px solid rgba(255,255,255,.6);
+  outline-offset: 2px;
+}
+.ribbon-chip{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.375rem .75rem;border-radius:9999px;
+  font-size:.875rem;line-height:1rem;text-decoration:none;
+  background:rgba(255,255,255,.12); /* no dark borders on red bg */
+  color:#fff;border:0;transition:background .15s ease;
+}
+.ribbon-chip:hover{ background:rgba(255,255,255,.18); }
+.ribbon-chip:focus-visible{ outline:2px solid rgba(255,255,255,.5); outline-offset:2px; }

@@ -1,11 +1,14 @@
-// tailwind.config.js
 import plugin from "tailwindcss/plugin";
 
 /** @type {import('tailwindcss').Config} */
 const config = {
   darkMode: "class",
-  // Keeping content is fine with v4:
-  content: ["./src/app/**/*.{ts,tsx}", "./src/components/**/*.{ts,tsx}"],
+  // v4 content scan
+  content: [
+    "./src/app/**/*.{ts,tsx}",
+    "./src/components/**/*.{ts,tsx}",
+    "./src/**/*.mdx",
+  ],
   theme: {
     extend: {
       fontFamily: {
@@ -49,7 +52,6 @@ const config = {
       addUtilities({
         ".glass": {
           backdropFilter: "blur(6px)",
-          // keep it simple & compatible
           backgroundColor: "rgba(20, 24, 27, 0.85)",
         },
       });

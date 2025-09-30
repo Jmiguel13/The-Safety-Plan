@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 
 import type React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { getSiteConfig } from "@/lib/site";
@@ -57,7 +58,7 @@ function firstExistingPublicPath(candidates: string[]): string | null {
       if (existsSync(join(pub, rel))) return `/${rel.replace(/^\/+/, "")}`;
     }
   } catch {
-    // ignore fs issues (non-Node envs)
+    // ignore fs issues
   }
   return null;
 }
@@ -70,10 +71,27 @@ const HERO_SRC = firstExistingPublicPath([
   "hero-tactical.jpg",
 ]);
 
-/** Simple, robust image (no next/image dependency) */
-function HeroImg({ src, alt, className }: { src: string; alt: string; className?: string }) {
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt={alt} className={className} style={{ width: "100%", height: "100%", objectFit: "cover" }} />;
+/** Next.js Image wrapper */
+function HeroImg({
+  src,
+  alt,
+  className,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+}) {
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      sizes="(min-width: 768px) 50vw, 100vw"
+      priority={false}
+      className={className}
+      style={{ objectFit: "cover" }}
+    />
+  );
 }
 
 /** Build MyShop external URL with default UTM */
@@ -84,10 +102,16 @@ function myShopUrlWithUtm(): string {
   try {
     const u = new URL(base);
     if (!u.searchParams.has("utm_source")) {
-      u.searchParams.set("utm_source", process.env.NEXT_PUBLIC_UTM_SOURCE || "safety-plan");
+      u.searchParams.set(
+        "utm_source",
+        process.env.NEXT_PUBLIC_UTM_SOURCE || "safety-plan",
+      );
     }
     if (!u.searchParams.has("utm_medium")) {
-      u.searchParams.set("utm_medium", process.env.NEXT_PUBLIC_UTM_MEDIUM || "web");
+      u.searchParams.set(
+        "utm_medium",
+        process.env.NEXT_PUBLIC_UTM_MEDIUM || "web",
+      );
     }
     return u.toString();
   } catch {
@@ -102,22 +126,7 @@ export default function Home() {
     { title: "Focus", desc: "Clarity without the crash.", Icon: IconTarget },
     { title: "Hydration", desc: "Electrolytes for long days.", Icon: IconDrop },
     { title: "Rest", desc: "Recover and reset.", Icon: IconMoon },
-    { title: "Impact", desc: "Every order funds prevention.", Icon: IconHeart },
-  ] as const;
-
-  const kits = [
-    {
-      name: "Homefront Kit",
-      href: "/kits/homefront",
-      badge: "Best for recovery",
-      gradient: "bg-gradient-to-br from-emerald-500/20 via-emerald-400/10 to-emerald-500/5",
-    },
-    {
-      name: "Resilient Kit",
-      href: "/kits/resilient",
-      badge: "Mission-ready",
-      gradient: "bg-gradient-to-br from-sky-500/20 via-sky-400/10 to-sky-500/5",
-    },
+    { title: "Impact", desc: "Standing with prevention efforts.", Icon: IconHeart },
   ] as const;
 
   const myShopHref = myShopUrlWithUtm();
@@ -126,35 +135,61 @@ export default function Home() {
     <div className="space-y-16">
       {/* HERO */}
       <section
-        className="rounded-2xl border border-white/10 p-6 md:p-10"
+        className="container rounded-2xl border border-white/10 p-6 md:p-10"
         aria-labelledby="hero-title"
         style={{
           background:
             "radial-gradient(1200px 600px at 20% -10%, rgba(56,189,248,.12), transparent), radial-gradient(800px 400px at 100% 20%, rgba(16,185,129,.10), transparent)",
         }}
       >
-        <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
+        <div className="grid items-center gap-10 md:grid-cols-2">
           <div>
-            <h1 id="hero-title" className="text-3xl font-semibold tracking-tight md:text-4xl">
+            <h1
+              id="hero-title"
+              className="text-3xl font-semibold tracking-tight md:text-4xl"
+            >
               Wellness with a mission
             </h1>
             <p className="mt-3 text-zinc-400">
-              Trusted essentials for long days and tough nights — and every purchase helps prevent veteran suicide.
+              Trusted essentials for long days and tough nights — you are not
+              alone. Every kit is a reminder of resilience, recovery, and the
+              mission we stand together for.
             </p>
 
             {/* CTAs */}
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/kits" className="btn">Browse kits</Link>
-              <Link href="/shop" className="btn-ghost">Shop</Link>
-              <a href={myShopHref} target="_blank" rel="noopener noreferrer" className="btn-ghost">
-                Solo Amway Products
-              </a>
-              <Link href="/donate" className="btn-ghost">Donate</Link>
-              <Link href="/faq" className="btn-ghost">FAQ</Link>
+              <Link href="/kits" className="btn">
+                Browse kits
+              </Link>
+
+              {/* Grouped Shop + MyShop */}
+              <div className="flex overflow-hidden rounded-full border border-white/10">
+                <Link
+                  href="/shop"
+                  className="px-4 py-2 text-sm font-medium text-white hover:bg-white/5"
+                >
+                  Shop
+                </Link>
+                <a
+                  href={myShopHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="border-l border-white/10 px-4 py-2 text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/5"
+                >
+                  Open MyShop
+                </a>
+              </div>
+
+              <Link href="/donate" className="btn-ghost">
+                Donate
+              </Link>
+              <Link href="/resources" className="btn-ghost">
+                Resources
+              </Link>
             </div>
 
             <p className="mt-8 text-sm md:text-base text-zinc-300">
-              Your support helps fund real-world prevention, outreach, and response.
+              We stand with those who serve—today and every day.
             </p>
           </div>
 
@@ -167,7 +202,11 @@ export default function Home() {
             }}
           >
             {HERO_SRC ? (
-              <HeroImg src={HERO_SRC} alt="The Safety Plan — wellness with a mission" className="absolute inset-0" />
+              <HeroImg
+                src={HERO_SRC}
+                alt="The Safety Plan — wellness with a mission"
+                className="absolute inset-0"
+              />
             ) : (
               <div aria-hidden="true" className="absolute inset-0" />
             )}
@@ -176,11 +215,16 @@ export default function Home() {
       </section>
 
       {/* FEATURES */}
-      <section aria-labelledby="features-title" className="mx-auto max-w-6xl">
-        <h2 id="features-title" className="sr-only">What’s inside</h2>
+      <section aria-labelledby="features-title" className="container">
+        <h2 id="features-title" className="sr-only">
+          What’s inside
+        </h2>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {features.map(({ title, desc, Icon }) => (
-            <li key={title} className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+            <li
+              key={title}
+              className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur"
+            >
               <div className="flex items-start gap-3">
                 <span className="inline-flex size-9 items-center justify-center rounded-lg bg-white/10">
                   <Icon className="size-5 text-white/90" />
@@ -196,14 +240,26 @@ export default function Home() {
       </section>
 
       {/* KITS */}
-      <section aria-labelledby="kits-title" className="mx-auto max-w-6xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 id="kits-title" className="text-xl font-semibold tracking-tight">Pick your kit</h2>
-          <Link href="/kits" className="text-sm text-zinc-400 underline-offset-4 hover:underline">View all</Link>
-        </div>
+      <section aria-labelledby="kits-title" className="container">
+        <h2 id="kits-title" className="mb-4 text-xl font-semibold tracking-tight">
+          Pick your kit
+        </h2>
 
         <ul className="grid gap-4 md:grid-cols-2">
-          {kits.map((k) => (
+          {[
+            {
+              name: "Homefront Kit",
+              href: "/kits/homefront",
+              badge: "Best for recovery",
+              gradient: "bg-gradient-to-br from-emerald-500/20 via-emerald-400/10 to-emerald-500/5",
+            },
+            {
+              name: "Resilient Kit",
+              href: "/kits/resilient",
+              badge: "Mission-ready",
+              gradient: "bg-gradient-to-br from-sky-500/20 via-sky-400/10 to-sky-500/5",
+            },
+          ].map((k) => (
             <li key={k.href}>
               <Link
                 href={k.href}
@@ -215,9 +271,14 @@ export default function Home() {
               >
                 <p className="text-xs text-emerald-300/80">{k.badge}</p>
                 <p className="mt-1 text-lg font-medium">{k.name}</p>
-                <p className="mt-1 text-sm text-zinc-400">Balanced essentials for performance and recovery — with impact built in.</p>
+                <p className="mt-1 text-sm text-zinc-400">
+                  Balanced essentials for performance and recovery — with impact
+                  built in.
+                </p>
                 <div className="mt-4 text-sm text-zinc-300">
-                  <span className="rounded-full bg-white/10 px-2 py-0.5">Learn more →</span>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5">
+                    Learn more →
+                  </span>
                 </div>
               </Link>
             </li>
@@ -228,11 +289,13 @@ export default function Home() {
       {/* IMPACT STRIP */}
       <section
         aria-label="Impact"
-        className="mx-auto max-w-6xl rounded-xl border border-white/10 bg-gradient-to-r from-emerald-500/10 via-sky-500/10 to-emerald-500/10 p-5"
+        className="container rounded-xl border border-white/10 bg-gradient-to-r from-emerald-500/10 via-sky-500/10 to-emerald-500/10 p-5"
       >
         <p className="text-sm text-zinc-200">
-          <strong className="font-semibold text-white">{IMPACT_STAT ?? "Thank you for backing the mission."}</strong>{" "}
-          Your support helps fund prevention, outreach, and crisis response.
+          <strong className="font-semibold text-white">
+            {IMPACT_STAT ?? "Thank you for backing the mission."}
+          </strong>{" "}
+          We move together—resilience, recovery, and support.
         </p>
       </section>
     </div>

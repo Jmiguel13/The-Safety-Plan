@@ -27,11 +27,16 @@ export async function POST(req: Request) {
     const stripe = getStripe();
 
     const { success_url, cancel_url } = getCheckoutRedirects(req);
+    // Enrich cancel URL with item + qty so cancel page can display them
+    const enrichedCancelUrl = `${cancel_url}?priceId=${encodeURIComponent(
+      priceId
+    )}&q=${quantity}`;
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [{ price: priceId, quantity }],
       success_url,
-      cancel_url,
+      cancel_url: enrichedCancelUrl,
       metadata: { custom_price_id: priceId },
     });
 

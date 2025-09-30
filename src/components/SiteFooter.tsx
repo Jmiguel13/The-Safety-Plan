@@ -1,13 +1,37 @@
-export default function SiteFooter() {
+// src/components/SiteFooter.tsx
+import Link from "next/link";
+
+export default function SiteFooter({
+  impactText = "Every purchase supports prevention resources.",
+}: {
+  impactText?: string;
+}) {
+  const year = new Date().getFullYear();
+
   return (
-    <footer className="mt-12 border-t border-[var(--border)]">
-      <div className="container">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="text-sm muted">Copyright &copy; {new Date().getFullYear()} The Safety Plan</div>
-          <div className="text-xs muted">Built for focus, recovery, hydration, rest.</div>
+    <footer className="border-t border-[color:var(--border)]">
+      <div className="container grid grid-cols-1 gap-6 py-8 sm:grid-cols-2 md:grid-cols-3">
+        <div>
+          <p className="text-sm text-zinc-400">{impactText}</p>
         </div>
+
+        <nav className="flex flex-col gap-2 text-sm" aria-label="Footer">
+          <Link href="/privacy" className="hover:underline">
+            Privacy
+          </Link>
+          <Link href="/terms" className="hover:underline">
+            Terms
+          </Link>
+          <Link href="/sitemap.xml" className="hover:underline">
+            Sitemap
+          </Link>
+          <Link href="/robots.txt" className="hover:underline">
+            Robots
+          </Link>
+        </nav>
+
+        <div className="text-sm text-zinc-400">© {year} The Safety Plan</div>
       </div>
     </footer>
   );
 }
-
