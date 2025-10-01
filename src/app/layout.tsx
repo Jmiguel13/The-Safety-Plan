@@ -1,4 +1,3 @@
-// src/app/layout.tsx
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
@@ -6,6 +5,7 @@ import { Inter } from "next/font/google";
 import ClientHelpStripIsland from "@/components/ClientHelpStripIsland";
 import Header from "@/components/Header";            // ← normal import (client component)
 import SiteFooter from "@/components/SiteFooter";
+import { BRAND, CONTACT } from "@/lib/blank";        // used in JSON-LD
 
 const inter = Inter({
   subsets: ["latin"],
@@ -118,7 +118,7 @@ function CrisisRibbon() {
 
 function JsonLd() {
   const siteUrl = env.NEXT_PUBLIC_SITE_URL;
-  const json = {
+  const json: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "The Safety Plan",
@@ -130,8 +130,19 @@ function JsonLd() {
     logo: `${siteUrl}/icon.png`,
     description:
       "Mission-first wellness kits — focus, recovery, hydration, rest.",
+    brand: {
+      "@type": "Brand",
+      name: BRAND.name,
+      slogan: BRAND.slogan,
+    },
     contactPoint: [
       { "@type": "ContactPoint", contactType: "Crisis", telephone: `+${env.CRISIS_TEL}` },
+      ...(CONTACT.email
+        ? [{ "@type": "ContactPoint", contactType: "Customer Support", email: CONTACT.email }] as const
+        : []),
+      ...(CONTACT.phone
+        ? [{ "@type": "ContactPoint", contactType: "Customer Support", telephone: CONTACT.phone }] as const
+        : []),
     ],
   };
 

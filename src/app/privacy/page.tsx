@@ -1,107 +1,66 @@
-// src/app/privacy/page.tsx
-import Link from "next/link";
+export const runtime = "nodejs";
 
-export const metadata = {
+import type { Metadata } from "next";
+import { BRAND, CONTACT } from "@/lib/blank";
+
+export const metadata: Metadata = {
   title: "Privacy Policy — The Safety Plan",
-  description:
-    "How The Safety Plan collects, uses, and protects your information.",
+  description: "How we collect, use, and protect your information.",
 };
 
 export default function PrivacyPage() {
-  const year = new Date().getFullYear();
-
   return (
-    <section className="space-y-8 max-w-3xl">
-      <header className="space-y-2">
-        <h1 className="text-4xl font-extrabold tracking-tight">Privacy Policy</h1>
-        <p className="muted text-sm">Effective {year}</p>
+    <main className="container space-y-8">
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight">Privacy Policy</h1>
+        <p className="muted mt-2">
+          We respect your privacy. This policy explains what we collect and how we use it.
+        </p>
       </header>
 
-      <div className="space-y-6">
-        <section className="panel p-5 space-y-3">
-          <h2 className="text-xl font-semibold">Overview</h2>
-          <p className="muted">
-            We collect the minimum information needed to operate our site,
-            fulfill purchases via Amway, and communicate about new products or
-            restocks (like our waitlist).
-          </p>
-        </section>
+      <section className="space-y-2">
+        <h2 className="text-xl font-semibold">Information We Collect</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>Account and order information you provide during checkout.</li>
+          <li>Basic analytics and device information used to improve the site.</li>
+        </ul>
+      </section>
 
-        <section className="panel p-5 space-y-3">
-          <h2 className="text-xl font-semibold">What we collect</h2>
-          <ul className="list-disc pl-6 space-y-1 text-sm text-zinc-400">
-            <li>Email and product of interest when you join a waitlist.</li>
-            <li>Basic analytics (aggregate, non-identifying).</li>
-            <li>
-              Order details are processed by Amway on their systems; we don’t
-              receive your payment data.
-            </li>
-          </ul>
-        </section>
+      <section className="space-y-2">
+        <h2 className="text-xl font-semibold">How We Use Information</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>To process orders, provide support, and improve our products.</li>
+          <li>To send transactional messages related to your order.</li>
+        </ul>
+      </section>
 
-        <section className="panel p-5 space-y-3">
-          <h2 className="text-xl font-semibold">How we use it</h2>
-          <ul className="list-disc pl-6 space-y-1 text-sm text-zinc-400">
-            <li>To notify you about availability and updates.</li>
-            <li>To improve site performance and product fit.</li>
-            <li>To prevent abuse and secure our services.</li>
-          </ul>
-        </section>
+      <section className="space-y-2">
+        <h2 className="text-xl font-semibold">Sharing</h2>
+        <p>
+          We do not sell your personal information. We share only as needed with service
+          providers (e.g., payment processing, fulfillment) to operate the business.
+        </p>
+      </section>
 
-        <section className="panel p-5 space-y-3">
-          <h2 className="text-xl font-semibold">Data sharing</h2>
-          <p className="muted">
-            We don’t sell your data. We share data with service providers that
-            help us run the site (e.g., hosting, analytics) under
-            confidentiality terms. Purchases happen on{" "}
-            <a
-              href="https://www.amway.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-2"
-            >
-              Amway
-            </a>
-            ; their privacy policy applies to checkout.
-          </p>
-        </section>
+      <section className="space-y-2">
+        <h2 className="text-xl font-semibold">Data Security</h2>
+        <p>
+          We take reasonable measures to protect information; however no system is 100% secure.
+        </p>
+      </section>
 
-        <section className="panel p-5 space-y-3">
-          <h2 className="text-xl font-semibold">Your choices</h2>
-          <ul className="list-disc pl-6 space-y-1 text-sm text-zinc-400">
-            <li>Unsubscribe links are included in our emails.</li>
-            <li>
-              To request deletion of waitlist info, contact{" "}
-              <a
-                href="mailto:privacy@thesafetyplan.org"
-                className="underline underline-offset-2"
-              >
-                privacy@thesafetyplan.org
-              </a>
-              .
-            </li>
-          </ul>
-        </section>
-
-        <section className="panel p-5 space-y-3">
-          <h2 className="text-xl font-semibold">Contact</h2>
-          <p className="muted">
-            Questions?{" "}
-            <a
-              href="mailto:privacy@thesafetyplan.org"
-              className="underline underline-offset-2"
-            >
-              Email us
-            </a>{" "}
-            or see our{" "}
-            <Link href="/terms" className="underline underline-offset-2">
-              Terms
-            </Link>
-            .
-          </p>
-        </section>
-      </div>
-    </section>
+      <section className="space-y-2">
+        <h2 className="text-xl font-semibold">Contact</h2>
+        <p>
+          For privacy requests or questions, contact{" "}
+          {CONTACT.email ? (
+            <a className="underline" href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
+          ) : (
+            <span>{BRAND.name}</span>
+          )}
+          {CONTACT.phone ? <> • {CONTACT.phone}</> : null}.
+        </p>
+      </section>
+    </main>
   );
 }
-

@@ -1,55 +1,81 @@
-// src/components/KitThumb.tsx
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
 
 type Props = {
-  src?: string | null;
-  alt?: string;
-  fit?: "cover" | "contain";   // default: contain
-  padding?: string;            // e.g. "p-10"; default depends on fit
-  sizes?: string;              // default below
-  watermark?: string;          // shown if missing/broken
+  src: string | null;
+  alt: string;
+  /** Keep full mark visible */
+  fit?: "contain" | "cover";
+  /** Inner padding so art breathes */
+  padding?: string;
+  /** Extra class on wrapper */
+  className?: string;
+  /** Scale factor applied to the contained image (1 = no scale) */
+  zoom?: number;
 };
 
 export default function KitThumb({
   src,
-  alt = "",
+  alt,
   fit = "contain",
-  padding,
-  sizes = "(min-width: 1024px) 560px, (min-width: 640px) 48vw, 100vw",
-  watermark,
+  padding = "p-6 md:p-8",
+  className = "",
+  zoom = 1.24, // a touch larger so the icon reads on the card
 }: Props) {
-  const [broken, setBroken] = useState(false);
-  const hasSrc = typeof src === "string" && src.trim().length > 0;
-  const showImg = hasSrc && !broken;
-
-  const pad = padding ?? (fit === "contain" ? "p-10" : "p-0");
-  const obj = fit === "cover" ? "object-cover" : "object-contain";
-
   return (
-    <div className="absolute inset-0">
-      {showImg && (
-        <Image
-          src={src!}
-          alt={alt}
-          fill
-          sizes={sizes}
-          className={`${obj} ${pad} opacity-90 transition-opacity duration-300`}
-          priority={false}
-          onError={() => setBroken(true)}
-          draggable={false}
-        />
-      )}
+    <div
+      className={[
+        // wrapper is borderless; the card link already has a border
+        "relative h-full w-full overflow-hidden rounded-xl bg-black/20",
+        "shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
+        className,
+      ].join(" ")}
+    >
+      {/* very soft center glow so the mark doesn't feel 'stuck' */}
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(30% 35% at 50% 54%, rgba(255,255,255,0.05), transparent 70%)",
+        }}
+      />
 
-      {!showImg && watermark ? (
-        <div className="absolute inset-0 grid place-items-center">
-          <span className="text-2xl font-semibold text-white/15 tracking-wide select-none">
-            {watermark}
-          </span>
-        </div>
-      ) : null}
+      {/* padded, centered image */}
+      <div
+        className={[
+          "absolute inset-0 flex items-center justify-center",
+          padding,
+        ].join(" ")}
+      >
+        {src ? (
+          <div className="relative h-full w-full">
+            <Image
+              src={src}
+              alt={alt}
+              fill
+              sizes="(min-width: 1024px) 45vw, 100vw"
+              className="object-contain will-change-transform"
+              style={{
+                objectFit: fit,
+                transform: `scale(${zoom})`,
+                transformOrigin: "center center",
+              }}
+              priority={false}
+            />
+          </div>
+        ) : (
+          <div
+            aria-hidden
+            className="h-full w-full rounded-lg"
+            style={{
+              background:
+                "radial-gradient(60% 50% at 20% 20%, rgba(56,189,248,.14), transparent), radial-gradient(40% 40% at 80% 20%, rgba(16,185,129,.10), transparent)",
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }

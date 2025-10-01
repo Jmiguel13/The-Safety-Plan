@@ -1,22 +1,10 @@
-<!-- Summit Shield — badge (512x512) -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#7dd3fc"></stop>
-      <stop offset="1" stop-color="#22d3ee"></stop>
+    <linearGradient id="gB1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee"></stop>
+      <stop offset="100%" stop-color="#34d399"></stop>
     </linearGradient>
-    <linearGradient id="peak" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#a5f3fc"></stop>
-      <stop offset=".6" stop-color="#38bdf8"></stop>
-      <stop offset="1" stop-color="#22d3ee"></stop>
-    </linearGradient>
-    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="10" result="b"></feGaussianBlur>
-      <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
-    </filter>
   </defs>
-
-  <path d="M256 64 416 112v112c0 98-69 175-160 216C165 399 96 322 96 224V112Z" fill="none" stroke="url(#stroke)" stroke-width="28" stroke-linejoin="round" filter="url(#glow)"></path>
-  <path d="M132 314 218 236 264 270 318 220 380 314" fill="none" stroke="url(#peak)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"></path>
-  <path d="M212 196 A80 80 0 0 1 314 214" fill="none" stroke="#67e8f9" stroke-width="8" stroke-opacity=".45"></path>
+  <rect x="1" y="1" width="54" height="54" rx="12" fill="rgba(0,0,0,0.35)" stroke="rgba(255,255,255,0.10)"></rect>
+  <path d="M28 10l10 4v10c0 8-6 14-10 16-4-2-10-8-10-16V14l10-4zm-6 12 5 3 4-2 6 5" fill="none" stroke="url(#gB1)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
 </svg>

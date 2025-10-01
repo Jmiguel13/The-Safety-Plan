@@ -7,6 +7,7 @@ import Image from "next/image";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { getSiteConfig } from "@/lib/site";
+import { BRAND, CONTACT } from "@/lib/blank";
 
 /** Inline icons */
 function IconTarget(props: React.SVGProps<SVGSVGElement>) {
@@ -117,12 +118,24 @@ export default function Home() {
       >
         <div className="grid items-center gap-10 md:grid-cols-2">
           <div>
-            <h1
-              id="hero-title"
-              className="text-3xl font-semibold tracking-tight md:text-4xl"
-            >
-              Wellness with a mission
-            </h1>
+            <div className="flex items-center justify-between gap-3">
+              <h1
+                id="hero-title"
+                className="text-3xl font-semibold tracking-tight md:text-4xl"
+              >
+                Wellness with a mission
+              </h1>
+
+              {/* Built by BLANK pill (kept only here) */}
+              <span
+                className="inline-flex shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium tracking-wide text-zinc-300"
+                aria-label={`Built by ${BRAND.name}`}
+                title={`Built by ${BRAND.name}`}
+              >
+                Built by {BRAND.name}
+              </span>
+            </div>
+
             <p className="mt-3 text-zinc-400">
               Trusted essentials for long days and tough nights — you are not
               alone. Every kit is a reminder of resilience, recovery, and the
@@ -142,6 +155,10 @@ export default function Home() {
               </Link>
               <Link href="/resources" className="btn-ghost">
                 Resources
+              </Link>
+              {/* NEW: About button */}
+              <Link href="/about" className="btn-ghost">
+                About
               </Link>
             </div>
 
@@ -208,13 +225,15 @@ export default function Home() {
               name: "Homefront Kit",
               href: "/kits/homefront",
               badge: "Best for recovery",
-              gradient: "bg-gradient-to-br from-emerald-500/20 via-emerald-400/10 to-emerald-500/5",
+              gradient:
+                "bg-gradient-to-br from-emerald-500/20 via-emerald-400/10 to-emerald-500/5",
             },
             {
               name: "Resilient Kit",
               href: "/kits/resilient",
               badge: "Mission-ready",
-              gradient: "bg-gradient-to-br from-sky-500/20 via-sky-400/10 to-sky-500/5",
+              gradient:
+                "bg-gradient-to-br from-sky-500/20 via-sky-400/10 to-sky-500/5",
             },
           ].map((k) => (
             <li key={k.href}>
@@ -232,6 +251,7 @@ export default function Home() {
                   Balanced essentials for performance and recovery — with impact
                   built in.
                 </p>
+
                 <div className="mt-4 text-sm text-zinc-300">
                   <span className="rounded-full bg-white/10 px-2 py-0.5">
                     Learn more →
@@ -243,7 +263,7 @@ export default function Home() {
         </ul>
       </section>
 
-      {/* IMPACT STRIP (kept, but no funding phrasing) */}
+      {/* IMPACT STRIP */}
       <section
         aria-label="Impact"
         className="container rounded-xl border border-white/10 bg-gradient-to-r from-emerald-500/10 via-sky-500/10 to-emerald-500/10 p-5"
@@ -253,6 +273,20 @@ export default function Home() {
             {IMPACT_STAT ?? "Thank you for backing the mission."}
           </strong>{" "}
           We move together—resilience, recovery, and support.
+          {CONTACT?.email || CONTACT?.phone ? (
+            <>
+              {" "}
+              Questions?{" "}
+              {CONTACT.email ? (
+                <a className="underline" href={`mailto:${CONTACT.email}`}>
+                  {CONTACT.email}
+                </a>
+              ) : null}
+              {CONTACT.email && CONTACT.phone ? " • " : null}
+              {CONTACT.phone ? <span>{CONTACT.phone}</span> : null}
+              .
+            </>
+          ) : null}
         </p>
       </section>
     </div>

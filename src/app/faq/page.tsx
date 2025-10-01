@@ -1,7 +1,8 @@
-// src/app/faq/page.tsx
+import type React from "react";
 import type { Metadata } from "next";
 import StructuredData, { type JsonLdObject } from "@/components/StructuredData";
 import Link from "next/link";
+import { CONTACT } from "@/lib/blank";
 
 export const metadata: Metadata = {
   title: "FAQ",
@@ -18,7 +19,9 @@ type FAQ = {
   variant?: "crisis" | "default";
 };
 
-const SUPPORT_EMAIL = "contactsafetyplan@yahoo.com";
+const SUPPORT_EMAIL = CONTACT.email ?? "contactsafetyplan@yahoo.com";
+const CRISIS_TEL = (process.env.CRISIS_TEL ?? "988").toString();
+const CRISIS_SMS = (process.env.CRISIS_SMS ?? "838255").toString();
 
 /** Put CRISIS first and mark it as special */
 const faqs: FAQ[] = [
@@ -29,10 +32,14 @@ const faqs: FAQ[] = [
     a: (
       <>
         If you or someone you know is in immediate danger, call{" "}
-        <a className="underline" href="tel:988">988</a> (Veterans press 1) or
-        text{" "}
-        <a className="underline" href="sms:838255">838255</a>. We’re here to help
-        connect resources, but we are <em>not</em> an emergency service.
+        <a className="underline" href={`tel:${CRISIS_TEL}`}>
+          {CRISIS_TEL}
+        </a>{" "}
+        (Veterans press 1) or text{" "}
+        <a className="underline" href={`sms:${CRISIS_SMS}`}>
+          {CRISIS_SMS}
+        </a>
+        . We’re here to help connect resources, but we are <em>not</em> an emergency service.
       </>
     ),
   },
@@ -42,10 +49,8 @@ const faqs: FAQ[] = [
     q: "How do donations work?",
     a: (
       <>
-        We use Stripe to securely process donations. You can choose a preset
-        amount or enter a custom amount. Every donation funds resources for
-        veterans in crisis and our outreach efforts. If you need a receipt,
-        it’s emailed automatically after checkout.
+        We use Stripe to securely process donations. You can choose a preset amount or enter a custom amount.
+        Every donation supports outreach and prevention work. A receipt is emailed automatically after checkout.
       </>
     ),
   },
@@ -54,9 +59,8 @@ const faqs: FAQ[] = [
     q: "Are donations tax-deductible?",
     a: (
       <>
-        Not at this time. We’re focused on rapid deployment and direct support
-        for veterans. If/when a 501(c)(3) arm is established, we’ll update this
-        page and your receipts accordingly.
+        Not at this time. We’re focused on rapid deployment and direct support. If/when a 501(c)(3) arm is established,
+        we’ll update this page and your receipts accordingly.
       </>
     ),
   },
@@ -68,12 +72,10 @@ const faqs: FAQ[] = [
         Two mission-first kits:
         <ul className="mt-2 list-disc pl-5 text-zinc-300">
           <li>
-            <strong>Resilient Kit</strong> — daily carry: focus, hydration,
-            recovery, rest.
+            <strong>Resilient Kit</strong> — daily carry: focus, hydration, recovery, rest.
           </li>
           <li>
-            <strong>Homefront Kit</strong> — home base support: hydration,
-            vitamins, recovery, and rest.
+            <strong>Homefront Kit</strong> — home base support: hydration, vitamins, recovery, and rest.
           </li>
         </ul>
         <div className="mt-3">
@@ -87,9 +89,8 @@ const faqs: FAQ[] = [
     q: "How long does shipping take?",
     a: (
       <>
-        Most orders ship within 2–4 business days. You’ll receive a tracking
-        link via email as soon as your order is on the way. If something looks
-        delayed, reply to your order email and we’ll help.
+        Most orders ship within 2–4 business days. You’ll receive a tracking link via email as soon as your order is on the way.
+        If something looks delayed, reply to your order email and we’ll help.
       </>
     ),
   },
@@ -98,10 +99,8 @@ const faqs: FAQ[] = [
     q: "What’s the returns/refunds policy?",
     a: (
       <>
-        Unopened kits can be returned within 30 days of delivery. For opened
-        consumables, contact us and we’ll work with you on a fair resolution.
-        Donations are not refundable once processed, but mistakes happen — reach
-        out and we’ll review case-by-case.
+        Unopened kits can be returned within 30 days of delivery. For opened consumables, contact us and we’ll work with you on a fair resolution.
+        Donations are not refundable once processed, but mistakes happen — reach out and we’ll review case-by-case.
       </>
     ),
   },
@@ -114,15 +113,14 @@ const faqs: FAQ[] = [
         <a className="underline" href={`mailto:${SUPPORT_EMAIL}`}>
           {SUPPORT_EMAIL}
         </a>{" "}
-        and include your order number (if applicable). For urgent issues related
-        to a current donation or checkout, reply to your Stripe receipt email — it
-        routes fastest.
+        and include your order number (if applicable). For urgent issues related to a current donation or checkout,
+        reply to your Stripe receipt email — it routes fastest.
       </>
     ),
   },
 ];
 
-// Strictly typed JSON-LD (no `any`)
+// Strictly typed JSON-LD
 const faqJsonLd = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
@@ -144,7 +142,7 @@ const faqJsonLd = {
           ? "Unopened kits refundable within 30 days. Donations are generally non-refundable."
           : id === "contact"
           ? `Email ${SUPPORT_EMAIL} and include your order number.`
-          : "Call 988 (Veterans press 1) or text 838255 for immediate help.",
+          : `Call ${CRISIS_TEL} (Veterans press 1) or text ${CRISIS_SMS} for immediate help.`,
     },
     url: `/faq#${id}`,
   })),
@@ -159,9 +157,7 @@ export default function FAQPage() {
       <main className="mx-auto w-full max-w-6xl px-4 py-10">
         <header className="mb-6">
           <h1 className="text-3xl font-bold tracking-tight">Frequently Asked Questions</h1>
-          <p className="mt-2 text-zinc-400">
-            Quick answers about donations, kits, shipping, and support.
-          </p>
+          <p className="mt-2 text-zinc-400">Quick answers about donations, kits, shipping, and support.</p>
         </header>
 
         <div className="grid gap-3">
@@ -200,9 +196,7 @@ export default function FAQPage() {
                     />
                   </svg>
                 </summary>
-                <div className={`mt-3 ${isCrisis ? "text-red-100/90" : "text-zinc-300"}`}>
-                  {a}
-                </div>
+                <div className={`mt-3 ${isCrisis ? "text-red-100/90" : "text-zinc-300"}`}>{a}</div>
               </details>
             );
           })}

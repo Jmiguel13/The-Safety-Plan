@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(140 110) scale(360)">
+      <stop stop-color="#0ea5e9" stop-opacity="0.18"></stop>
+      <stop offset="1" stop-color="#020617"></stop>
+    </radialGradient>
+    <linearGradient id="stroke" x1="96" y1="80" x2="416" y2="432" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38BDF8"></stop>
+      <stop offset="1" stop-color="#10B981"></stop>
+    </linearGradient>
+    <filter id="g" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="b"></feGaussianBlur>
+      <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="32" fill="url(#bg)"></rect>
+  <g stroke="url(#stroke)" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#g)">
+    <path d="M256 80c-32 0-103 28-144 52v160c0 104 112 136 144 148c32-12 144-44 144-148V132c-41-24-112-52-144-52z"></path>
+    <path d="M140 288l68-52l64 48l84-64l44 32"></path>
+  </g>
+</svg>

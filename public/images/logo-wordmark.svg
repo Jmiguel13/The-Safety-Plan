@@ -1,0 +1,23 @@
+<svg width="1200" height="260" viewBox="0 0 1200 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="t" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E9FBFF"></stop>
+      <stop offset="1" stop-color="#E6FDF6"></stop>
+    </linearGradient>
+    <linearGradient id="s" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#38BDF8"></stop>
+      <stop offset="1" stop-color="#10B981"></stop>
+    </linearGradient>
+    <filter id="g" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="b"></feGaussianBlur>
+      <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="260" rx="20" fill="#0a0a0b"></rect>
+  <g transform="translate(28 30) scale(0.8)" stroke="url(#s)" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#g)">
+    <path d="M140 32c-28 0-79 18-110 35v120c0 86 69 120 110 136c41-16 110-50 110-136V67c-31-17-82-35-110-35z"></path>
+    <path d="M67 164l46-36l44 34l58-44l32 24"></path>
+  </g>
+  <text x="250" y="144" font-family="Inter, ui-sans-serif, system-ui" font-weight="800" font-size="72" fill="url(#t)">The Safety Plan</text>
+  <text x="254" y="176" font-family="Inter, ui-sans-serif, system-ui" font-size="18" fill="rgba(226,232,240,0.72)">Focus • Hydration • Recovery • Rest</text>
+</svg>

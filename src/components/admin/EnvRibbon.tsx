@@ -1,38 +1,65 @@
-// src/components/admin/EnvRibbon.tsx
-import React from "react";
+"use client";
 
-/** Optional label you can pass, otherwise we read NODE_ENV. */
-type AppEnv = "development" | "production" | "staging" | "preview" | "test";
+import Link from "next/link";
 
-type Props = {
-  /** Optional override; pass "staging", "preview", etc. */
-  env?: AppEnv | string;
+const PUB = {
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "",
+  stripeKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "",
+  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+  myshopUrl: process.env.NEXT_PUBLIC_AMWAY_MYSHOP_URL ?? "",
 };
 
-// Use a string-keyed map so unknown values degrade gracefully.
-const LABELS: Record<string, string> = {
-  production: "PROD",
-  development: "DEV",
-  staging: "STAGING",
-  preview: "PREVIEW",
-  test: "TEST",
-};
-
-export default function EnvRibbon({ env }: Props) {
-  // Prefer an explicit prop; otherwise rely on the build-time NODE_ENV
-  const current = (env ?? process.env.NODE_ENV ?? "development") as string;
-
-  // Hide the ribbon for true production
-  if (current === "production") return null;
-
-  const label = LABELS[current] ?? current.toUpperCase();
-
-  return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center">
-      <span className="m-2 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-3 py-1 text-xs tracking-wider text-yellow-300">
-        {label} ENV
-      </span>
-    </div>
+function Chip({
+  children,
+  href,
+  title,
+}: {
+  children: React.ReactNode;
+  href?: string;
+  title?: string;
+}) {
+  const cls =
+    "inline-flex items-center rounded-full border border-white/10 bg-white/10 px-2.5 py-0.5 text-[11px] font-medium text-zinc-100";
+  return href ? (
+    <Link className={cls} href={href} target="_blank" rel="noopener noreferrer" title={title}>
+      {children}
+    </Link>
+  ) : (
+    <span className={cls} title={title}>
+      {children}
+    </span>
   );
 }
 
+export default function EnvRibbon() {
+  const mode =
+    process.env.NODE_ENV === "production" ? "production" : "development";
+  const stripeMode = PUB.stripeKey
+    ? PUB.stripeKey.startsWith("pk_live")
+      ? "LIVE"
+      : "TEST"
+    : "—";
+  const supabaseHost = (() => {
+    try {
+      return new URL(PUB.supabaseUrl).host;
+    } catch {
+      return "—";
+    }
+  })();
+
+  return (
+    <div className="w-full border-b border-amber-400/20 bg-amber-500/10">
+      <div className="container flex flex-wrap items-center gap-2 py-2 text-amber-100">
+        <Chip title="Build/runtime mode">Env: {mode}</Chip>
+        <Chip href={PUB.siteUrl || undefined} title={PUB.siteUrl || undefined}>
+          Site: {PUB.siteUrl || "—"}
+        </Chip>
+        <Chip href={PUB.myshopUrl || undefined} title={PUB.myshopUrl || undefined}>
+          MyShop: {PUB.myshopUrl ? "configured" : "—"}
+        </Chip>
+        <Chip title="Stripe publishable key mode">Stripe: {stripeMode}</Chip>
+        <Chip title={PUB.supabaseUrl || undefined}>Supabase: {supabaseHost}</Chip>
+      </div>
+    </div>
+  );
+}

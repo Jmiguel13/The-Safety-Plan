@@ -1,44 +1,56 @@
-<!-- Summit Shield — hero (1600x900) -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+<!-- Resilient hero — shield + label. ViewBox padded so nothing clips when scaled. -->
+<svg width="1200" height="700" viewBox="0 0 1200 700" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="bg" cx="20%" cy="12%" r="90%">
-      <stop offset="0" stop-color="#0f172a"></stop>
-      <stop offset="1" stop-color="#0b1113"></stop>
-    </radialGradient>
-    <radialGradient id="t1" cx="14%" cy="20%" r="42%">
-      <stop offset="0" stop-color="#22d3ee" stop-opacity=".14"></stop>
-      <stop offset="1" stop-color="#0b1113" stop-opacity="0"></stop>
-    </radialGradient>
-    <radialGradient id="t2" cx="90%" cy="12%" r="50%">
-      <stop offset="0" stop-color="#10b981" stop-opacity=".14"></stop>
-      <stop offset="1" stop-color="#0b1113" stop-opacity="0"></stop>
-    </radialGradient>
-
-    <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#7dd3fc"></stop>
-      <stop offset="1" stop-color="#22d3ee"></stop>
+    <!-- Neon gradient stroke -->
+    <linearGradient id="gShield" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee"></stop>
+      <stop offset="50%" stop-color="#60a5fa"></stop>
+      <stop offset="100%" stop-color="#34d399"></stop>
     </linearGradient>
-    <linearGradient id="peak" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#a5f3fc"></stop>
-      <stop offset=".6" stop-color="#38bdf8"></stop>
-      <stop offset="1" stop-color="#22d3ee"></stop>
-    </linearGradient>
-    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="22" result="b"></feGaussianBlur>
-      <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+    <!-- Gentle vignette + glow -->
+    <radialGradient id="bgGlow1" cx="25%" cy="70%" r="55%">
+      <stop offset="0%" stop-color="rgba(56,189,248,0.12)"></stop>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"></stop>
+    </radialGradient>
+    <radialGradient id="bgGlow2" cx="75%" cy="30%" r="50%">
+      <stop offset="0%" stop-color="rgba(16,185,129,0.10)"></stop>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"></stop>
+    </radialGradient>
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur"></feGaussianBlur>
+      <feMerge>
+        <feMergeNode in="blur"></feMergeNode>
+        <feMergeNode in="SourceGraphic"></feMergeNode>
+      </feMerge>
     </filter>
   </defs>
 
-  <rect width="1600" height="900" fill="url(#bg)"></rect>
-  <rect width="1600" height="900" fill="url(#t1)"></rect>
-  <rect width="1600" height="900" fill="url(#t2)"></rect>
+  <!-- Background layers -->
+  <rect width="1200" height="700" fill="rgba(0,0,0,0)"></rect>
+  <rect width="1200" height="700" fill="url(#bgGlow1)"></rect>
+  <rect width="1200" height="700" fill="url(#bgGlow2)"></rect>
 
-  <g transform="translate(800 480) scale(1.18)" filter="url(#glow)">
-    <!-- shield -->
-    <path d="M0 -288 L272 -206 v112 c0 186 -160 278 -272 320 -112 -42 -272 -134 -272 -320 v-112 Z" fill="none" stroke="url(#stroke)" stroke-width="36" stroke-linejoin="round"></path>
+  <!-- Label pill -->
+  <g transform="translate(64,56)">
+    <rect x="0" y="0" rx="16" ry="16" width="210" height="44" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.12)"></rect>
+    <text x="105" y="30" font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto" font-size="20" fill="white" text-anchor="middle" letter-spacing=".12em">RESILIENT</text>
+  </g>
 
-    <!-- mountain / summit with sun arc -->
-    <path d="M-170 84  -30 -40  40 20  120 -60  210 84" fill="none" stroke="url(#peak)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"></path>
-    <path d="M-40 -100 A140 140 0 0 1 140 -60" fill="none" stroke="#67e8f9" stroke-width="10" stroke-opacity=".4"></path>
+  <!-- Shield icon (centered) -->
+  <g transform="translate(0,20)">
+    <path d="
+      M600 150
+      L780 220
+      V360
+      C780 480 690 570 600 606
+      C510 570 420 480 420 360
+      V220
+      L600 150 Z
+
+      M520 320
+      L572 356
+      L616 330
+      L680 380
+    " fill="none" stroke="url(#gShield)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" filter="url(#softGlow)"></path>
   </g>
 </svg>
