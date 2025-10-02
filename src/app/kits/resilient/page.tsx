@@ -6,7 +6,7 @@ import KitCheckoutForm from "@/components/KitCheckoutForm";
 import { kits } from "@/lib/kits";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic"; // render at request-time, not at build
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const viewport: Viewport = { themeColor: "#0b0f10" };
@@ -62,7 +62,8 @@ export default function ResilientPage() {
   const title = asNonEmptyString(kit?.title, "Resilient Kit");
   const weight = toStringOrDash(kit?.weight ?? kit?.specs?.weight);
 
-  const items: KitItem[] = (Array.isArray(kit?.contents) ? kit?.contents : kit?.items) ?? [];
+  const items: KitItem[] =
+    (Array.isArray(kit?.contents) ? kit?.contents : kit?.items) ?? [];
   const skus = toStringArray(kit?.skus ?? kit?.sku_list);
   const copyItems = skusToItems(skus);
 
@@ -76,43 +77,31 @@ export default function ResilientPage() {
 
   return (
     <main id="content" className="container max-w-6xl space-y-10 py-10">
-      {/* Hero */}
+      {/* Header block (no hero image) */}
       <section
         className="relative overflow-hidden rounded-3xl border border-white/10"
         style={{ backgroundImage: grd(), backgroundColor: "rgb(9 9 11 / 0.65)" }}
       >
-        <div className="grid gap-8 md:grid-cols-[1.1fr,480px]">
-          {/* Copy + actions */}
-          <div className="p-6 md:p-8">
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{title}</h1>
-              <p className="muted">Built for daily carry. Energy, hydration, recovery, morale.</p>
+        <div className="p-6 md:p-8">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+            {title}
+          </h1>
+          <p className="muted mt-2">
+            Built for daily carry. Energy, hydration, recovery, morale.
+          </p>
 
-              {/* Pure client checkout (no Stripe during render) */}
-              <KitCheckoutForm kit={{ slug: "resilient", title }} className="pt-1" />
+          <KitCheckoutForm kit={{ slug: "resilient", title }} className="pt-3" />
 
-              {/* Specs */}
-              <div className="pt-2">
-                <SpecGrid specs={specs} />
-              </div>
-
-              <div className="flex flex-wrap gap-3 pt-1">
-                <Link href="/kits/resilient/items" className="btn-ghost">View SKUs</Link>
-                {copyItems.length > 0 ? <CopySkus items={copyItems} /> : null}
-              </div>
-            </div>
+          <div className="pt-3">
+            <SpecGrid specs={specs} />
           </div>
 
-          {/* Visual slot */}
-          <div
-            className="min-h-[260px] md:min_h-[100%] bg-zinc-900/40"
-            style={{
-              backgroundImage: kit?.imageUrl ? `url("${kit.imageUrl}")` : undefined,
-              backgroundSize: kit?.imageUrl ? "cover" : undefined,
-              backgroundPosition: kit?.imageUrl ? "center" : undefined,
-            }}
-            aria-hidden="true"
-          />
+          <div className="flex flex-wrap gap-3 pt-2">
+            <Link href="/kits/resilient/items" className="btn-ghost">
+              View SKUs
+            </Link>
+            {copyItems.length > 0 ? <CopySkus items={copyItems} /> : null}
+          </div>
         </div>
       </section>
 
@@ -125,8 +114,14 @@ export default function ResilientPage() {
             {items.map((i, idx) => (
               <li key={`${i.sku ?? idx}`}>
                 <div className="rounded-2xl border border-white/10 bg-zinc-950/60 p-3">
-                  <div className="font-medium truncate">{i.title ?? i.sku ?? "Item"}</div>
-                  {i.sku ? <div className="text-xs text-zinc-500 mt-0.5">SKU {i.sku}</div> : null}
+                  <div className="font-medium truncate">
+                    {i.title ?? i.sku ?? "Item"}
+                  </div>
+                  {i.sku ? (
+                    <div className="mt-0.5 text-xs text-zinc-500">
+                      SKU {i.sku}
+                    </div>
+                  ) : null}
                 </div>
               </li>
             ))}
@@ -134,12 +129,17 @@ export default function ResilientPage() {
         ) : copyItems.length > 0 ? (
           <div className="rounded-2xl border border-[var(--border)] bg-zinc-950/60 p-4">
             <div className="mb-2 flex items-center justify-between">
-              <div className="muted text-xs">Paste any SKU in your Amway search bar to add to cart.</div>
+              <div className="muted text-xs">
+                Paste any SKU in your Amway search bar to add to cart.
+              </div>
               <CopySkus items={copyItems} />
             </div>
             <ul className="grid gap-1 font-mono text-sm">
               {copyItems.map((row) => (
-                <li key={row.sku} className="flex items-center justify-between border-b border-[var(--border)]/50 pb-1">
+                <li
+                  key={row.sku}
+                  className="flex items-center justify-between border-b border-[var(--border)]/50 pb-1"
+                >
                   <span>{row.sku}</span>
                   <span className="muted">x{row.quantity}</span>
                 </li>

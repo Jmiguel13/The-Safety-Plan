@@ -6,7 +6,7 @@ import KitCheckoutForm from "@/components/KitCheckoutForm";
 import { kits } from "@/lib/kits";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic"; // render at request-time, not at build
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const viewport: Viewport = { themeColor: "#0b0f10" };
@@ -62,11 +62,13 @@ export default function HomefrontPage() {
   const title = asNonEmptyString(kit?.title, "Homefront Kit");
   const weight = toStringOrDash(kit?.weight ?? kit?.specs?.weight);
 
-  const contents: KitItem[] = (Array.isArray(kit?.contents) ? kit?.contents : kit?.items) ?? [];
+  const contents: KitItem[] =
+    (Array.isArray(kit?.contents) ? kit?.contents : kit?.items) ?? [];
   const skus = toStringArray(kit?.skus ?? kit?.sku_list);
   const copyItems = skusToItems(skus);
 
-  const itemsCount = (Array.isArray(contents) ? contents.length : 0) || copyItems.length;
+  const itemsCount =
+    (Array.isArray(contents) ? contents.length : 0) || copyItems.length;
 
   const specs = [
     { label: "Weight", value: weight },
@@ -76,43 +78,33 @@ export default function HomefrontPage() {
 
   return (
     <main id="content" className="container max-w-6xl space-y-10 py-10">
-      {/* Hero */}
+      {/* Header block (no hero image) */}
       <section
         className="relative overflow-hidden rounded-3xl border border-white/10"
         style={{ backgroundImage: grd(), backgroundColor: "rgb(9 9 11 / 0.65)" }}
       >
-        <div className="grid gap-8 md:grid-cols-[1.1fr,480px]">
-          {/* Copy + actions */}
-          <div className="p-6 md:p-8">
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{title}</h1>
-              <p className="muted">Best for recovery. Rehydrate, restore, and reset.</p>
+        <div className="p-6 md:p-8">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+            {title}
+          </h1>
+          <p className="muted mt-2">
+            Best for recovery. Rehydrate, restore, and reset.
+          </p>
 
-              {/* Pure client checkout (no Stripe during render) */}
-              <KitCheckoutForm kit={{ slug: "homefront", title }} className="pt-1" />
+          {/* Client checkout (no server Stripe work here) */}
+          <KitCheckoutForm kit={{ slug: "homefront", title }} className="pt-3" />
 
-              {/* Specs */}
-              <div className="pt-2">
-                <SpecGrid specs={specs} />
-              </div>
-
-              <div className="flex flex-wrap gap-3 pt-1">
-                <Link href="/kits/homefront/items" className="btn-ghost">View SKUs</Link>
-                {copyItems.length > 0 ? <CopySkus items={copyItems} /> : null}
-              </div>
-            </div>
+          {/* Specs */}
+          <div className="pt-3">
+            <SpecGrid specs={specs} />
           </div>
 
-          {/* Visual slot */}
-          <div
-            className="min-h-[260px] md:min-h-[100%] bg-zinc-900/40"
-            style={{
-              backgroundImage: kit?.imageUrl ? `url("${kit.imageUrl}")` : undefined,
-              backgroundSize: kit?.imageUrl ? "cover" : undefined,
-              backgroundPosition: kit?.imageUrl ? "center" : undefined,
-            }}
-            aria-hidden="true"
-          />
+          <div className="flex flex-wrap gap-3 pt-2">
+            <Link href="/kits/homefront/items" className="btn-ghost">
+              View SKUs
+            </Link>
+            {copyItems.length > 0 ? <CopySkus items={copyItems} /> : null}
+          </div>
         </div>
       </section>
 
@@ -125,13 +117,18 @@ export default function HomefrontPage() {
         ) : (
           <div className="panel rounded-2xl border border-[var(--border)] p-4">
             <div className="mb-2 flex items-center justify-between">
-              <div className="muted text-xs">Paste any SKU in your Amway search bar to add to cart.</div>
+              <div className="muted text-xs">
+                Paste any SKU in your Amway search bar to add to cart.
+              </div>
               <CopySkus items={copyItems} />
             </div>
 
             <ul className="grid gap-1 font-mono text-sm">
               {copyItems.map((row) => (
-                <li key={row.sku} className="flex items-center justify-between border-b border-[var(--border)]/50 pb-1">
+                <li
+                  key={row.sku}
+                  className="flex items-center justify-between border-b border-[var(--border)]/50 pb-1"
+                >
                   <span>{row.sku}</span>
                   <span className="muted">x{row.quantity}</span>
                 </li>

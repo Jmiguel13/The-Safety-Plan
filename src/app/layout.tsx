@@ -1,11 +1,12 @@
+// src/app/layout.tsx
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Inter } from "next/font/google";
 import ClientHelpStripIsland from "@/components/ClientHelpStripIsland";
-import Header from "@/components/Header";            // ← normal import (client component)
+import Header from "@/components/Header"; // ← normal client component import
 import SiteFooter from "@/components/SiteFooter";
-import { BRAND, CONTACT } from "@/lib/blank";        // used in JSON-LD
+import { BRAND, CONTACT } from "@/lib/blank"; // used in JSON-LD
 
 const inter = Inter({
   subsets: ["latin"],
@@ -178,7 +179,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Optional client-only help strip */}
         {enableHelpStrip ? <ClientHelpStripIsland /> : null}
 
-        {/* Header (client component, imported normally) */}
+        {/* Header (client component) */}
         <Header />
 
         {/* Main */}

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useMemo, useState } from "react";
 
 type Props = {
   src: string | null;
@@ -21,12 +22,15 @@ export default function KitThumb({
   fit = "contain",
   padding = "p-6 md:p-8",
   className = "",
-  zoom = 1.24, // a touch larger so the icon reads on the card
+  zoom = 1.24,
 }: Props) {
+  const [broken, setBroken] = useState(false);
+  const isSvg = useMemo(() => (src ?? "").toLowerCase().endsWith(".svg"), [src]);
+  const showImg = !!src && !broken;
+
   return (
     <div
       className={[
-        // wrapper is borderless; the card link already has a border
         "relative h-full w-full overflow-hidden rounded-xl bg-black/20",
         "shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
         className,
@@ -43,26 +47,25 @@ export default function KitThumb({
       />
 
       {/* padded, centered image */}
-      <div
-        className={[
-          "absolute inset-0 flex items-center justify-center",
-          padding,
-        ].join(" ")}
-      >
-        {src ? (
+      <div className={["absolute inset-0 flex items-center justify-center", padding].join(" ")}>
+        {showImg ? (
           <div className="relative h-full w-full">
             <Image
-              src={src}
+              src={src!}
               alt={alt}
               fill
               sizes="(min-width: 1024px) 45vw, 100vw"
-              className="object-contain will-change-transform"
+              className="object-contain will-change-transform select-none pointer-events-none"
               style={{
                 objectFit: fit,
                 transform: `scale(${zoom})`,
                 transformOrigin: "center center",
               }}
+              // SVGs: skip optimization; any error: gracefully fall back
+              unoptimized={isSvg}
+              onError={() => setBroken(true)}
               priority={false}
+              draggable={false}
             />
           </div>
         ) : (
