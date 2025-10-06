@@ -1,3 +1,4 @@
+// src/components/Header.tsx
 "use client";
 
 import Link from "next/link";
@@ -10,39 +11,38 @@ export default function Header() {
 
   const links: NavLink[] = [
     { href: "/kits", label: "Kits", isActive: (p) => p === "/kits" || p.startsWith("/kits/") },
-    { href: "/kits/resilient", label: "Resilient", isActive: (p) => p.startsWith("/kits/resilient") },
-    { href: "/kits/homefront", label: "Homefront", isActive: (p) => p.startsWith("/kits/homefront") },
     { href: "/faq", label: "FAQ", isActive: (p) => p.startsWith("/faq") },
+    { href: "/partners", label: "Partners", isActive: (p) => p.startsWith("/partners") },
   ];
 
   return (
     <header className="sticky top-0 z-40 border-b border-[color:var(--border)] bg-[#0b1113]/75 backdrop-blur">
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container flex h-16 items-center">
+        {/* Brand */}
         <Link href="/" className="flex items-center gap-2">
           <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-white/10 text-white">✚</span>
           <span className="text-sm font-semibold tracking-wide">The Safety Plan</span>
         </Link>
 
-        <nav className="hidden items-center gap-2 sm:flex">
-          {links.map(({ href, label, isActive }) => {
-            const active = isActive(pathname);
-            return (
-              <Link
-                key={href}
-                href={href}
-                data-active={active ? "true" : "false"}
-                className="pill"
-                aria-current={active ? "page" : undefined}
-              >
-                {label}
-              </Link>
-            );
-          })}
+        {/* Spacer between brand and nav */}
+        <div className="w-5 sm:w-8" />
+
+        {/* Nav */}
+        <nav className="flex items-center gap-3 sm:gap-4">
+          {links.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="pill"
+              data-active={l.isActive(pathname)}
+            >
+              {l.label}
+            </Link>
+          ))}
         </nav>
 
-        <div className="flex items-center gap-2">
-          <Link href="/shop" className="btn">Buy Kits</Link>
-        </div>
+        {/* Push everything else (currently nothing) to the far right */}
+        <div className="ml-auto" />
       </div>
     </header>
   );

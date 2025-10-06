@@ -29,7 +29,7 @@ export const BRAND: BrandConfig = {
 };
 
 export const CONTACT: ContactConfig = {
-  email: "support@blanknothing.com",
+  email: "Contactsafetyplan@yahoo.com",
   phone: "864-713-0509",
   
 };

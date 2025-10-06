@@ -4,7 +4,7 @@ import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Inter } from "next/font/google";
 import ClientHelpStripIsland from "@/components/ClientHelpStripIsland";
-import Header from "@/components/Header"; // ← normal client component import
+import Header from "@/components/Header"; // client component
 import SiteFooter from "@/components/SiteFooter";
 import { BRAND, CONTACT } from "@/lib/blank"; // used in JSON-LD
 
@@ -101,18 +101,29 @@ function CrisisRibbon() {
   const sms = env.CRISIS_SMS;
 
   return (
-    <div className="w-full bg-red-600/95 text-white">
+    <div
+      className="w-full bg-red-600/95 text-white border-b border-black/30"
+      role="region"
+      aria-label="Crisis support"
+    >
       <div className="container flex flex-wrap items-center justify-between gap-3 py-2 text-sm">
         <span className="font-semibold tracking-wide">
-          {/* Grammar fix per Linwood */}
-          you are not alone; every kit is a reminder of resilience, recovery, and the mission for which we stand together.
+          You are not alone. Every kit is a reminder of resilience, recovery, and our shared mission.
         </span>
         <div className="flex items-center gap-2">
-          <a href={`tel:${tel}`} className="ribbon-chip">Call {formatTelHuman(tel)}</a>
-          <a href={`sms:${sms}`} className="ribbon-chip">Text {sms}</a>
-          <Link href="/resources" className="ribbon-chip">Resources</Link>
+          <a href={`tel:${tel}`} className="link-chip tel" aria-label={`Call ${formatTelHuman(tel)}`}>
+            Call {formatTelHuman(tel)}
+          </a>
+          <a href={`sms:${sms}`} className="link-chip sms" aria-label={`Text ${sms}`}>
+            Text {sms}
+          </a>
+          <Link href="/resources" className="link-chip" aria-label="View resources">
+            Resources
+          </Link>
         </div>
       </div>
+      {/* spacer gives breathing room below the ribbon */}
+      <div className="h-2" />
     </div>
   );
 }
@@ -183,7 +194,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
 
         {/* Main */}
-        <main id="main" className="container py-8">
+        <main id="main" className="container py-10">
           {children}
         </main>
 

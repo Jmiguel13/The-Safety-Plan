@@ -1,38 +1,45 @@
+// src/components/SiteHeader.tsx
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const links = [
-  { href: "/kits", label: "Kits" },
-  { href: "/shop", label: "Shop" },
-  { href: "/gallery", label: "Gallery" },
-  { href: "/faq", label: "FAQ" },
-  { href: "/contact", label: "Contact" },
-];
+type NavLink = { href: string; label: string; isActive: (p: string) => boolean };
 
 export default function SiteHeader() {
   const pathname = usePathname() || "/";
+
+  const links: NavLink[] = [
+    { href: "/kits", label: "Kits", isActive: (p) => p === "/kits" || p.startsWith("/kits/") },
+    { href: "/faq", label: "FQA", isActive: (p) => p.startsWith("/faq") },           // label per your request
+    { href: "/partners", label: "Partners", isActive: (p) => p.startsWith("/partners") },
+  ];
+
   return (
-    <nav aria-label="Primary" className="container mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
-      <Link href="/" className="font-semibold tracking-wide">THE SAFETY PLAN</Link>
-      <ul className="flex items-center gap-2">
-        {links.map((l) => {
-          const active = pathname === l.href || (l.href !== "/" && pathname.startsWith(l.href));
-          return (
-            <li key={l.href}>
-              <Link
-                href={l.href}
-                className="pill"
-                data-active={active ? "true" : "false"}
-                aria-current={active ? "page" : undefined}
-              >
-                {l.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+    <header className="sticky top-0 z-40 border-b border-[color:var(--border)] bg-[#0b1113]/75 backdrop-blur">
+      <div className="container flex h-16 items-center justify-between">
+        <Link href="/" className="flex items-center gap-2">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-white/10 text-white">✚</span>
+          <span className="text-sm font-semibold tracking-wide">The Safety Plan</span>
+        </Link>
+
+        {/* Nav: Kits · FQA · Partners */}
+        <nav className="hidden items-center gap-2 sm:flex">
+          {links.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="pill"
+              data-active={l.isActive(pathname)}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Right side intentionally empty (Buy Kits removed) */}
+        <div className="flex items-center gap-2" />
+      </div>
+    </header>
   );
 }
-

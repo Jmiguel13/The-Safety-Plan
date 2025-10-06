@@ -1,40 +1,61 @@
-"use client";
+// src/components/SafeImage.tsx
+// Server component that gracefully falls back when the file isn't present.
+import Image, { ImageProps } from "next/image";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 
-import * as React from "react";
-import NextImage, { ImageProps } from "next/image";
-
-type SafeImageProps = Omit<ImageProps, "src" | "onError"> & {
-  /** Can be null/undefined/empty; we’ll fall back automatically */
-  src?: string | null;
-  /** Optional explicit fallback image */
-  fallbackSrc?: string;
+type Props = Omit<ImageProps, "src" | "alt" | "fill"> & {
+  src?: string;
+  candidates?: string[];  // try these in order
+  alt: string;
+  height?: number;        // used for the fallback box
+  fill?: boolean;
 };
 
-/** Transparent 1×1 PNG data URI (no asset needed) */
-const TRANSPARENT_PNG =
-  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=";
+function firstExistingPublicPath(cands: string[]): string | null {
+  try {
+    const pub = join(process.cwd(), "public");
+    for (const rel of cands) {
+      const clean = rel.replace(/^\//, "");
+      if (existsSync(join(pub, clean))) return `/${clean}`;
+    }
+  } catch {}
+  return null;
+}
 
 export default function SafeImage({
   src,
+  candidates,
   alt,
-  fallbackSrc,
-  onLoadingComplete,
+  height = 320,
+  fill,
+  className,
   ...rest
-}: SafeImageProps) {
-  const [errored, setErrored] = React.useState(false);
+}: Props) {
+  const tryList = [...(candidates ?? []), ...(src ? [src] : [])].filter(Boolean) as string[];
+  const found = tryList.length ? firstExistingPublicPath(tryList) : null;
 
-  const resolvedSrc =
-    (!errored && src && String(src).trim().length > 0 ? String(src) : undefined) ??
-    fallbackSrc ??
-    TRANSPARENT_PNG;
+  if (!found) {
+    return (
+      <div
+        className={[
+          "w-full rounded-xl border border-white/10",
+          "bg-gradient-to-br from-sky-900/30 via-emerald-900/20 to-sky-900/30",
+          className,
+        ].join(" ")}
+        style={{ height }}
+        aria-hidden="true"
+      />
+    );
+  }
 
-  return (
-    <NextImage
-      {...rest}
-      src={resolvedSrc}
-      alt={alt ?? ""}
-      onError={() => setErrored(true)}
-      onLoadingComplete={onLoadingComplete}
-    />
-  );
+  if (fill) {
+    return (
+      <div className={["relative overflow-hidden rounded-xl border border-white/10", className].join(" ")} style={{ height }}>
+        <Image src={found} alt={alt} fill sizes="(min-width: 768px) 900px, 100vw" style={{ objectFit: "cover" }} {...rest} />
+      </div>
+    );
+  }
+
+  return <Image src={found} alt={alt} className={className} {...rest} />;
 }

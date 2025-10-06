@@ -126,7 +126,7 @@ export default function Home() {
                 Wellness with a mission
               </h1>
 
-              {/* Built by BLANK pill (kept only here) */}
+              {/* Built by BLANK pill */}
               <span
                 className="inline-flex shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium tracking-wide text-zinc-300"
                 aria-label={`Built by ${BRAND.name}`}
@@ -139,31 +139,30 @@ export default function Home() {
             <p className="mt-3 text-zinc-400">
               Trusted essentials for long days and tough nights — you are not
               alone. Every kit is a reminder of resilience, recovery, and the
-              mission for which we stand together.
+              mission we stand for together.
             </p>
 
             {/* CTAs */}
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/kits" className="btn">
+              <Link href="/kits" className="btn" aria-label="Browse kits">
                 Browse kits
               </Link>
-              <Link href="/shop" className="btn">
+              <Link href="/shop" className="btn" aria-label="Shop">
                 Shop
               </Link>
-              <Link href="/donate" className="btn-ghost">
+              <Link href="/donate" className="btn-ghost" aria-label="Donate">
                 Donate
               </Link>
-              <Link href="/resources" className="btn-ghost">
+              <Link href="/resources" className="btn-ghost" aria-label="Resources">
                 Resources
               </Link>
-              {/* NEW: About button */}
-              <Link href="/about" className="btn-ghost">
+              <Link href="/about" className="btn-ghost" aria-label="About">
                 About
               </Link>
             </div>
 
             <p className="mt-8 text-sm md:text-base text-zinc-300">
-              We stand with those who serve—today and every day.
+              We stand with those who serve — today and every day.
             </p>
           </div>
 
@@ -174,6 +173,7 @@ export default function Home() {
               background:
                 "linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.35)), radial-gradient(220px 140px at 30% 70%, rgba(16,185,129,.22), transparent), radial-gradient(220px 140px at 75% 30%, rgba(59,130,246,.22), transparent)",
             }}
+            aria-label="Mission hero image"
           >
             {HERO_SRC ? (
               <HeroImg
@@ -244,6 +244,7 @@ export default function Home() {
                   "hover:border-white/20 hover:bg-white/[0.03]",
                   k.gradient,
                 ].join(" ")}
+                aria-label={`View ${k.name}`}
               >
                 <p className="text-xs text-emerald-300/80">{k.badge}</p>
                 <p className="mt-1 text-lg font-medium">{k.name}</p>
@@ -272,7 +273,7 @@ export default function Home() {
           <strong className="font-semibold text-white">
             {IMPACT_STAT ?? "Thank you for backing the mission."}
           </strong>{" "}
-          We move together—resilience, recovery, and support.
+          We move together — resilience, recovery, and support.
           {CONTACT?.email || CONTACT?.phone ? (
             <>
               {" "}
