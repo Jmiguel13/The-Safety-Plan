@@ -17,7 +17,7 @@ export type BomItem = {
   perDay?: number;
   /** Items included once and not scaled (e.g., one sanitizer). */
   fixed?: number;
-  /** Whether we repack (vs. ship full factory container). */
+  /** Kept for compatibility; always false so no “Repacked.” text renders */
   repack?: boolean;
   /** Short note shown on the kit page. */
   note?: string;
@@ -31,7 +31,7 @@ export const RESILIENT_BOM: BomItem[] = [
     sku: "123842",
     perDay: 1,
     repack: false,
-    note: "Keep sticks sealed.",
+    note: "Keep sealed.",
   },
   {
     category: "Hydration",
@@ -39,31 +39,31 @@ export const RESILIENT_BOM: BomItem[] = [
     sku: "110601",
     perDay: 1,
     repack: false,
-    note: "Keep sticks sealed.",
+    note: "Keep sealed.",
   },
   {
     category: "Rest",
     title: "Nutrilite Sleep Health",
     sku: "A8992",
     perDay: 1,
-    repack: true,
-    note: "Repacked into labeled sachets for 10-/30-Day.",
+    repack: false,
+    note: "Daily portion for multi-day kits.",
   },
   {
     category: "Rest",
     title: "n* by Nutrilite Sweet Dreams Sleep Gummies",
     sku: "124506",
     perDay: 2,
-    repack: true,
-    note: "Food-safe pouches, labeled “2/night”.",
+    repack: false,
+    note: "Daily serving: 2/night.",
   },
   {
     category: "Protein / Recovery",
     title: "Nutrilite Organics Plant Protein — Vanilla",
     sku: "125923",
     perDay: 1,
-    repack: true,
-    note: "Portioned scoops for 10-/30-Day; full tub when practical.",
+    repack: false,
+    note: "Daily scoop for multi-day kits; full tub when practical.",
   },
   {
     category: "Hygiene",
@@ -86,24 +86,24 @@ export const RESILIENT_BOM: BomItem[] = [
     title: "Nutrilite Vitamin C — 180 tablets",
     sku: "109747",
     perDay: 1,
-    repack: true,
-    note: "Repacked into day-count sleeves.",
+    repack: false,
+    note: "Daily serving.",
   },
   {
     category: "Protein / Recovery",
     title: "Nutrilite Vitamin D — 90 tablets",
     sku: "119346",
     perDay: 1,
-    repack: true,
-    note: "Repacked into day-count sleeves.",
+    repack: false,
+    note: "Daily serving.",
   },
   {
     category: "Protein / Recovery",
     title: "Nutrilite Advanced Omega — 60 softgels",
     sku: "126136",
     perDay: 1,
-    repack: true,
-    note: "Repacked into day-count sleeves.",
+    repack: false,
+    note: "Daily serving.",
   },
   {
     category: "Hydration",
@@ -111,11 +111,11 @@ export const RESILIENT_BOM: BomItem[] = [
     sku: "110601",
     perDay: 1,
     repack: false,
-    note: "Additional day coverage.",
+    note: "Additional coverage.",
   },
 ];
 
-/** Homefront Kit — add/adjust items as needed */
+/** Home Front Kit — add/adjust items as needed */
 export const HOMEFRONT_BOM: BomItem[] = [
   {
     category: "Hydration",
@@ -123,31 +123,31 @@ export const HOMEFRONT_BOM: BomItem[] = [
     sku: "110601",
     perDay: 1,
     repack: false,
-    note: "Keep sticks sealed.",
+    note: "Keep sealed.",
   },
   {
     category: "Rest",
     title: "Nutrilite Sleep Health",
     sku: "A8992",
     perDay: 1,
-    repack: true,
-    note: "Repacked into labeled sachets for 10-/30-Day.",
+    repack: false,
+    note: "Daily portion for multi-day kits.",
   },
   {
     category: "Rest",
     title: "n* by Nutrilite Sweet Dreams Sleep Gummies",
     sku: "124506",
     perDay: 2,
-    repack: true,
-    note: "Food-safe pouches, labeled “2/night”.",
+    repack: false,
+    note: "Daily serving: 2/night.",
   },
   {
     category: "Protein / Recovery",
     title: "Nutrilite Organics Plant Protein — Vanilla",
     sku: "125923",
     perDay: 1,
-    repack: true,
-    note: "Portioned scoops for 10-/30-Day; full tub when practical.",
+    repack: false,
+    note: "Daily scoop for multi-day kits; full tub when practical.",
   },
   {
     category: "Hygiene",
@@ -162,24 +162,24 @@ export const HOMEFRONT_BOM: BomItem[] = [
     title: "Nutrilite Vitamin C — 180 tablets",
     sku: "109747",
     perDay: 1,
-    repack: true,
-    note: "Repacked into day-count sleeves.",
+    repack: false,
+    note: "Daily serving.",
   },
   {
     category: "Protein / Recovery",
     title: "Nutrilite Vitamin D — 90 tablets",
     sku: "119346",
     perDay: 1,
-    repack: true,
-    note: "Repacked into day-count sleeves.",
+    repack: false,
+    note: "Daily serving.",
   },
   {
     category: "Protein / Recovery",
     title: "Nutrilite Advanced Omega — 60 softgels",
     sku: "126136",
     perDay: 1,
-    repack: true,
-    note: "Repacked into day-count sleeves.",
+    repack: false,
+    note: "Daily serving.",
   },
   {
     category: "Focus / Energy",
@@ -187,7 +187,7 @@ export const HOMEFRONT_BOM: BomItem[] = [
     sku: "123842",
     perDay: 1,
     repack: false,
-    note: "Keep sticks sealed.",
+    note: "Keep sealed.",
   },
 ];
 
@@ -208,12 +208,11 @@ export function scaledQty(item: BomItem, variant: Variant): number {
 }
 
 export function kitTitle(slug: KitSlug): string {
-  return slug === "resilient" ? "Resilient Kit" : "Homefront Kit";
+  return slug === "resilient" ? "Resilient Kit" : "Home Front Kit";
 }
 
-/** Customer-facing repack policy text. */
+/** Customer-facing policy text (no repack wording). */
 export const REPACK_POLICY = `
 Daily is a one-day supply. 10-Day and 30-Day include the same items scaled 10× and 30×.
-To keep kits compact, some consumables are repacked into clearly labeled day-count pouches.
-When practical (e.g., 30-day bottles), we ship factory-sealed containers.
+When practical (e.g., larger bottles or tubs), we include factory-sealed containers.
 `.trim();

@@ -1,3 +1,4 @@
+// src/app/kits/resilient/page.tsx
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import SpecGrid from "@/components/SpecGrid";
@@ -92,6 +93,12 @@ export default function ResilientPage() {
 
           <KitCheckoutForm kit={{ slug: "resilient", title }} className="pt-3" />
 
+          {/* Scaling hint */}
+          <p className="mt-2 text-xs text-zinc-500">
+            Quantities scale by duration. Energy drinks are portioned by the selected duration
+            (1 can, 10 cans, or 30 cans). Daily cans are included in your kit and not added to your MyShop cart.
+          </p>
+
           <div className="pt-3">
             <SpecGrid specs={specs} />
           </div>
@@ -130,7 +137,7 @@ export default function ResilientPage() {
           <div className="rounded-2xl border border-[var(--border)] bg-zinc-950/60 p-4">
             <div className="mb-2 flex items-center justify-between">
               <div className="muted text-xs">
-                Paste any SKU in your Amway search bar to add to cart.
+                Paste any SKU into your <strong>MyShop</strong> search bar to add to cart.
               </div>
               <CopySkus items={copyItems} />
             </div>

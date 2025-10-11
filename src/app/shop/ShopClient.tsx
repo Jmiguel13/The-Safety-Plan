@@ -7,16 +7,47 @@ import { REPACK_POLICY } from "@/lib/kits-bom";
 import type { TspProduct } from "@/lib/tsp-products";
 
 /* ======================= Types ======================= */
+type SelectOpt = { label: string; sku: string };
+
 type KitLite = {
   slug: string;
   title: string;
   stats?: { itemCount: number; skuCount: number };
+  options?: {
+    energyFlavor?:
+      | {
+          type: "select";
+          key: "energyFlavor";
+          label: string;
+          choices: SelectOpt[];
+          defaultSku: string;
+        }
+      | undefined;
+    proteinChoice?:
+      | {
+          type: "select";
+          key: "proteinChoice";
+          label: string;
+          choices: SelectOpt[];
+          defaultSku: string;
+        }
+      | undefined;
+    includeMensPack?:
+      | {
+          type: "checkbox";
+          key: "includeMensPack";
+          label: string;
+          sku: string;
+          defaultChecked?: boolean;
+        }
+      | undefined;
+  };
 };
 
 type Props = {
   kitsList: KitLite[];
   tspProducts: TspProduct[];
-  storeHref: string; // may be '', '/', or a full URL
+  storeHref: string;
   prices?: KitPricesMap;
 };
 
@@ -27,6 +58,9 @@ const VARIANT_LABEL: Record<Variant, string> = {
   "30day": "30-Day Supply",
 };
 
+// cans-per-variant for XS Energy (parity with kit page)
+const VARIANT_CANS: Record<Variant, number> = { daily: 1, "10day": 10, "30day": 30 };
+
 type CheckoutResponse = { url?: string; error?: string };
 
 /* ======================= Helpers ======================= */
@@ -36,9 +70,13 @@ function clampQty(v: number) {
 const kebabFromId = (id: string) => id.replace(/_/g, "-");
 const hrefForTsp = (p: TspProduct) => p.url ?? `/gear/${kebabFromId(p.id)}`;
 const isExternal = (href: string) => /^https?:\/\//i.test(href);
-
-// Only these show a BUY button (others are view/waitlist)
 const DIRECT_GEAR = new Set<string>(["morale_patch", "sticker_pack"]);
+
+function energyLabelFor(baseLabel: string, variant: Variant) {
+  if (variant === "daily") return `Single Can — ${baseLabel}`;
+  if (variant === "10day") return `10 Cans — ${baseLabel}`;
+  return `Full Case — ${baseLabel}`;
+}
 
 /* ======================= Component ======================= */
 export default function ShopClient({
@@ -47,12 +85,25 @@ export default function ShopClient({
   storeHref,
   prices,
 }: Props) {
+  // quantities & variant
   const [quantities, setQuantities] = React.useState<Record<string, number>>(
     Object.fromEntries(kitsList.map((k) => [k.slug, 1])),
   );
   const [variants, setVariants] = React.useState<Record<string, Variant>>(
     Object.fromEntries(kitsList.map((k) => [k.slug, "daily"])),
   );
+
+  // per-kit option state
+  const [energySku, setEnergySku] = React.useState<Record<string, string>>(
+    Object.fromEntries(kitsList.map((k) => [k.slug, k.options?.energyFlavor?.defaultSku ?? ""])),
+  );
+  const [proteinSku, setProteinSku] = React.useState<Record<string, string>>(
+    Object.fromEntries(kitsList.map((k) => [k.slug, k.options?.proteinChoice?.defaultSku ?? ""])),
+  );
+  const [includeMens, setIncludeMens] = React.useState<Record<string, boolean>>(
+    Object.fromEntries(kitsList.map((k) => [k.slug, !!k.options?.includeMensPack?.defaultChecked])),
+  );
+
   const [submitting, setSubmitting] = React.useState<string | null>(null);
   const [errors, setErrors] = React.useState<Record<string, string | null>>({});
   const [buyingProduct, setBuyingProduct] = React.useState<string | null>(null);
@@ -88,13 +139,20 @@ export default function ShopClient({
     setSubmitting(slug);
     setErrors((e) => ({ ...e, [slug]: null }));
     try {
+      const variant = (variants[slug] as Variant) ?? "daily";
       const res = await fetch("/api/checkout/kit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           slug,
-          variant: variants[slug] as Variant,
+          variant,
           quantity: quantities[slug] ?? 1,
+          options: {
+            energyFlavorSku: energySku[slug] || undefined,
+            proteinSku: proteinSku[slug] || undefined,
+            includeMensPack: includeMens[slug] || false,
+            energyCans: VARIANT_CANS[variant],
+          },
         }),
       });
 
@@ -109,8 +167,7 @@ export default function ShopClient({
     } catch (err) {
       setErrors((e) => ({
         ...e,
-        [slug]:
-          err instanceof Error ? err.message : "Checkout failed. Try again.",
+        [slug]: err instanceof Error ? err.message : "Checkout failed. Try again.",
       }));
     } finally {
       setSubmitting(null);
@@ -135,9 +192,7 @@ export default function ShopClient({
         throw new Error(data.error || `Checkout failed (${res.status})`);
       window.location.assign(data.url);
     } catch (err) {
-      alert(
-        err instanceof Error ? err.message : "Checkout failed. Try again.",
-      );
+      alert(err instanceof Error ? err.message : "Checkout failed. Try again.");
     } finally {
       setBuyingProduct(null);
     }
@@ -145,7 +200,7 @@ export default function ShopClient({
 
   return (
     <>
-      {/* === The Kits (no duplicate header) === */}
+      {/* === The Kits === */}
       <section id="kits" className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           {kitsList.map((k) => {
@@ -157,31 +212,24 @@ export default function ShopClient({
                 : undefined;
             const { total, currency } = kitTotalCents(k.slug);
 
+            const hasEnergy = !!k.options?.energyFlavor;
+            const hasProtein = !!k.options?.proteinChoice;
+            const hasMens = !!k.options?.includeMensPack;
+
             return (
-              <div
-                key={k.slug}
-                className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
-              >
+              <div key={k.slug} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-lg font-semibold">{k.title}</h3>
-                    {count ? (
-                      <p className="muted text-sm">{count}</p>
-                    ) : (
-                      <p className="muted text-sm">&nbsp;</p>
-                    )}
+                    {count ? <p className="muted text-sm">{count}</p> : <p className="muted text-sm">&nbsp;</p>}
                   </div>
 
-                  <Link
-                    href={`/kits/${k.slug}`}
-                    className="btn btn-ghost"
-                    aria-label={`View ${k.title}`}
-                  >
+                  <Link href={`/kits/${k.slug}`} className="btn btn-ghost" aria-label={`View ${k.title}`}>
                     View kit
                   </Link>
                 </div>
 
-                {/* Variant selector */}
+                {/* Variant selector + qty */}
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <label className="flex flex-col gap-1">
                     <span className="text-xs text-zinc-400">Kit option</span>
@@ -196,16 +244,8 @@ export default function ShopClient({
                     </select>
                   </label>
 
-                  {/* Quantity */}
                   <div className="flex items-end justify-start gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      onClick={() => setQty(k.slug, (qty ?? 1) - 1)}
-                      aria-label="Decrease quantity"
-                    >
-                      −
-                    </button>
+                    <button type="button" className="btn btn-ghost" onClick={() => setQty(k.slug, (qty ?? 1) - 1)} aria-label="Decrease quantity">−</button>
                     <input
                       aria-label="Quantity"
                       className="w-16 rounded-xl border border-zinc-700 bg-zinc-900 px-2 py-2 text-center"
@@ -213,29 +253,74 @@ export default function ShopClient({
                       min={1}
                       max={10}
                       value={qty ?? 1}
-                      onChange={(e) =>
-                        setQty(k.slug, Number.parseInt(e.target.value, 10))
-                      }
+                      onChange={(e) => setQty(k.slug, Number.parseInt(e.target.value, 10))}
                     />
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      onClick={() => setQty(k.slug, (qty ?? 1) + 1)}
-                      aria-label="Increase quantity"
-                    >
-                      +
-                    </button>
+                    <button type="button" className="btn btn-ghost" onClick={() => setQty(k.slug, (qty ?? 1) + 1)} aria-label="Increase quantity">+</button>
                   </div>
                 </div>
+
+                {/* Option selectors (match kit page) */}
+                {(hasEnergy || hasProtein || hasMens) && (
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {hasEnergy && (
+                      <label className="flex flex-col gap-1">
+                        <span className="text-xs text-zinc-400">{k.options!.energyFlavor!.label}</span>
+                        <select
+                          className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2"
+                          value={energySku[k.slug] ?? ""}
+                          onChange={(e) => setEnergySku((p) => ({ ...p, [k.slug]: e.target.value }))}
+                        >
+                          {k.options!.energyFlavor!.choices.map((c) => (
+                            <option key={c.sku} value={c.sku}>
+                              {energyLabelFor(c.label, variant)}
+                            </option>
+                          ))}
+                        </select>
+                        {variant === "daily" ? (
+                          <span className="mt-1 text-xs text-zinc-500">
+                            Daily includes one can in your kit. Energy isn’t added to your MyShop cart for Daily.
+                          </span>
+                        ) : null}
+                      </label>
+                    )}
+
+                    {hasProtein && (
+                      <label className="flex flex-col gap-1">
+                        <span className="text-xs text-zinc-400">{k.options!.proteinChoice!.label}</span>
+                        <select
+                          className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2"
+                          value={proteinSku[k.slug] ?? ""}
+                          onChange={(e) => setProteinSku((p) => ({ ...p, [k.slug]: e.target.value }))}
+                        >
+                          {k.options!.proteinChoice!.choices.map((c) => (
+                            <option key={c.sku} value={c.sku}>
+                              {c.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+
+                    {hasMens && (
+                      <label className="mt-1 flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          className="size-4 rounded border-white/20 bg-black/50"
+                          checked={!!includeMens[k.slug]}
+                          onChange={(e) => setIncludeMens((p) => ({ ...p, [k.slug]: e.target.checked }))}
+                        />
+                        <span className="text-sm">{k.options!.includeMensPack!.label}</span>
+                      </label>
+                    )}
+                  </div>
+                )}
 
                 {/* Repack policy */}
                 <details className="mt-3 rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
                   <summary className="cursor-pointer select-none text-sm font-medium">
                     What changes between Daily, 10-Day, and 30-Day?
                   </summary>
-                  <p className="mt-2 whitespace-pre-line text-xs text-zinc-400">
-                    {REPACK_POLICY}
-                  </p>
+                  <p className="mt-2 whitespace-pre-line text-xs text-zinc-400">{REPACK_POLICY}</p>
                 </details>
 
                 {/* Price preview */}
@@ -243,17 +328,11 @@ export default function ShopClient({
                   <p className="text-sm text-zinc-300">
                     {total != null ? (
                       <>
-                        <span className="mr-1 font-semibold">
-                          {formatUsd(total, currency)}
-                        </span>
-                        <span className="text-zinc-500">
-                          for {qty} × {VARIANT_LABEL[variant]}
-                        </span>
+                        <span className="mr-1 font-semibold">{formatUsd(total, currency)}</span>
+                        <span className="text-zinc-500">for {qty} × {VARIANT_LABEL[variant]}</span>
                       </>
                     ) : (
-                      <span className="text-zinc-500">
-                        Price shown at checkout
-                      </span>
+                      <span className="text-zinc-500">Price shown at checkout</span>
                     )}
                   </p>
                 </div>
@@ -273,10 +352,7 @@ export default function ShopClient({
                     <p className="text-sm text-red-400">{errors[k.slug]}</p>
                   ) : (
                     <p className="text-xs text-zinc-500">
-                      Variant:{" "}
-                      <span className="uppercase">
-                        {VARIANT_LABEL[variant] ?? variant}
-                      </span>
+                      Variant: <span className="uppercase">{VARIANT_LABEL[variant] ?? variant}</span>
                     </p>
                   )}
                 </div>
@@ -286,16 +362,10 @@ export default function ShopClient({
         </div>
       </section>
 
-      {/* === MyShop single button (no header, no list) === */}
+      {/* === MyShop single button === */}
       <section className="mt-8">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-          <a
-            href={myShopHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn"
-            aria-label="Open MyShop in a new tab"
-          >
+          <a href={myShopHref} target="_blank" rel="noopener noreferrer" className="btn" aria-label="Open MyShop in a new tab">
             Open MyShop
           </a>
         </div>
@@ -309,31 +379,21 @@ export default function ShopClient({
           {tspProducts.map((p) => {
             const href = hrefForTsp(p);
             const external = isExternal(href);
-            const canDirect =
-              p.inStock !== false &&
-              DIRECT_GEAR.has(p.id) &&
-              !!p.stripeProductId;
+            const canDirect = p.inStock !== false && DIRECT_GEAR.has(p.id) && !!p.stripeProductId;
 
             return (
-              <article
-                key={p.id}
-                className="flex flex-col justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
-              >
+              <article key={p.id} className="flex flex-col justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
                 <div>
                   <h3 className="text-lg font-semibold">{p.title}</h3>
                   <p
                     className={[
                       "mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-xs",
-                      p.inStock === false
-                        ? "bg-amber-500/10 text-amber-300"
-                        : "bg-emerald-500/10 text-emerald-300",
+                      p.inStock === false ? "bg-amber-500/10 text-amber-300" : "bg-emerald-500/10 text-emerald-300",
                     ].join(" ")}
                   >
                     {p.inStock === false ? "Waitlist open" : "In stock"}
                   </p>
-                  {p.blurb ? (
-                    <p className="mt-2 text-sm text-zinc-400">{p.blurb}</p>
-                  ) : null}
+                  {p.blurb ? <p className="mt-2 text-sm text-zinc-400">{p.blurb}</p> : null}
                 </div>
 
                 <div className="mt-4">
@@ -343,20 +403,14 @@ export default function ShopClient({
                       onClick={() => buyGearByProduct(p.stripeProductId!)}
                       className="inline-flex items-center rounded-xl bg-white px-3 py-2 text-sm font-medium text-black hover:opacity-90"
                       disabled={buyingProduct === p.stripeProductId}
-                      aria-busy={
-                        buyingProduct === p.stripeProductId || undefined
-                      }
+                      aria-busy={buyingProduct === p.stripeProductId || undefined}
                     >
-                      {buyingProduct === p.stripeProductId
-                        ? "Redirecting…"
-                        : "Buy"}
+                      {buyingProduct === p.stripeProductId ? "Redirecting…" : "Buy"}
                     </button>
                   ) : (
                     <Link
                       href={href}
-                      {...(external
-                        ? { target: "_blank", rel: "noreferrer" }
-                        : {})}
+                      {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
                       className="inline-flex items-center rounded-xl border border-white/15 px-3 py-2 text-sm font-medium text-white hover:border-white/30 hover:bg-white/10"
                     >
                       {p.inStock === false ? "View / Join waitlist" : "View"}

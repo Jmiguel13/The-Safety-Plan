@@ -58,9 +58,7 @@ function firstExistingPublicPath(candidates: string[]): string | null {
     for (const rel of candidates) {
       if (existsSync(join(pub, rel))) return `/${rel.replace(/^\/+/, "")}`;
     }
-  } catch {
-    // ignore fs issues
-  }
+  } catch {}
   return null;
 }
 
@@ -95,15 +93,37 @@ function HeroImg({
   );
 }
 
+/** Reusable accordion tile (click to open/close) */
+function FeatureTile({
+  title,
+  desc,
+  Icon,
+  children,
+}: {
+  title: string;
+  desc: string;
+  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="rounded-xl border border-white/10 bg-white/5 transition open:bg-white/7">
+      <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3">
+        <span className="inline-flex size-9 items-center justify-center rounded-lg bg-white/10">
+          <Icon className="size-5 text-white/90" />
+        </span>
+        <div className="flex-1">
+          <p className="font-medium">{title}</p>
+          <p className="text-sm text-zinc-400">{desc}</p>
+        </div>
+        <span aria-hidden className="ml-2 select-none text-zinc-400">▾</span>
+      </summary>
+      <div className="px-4 pb-4 pt-1 text-sm text-zinc-300">{children}</div>
+    </details>
+  );
+}
+
 export default function Home() {
   const { IMPACT_STAT } = getSiteConfig();
-
-  const features = [
-    { title: "Focus", desc: "Clarity without the crash.", Icon: IconTarget },
-    { title: "Hydration", desc: "Electrolytes for long days.", Icon: IconDrop },
-    { title: "Rest", desc: "Recover and reset.", Icon: IconMoon },
-    { title: "Impact", desc: "Standing with prevention efforts.", Icon: IconHeart },
-  ] as const;
 
   return (
     <div className="space-y-16">
@@ -162,7 +182,7 @@ export default function Home() {
             </div>
 
             <p className="mt-8 text-sm md:text-base text-zinc-300">
-              We stand with those who serve — today and every day.
+              Your support helps <strong>with</strong> prevention, outreach, and response.
             </p>
           </div>
 
@@ -182,35 +202,72 @@ export default function Home() {
                 className="absolute inset-0"
               />
             ) : (
-              <div aria-hidden="true" className="absolute inset-0" />
+              <div aria-hidden className="absolute inset-0" />
             )}
           </div>
         </div>
       </section>
 
-      {/* FEATURES */}
+      {/* FEATURES — click to open */}
       <section aria-labelledby="features-title" className="container">
         <h2 id="features-title" className="sr-only">
           What’s inside
         </h2>
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {features.map(({ title, desc, Icon }) => (
-            <li
-              key={title}
-              className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur"
-            >
-              <div className="flex items-start gap-3">
-                <span className="inline-flex size-9 items-center justify-center rounded-lg bg-white/10">
-                  <Icon className="size-5 text-white/90" />
-                </span>
-                <div>
-                  <p className="font-medium">{title}</p>
-                  <p className="text-sm text-zinc-400">{desc}</p>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <FeatureTile
+            title="Focus"
+            desc="Clarity without the crash."
+            Icon={IconTarget}
+          >
+            <ul className="list-disc space-y-1 pl-5">
+              <li>
+                <strong>Nutrilite Ultra Focus Energy Pack</strong> — on-the-go focus.
+              </li>
+              <li>
+                <strong>XS Energy (can)</strong> — quick boost when needed.
+              </li>
+            </ul>
+          </FeatureTile>
+
+          <FeatureTile
+            title="Hydration"
+            desc="Electrolytes for long days."
+            Icon={IconDrop}
+          >
+            <ul className="list-disc space-y-1 pl-5">
+              <li>
+                <strong>XS Sports Electrolyte Drink Mix</strong> — simple, daily hydration.
+              </li>
+              <li>
+                <strong>Extra electrolyte sticks</strong> — added coverage on hard days.
+              </li>
+            </ul>
+          </FeatureTile>
+
+          <FeatureTile title="Rest" desc="Recover and reset." Icon={IconMoon}>
+            <ul className="list-disc space-y-1 pl-5">
+              <li>
+                <strong>Nutrilite Sleep Health</strong> — nightly support.
+              </li>
+              <li>
+                <strong>Sweet Dreams Sleep Gummies</strong> — <em>2/night</em> as needed.
+              </li>
+            </ul>
+          </FeatureTile>
+
+          <FeatureTile
+            title="Impact"
+            desc="Your support helps with prevention."
+            Icon={IconHeart}
+          >
+            <p>
+              <strong>Every ~7 minutes</strong>, a U.S. veteran dies by suicide. Your
+              support helps with prevention, outreach, and response — one kit,
+              one conversation, one life at a time.
+            </p>
+          </FeatureTile>
+        </div>
       </section>
 
       {/* KITS */}
@@ -222,7 +279,7 @@ export default function Home() {
         <ul className="grid gap-4 md:grid-cols-2">
           {[
             {
-              name: "Homefront Kit",
+              name: "Home Front Kit",
               href: "/kits/homefront",
               badge: "Best for recovery",
               gradient:
@@ -264,31 +321,37 @@ export default function Home() {
         </ul>
       </section>
 
-      {/* IMPACT STRIP */}
+      {/* IMPACT STRIP (single sentence; no “fund”, no duplicates) */}
       <section
         aria-label="Impact"
         className="container rounded-xl border border-white/10 bg-gradient-to-r from-emerald-500/10 via-sky-500/10 to-emerald-500/10 p-5"
       >
-        <p className="text-sm text-zinc-200">
-          <strong className="font-semibold text-white">
-            {IMPACT_STAT ?? "Thank you for backing the mission."}
-          </strong>{" "}
-          We move together — resilience, recovery, and support.
-          {CONTACT?.email || CONTACT?.phone ? (
-            <>
-              {" "}
-              Questions?{" "}
-              {CONTACT.email ? (
-                <a className="underline" href={`mailto:${CONTACT.email}`}>
-                  {CONTACT.email}
-                </a>
+        {(() => {
+          const raw =
+            (IMPACT_STAT as string) ||
+            "Your support helps with prevention, outreach, and response.";
+          const cleaned = raw.replace(/\bfund\b/gi, "with");
+
+          return (
+            <p className="text-sm text-zinc-200">
+              <span className="font-semibold text-white">{cleaned}</span>
+              {CONTACT?.email || CONTACT?.phone ? (
+                <>
+                  {" "}
+                  Questions?{" "}
+                  {CONTACT.email ? (
+                    <a className="underline" href={`mailto:${CONTACT.email}`}>
+                      {CONTACT.email}
+                    </a>
+                  ) : null}
+                  {CONTACT.email && CONTACT.phone ? " • " : null}
+                  {CONTACT.phone ? <span>{CONTACT.phone}</span> : null}
+                  .
+                </>
               ) : null}
-              {CONTACT.email && CONTACT.phone ? " • " : null}
-              {CONTACT.phone ? <span>{CONTACT.phone}</span> : null}
-              .
-            </>
-          ) : null}
-        </p>
+            </p>
+          );
+        })()}
       </section>
     </div>
   );

@@ -8,6 +8,7 @@ import { join } from "node:path";
 import { kits } from "@/lib/kits";
 import KitThumb from "@/components/KitThumb";
 import { BRAND } from "@/lib/blank";
+import { myShopLink } from "@/lib/amway";
 
 export const revalidate = 86_400;
 
@@ -94,14 +95,21 @@ export default function KitsIndexPage() {
           <p className="muted mt-2">Built for real needs: hydration, energy, recovery, and rest.</p>
         </div>
 
-        {/* Built by BLANK (hide on xs to avoid crowding) */}
-        <span
-          aria-label={`Built by ${BRAND.name}`}
-          className="hidden shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium tracking-wide text-zinc-300 sm:inline-flex"
-          title={`Built by ${BRAND.name}`}
-        >
-          Built by {BRAND.name}
-        </span>
+        <div className="flex items-center gap-2">
+          {/* Open MyShop button (added) */}
+          <a href={myShopLink("/")} target="_blank" rel="noopener noreferrer" className="btn-ghost">
+            Open MyShop
+          </a>
+
+          {/* Built by BLANK (hide on xs to avoid crowding) */}
+          <span
+            aria-label={`Built by ${BRAND.name}`}
+            className="hidden shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium tracking-wide text-zinc-300 sm:inline-flex"
+            title={`Built by ${BRAND.name}`}
+          >
+            Built by {BRAND.name}
+          </span>
+        </div>
       </div>
 
       <ul className="mt-8 grid gap-6 sm:grid-cols-2">

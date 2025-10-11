@@ -37,7 +37,7 @@ function readEnv() {
     NEXT_PUBLIC_ENABLE_HELP_STRIP: (NEXT_PUBLIC_ENABLE_HELP_STRIP ?? "0").toString(),
     NEXT_PUBLIC_IMPACT_STAT:
       NEXT_PUBLIC_IMPACT_STAT ??
-      "Every kit helps us sustain prevention, outreach, and response.",
+      "Your support helps with prevention, outreach, and response.",
     CRISIS_TEL: (CRISIS_TEL ?? "988").toString(),
     CRISIS_SMS: (CRISIS_SMS ?? "838255").toString(),
   } as const;
@@ -198,8 +198,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </main>
 
-        {/* Footer */}
-        <SiteFooter impactText={env.NEXT_PUBLIC_IMPACT_STAT} />
+        {/* Footer (force “with” wording) */}
+        <SiteFooter impactText={env.NEXT_PUBLIC_IMPACT_STAT.replace(/\bfund\b/gi, "with")} />
 
         {/* JSON-LD */}
         <JsonLd />

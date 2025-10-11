@@ -1,4 +1,3 @@
-// src/app/donate/page.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -96,7 +95,7 @@ export default function DonatePage() {
       <header className="space-y-2">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Donate</h1>
         <p className="muted">
-          Your donation funds prevention, outreach, and response for veterans in crisis.
+          Your donation <strong>helps with</strong> prevention, outreach, and response for veterans in crisis.
         </p>
 
         {TEST_MODE && (
@@ -229,7 +228,7 @@ export default function DonatePage() {
         <ul className="grid gap-3 text-sm sm:grid-cols-3">
           <li><span className="font-semibold">Secure:</span> Stripe Checkout</li>
           <li><span className="font-semibold">Receipts:</span> Emailed after payment</li>
-          <li><span className="font-semibold">Impact:</span> Funds outreach & response</li>
+          <li><span className="font-semibold">Impact:</span> Helps with outreach &amp; response</li>
         </ul>
       </div>
 

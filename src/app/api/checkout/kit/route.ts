@@ -1,4 +1,3 @@
-// src/app/api/checkout/kit/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getStripe, getCheckoutRedirects } from "@/lib/stripe";
@@ -11,6 +10,12 @@ type CheckoutBody = {
   slug?: string;
   variant?: Variant;
   quantity?: number;
+  options?: {
+    energyFlavorSku?: string;
+    proteinSku?: string;
+    includeMensPack?: boolean;
+    energyCans?: number; // hint for parity with kit page messaging
+  };
 };
 
 function env(key: string): string | undefined {
@@ -133,12 +138,23 @@ export async function POST(req: Request) {
     const priceId = await getPriceIdFromTarget(stripe, target, slug, variant);
 
     const { success_url, cancel_url } = getCheckoutRedirects(req);
+
+    // carry option selections to the back office via metadata
+    const md = {
+      kit_slug: slug,
+      kit_variant: variant,
+      opt_energy_sku: body.options?.energyFlavorSku ?? "",
+      opt_protein_sku: body.options?.proteinSku ?? "",
+      opt_include_mens_pack: body.options?.includeMensPack ? "1" : "0",
+      opt_energy_cans: body.options?.energyCans != null ? String(body.options.energyCans) : "",
+    };
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [{ price: priceId, quantity }],
       success_url,
       cancel_url,
-      metadata: { kit_slug: slug, kit_variant: variant },
+      metadata: md,
     });
 
     if (!session.url) return NextResponse.json({ error: "Stripe did not return a URL" }, { status: 502 });

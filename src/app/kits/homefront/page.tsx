@@ -12,7 +12,7 @@ export const revalidate = 0;
 export const viewport: Viewport = { themeColor: "#0b0f10" };
 export const metadata: Metadata = {
   title: "Homefront Kit — The Safety Plan",
-  description: "Best for recovery. Rehydrate, restore, and reset.",
+  description: "Best for recovery. Rehydrate, restore, and rest.",
 };
 
 // ---- Types ----
@@ -88,11 +88,17 @@ export default function HomefrontPage() {
             {title}
           </h1>
           <p className="muted mt-2">
-            Best for recovery. Rehydrate, restore, and reset.
+            Best for recovery. Rehydrate, restore, and rest.
           </p>
 
-          {/* Client checkout (no server Stripe work here) */}
+          {/* Client checkout */}
           <KitCheckoutForm kit={{ slug: "homefront", title }} className="pt-3" />
+
+          {/* Scaling hint (scrubbed wording) */}
+          <p className="mt-2 text-xs text-zinc-500">
+            Quantities scale by duration. Energy drinks are portioned by the selected duration
+            (1 can, 10 cans, or 30 cans). Daily cans are included in your kit and not added to your MyShop cart.
+          </p>
 
           {/* Specs */}
           <div className="pt-3">
@@ -118,7 +124,7 @@ export default function HomefrontPage() {
           <div className="panel rounded-2xl border border-[var(--border)] p-4">
             <div className="mb-2 flex items-center justify-between">
               <div className="muted text-xs">
-                Paste any SKU in your Amway search bar to add to cart.
+                Paste any SKU into your <strong>MyShop</strong> search bar to add to cart.
               </div>
               <CopySkus items={copyItems} />
             </div>
